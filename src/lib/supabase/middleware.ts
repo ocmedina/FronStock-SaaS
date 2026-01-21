@@ -30,9 +30,32 @@ export async function updateSession(request: NextRequest) {
     // IMPORTANT: Don't add any logic between createServerClient and getUser()
     // A simple mistake could make it very hard to debug session issues.
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    let user = null;
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) {
+            // Handle invalid refresh token by clearing auth cookies
+            if (error.code === 'refresh_token_not_found' || error.message.includes('Refresh Token')) {
+                console.warn('Invalid refresh token, clearing session');
+                // Clear Supabase auth cookies
+                request.cookies.getAll().forEach(cookie => {
+                    if (cookie.name.startsWith('sb-')) {
+                        supabaseResponse.cookies.delete(cookie.name);
+                    }
+                });
+            }
+        } else {
+            user = data.user;
+        }
+    } catch (error) {
+        console.error('Auth error in middleware:', error);
+        // Clear cookies on any auth error
+        request.cookies.getAll().forEach(cookie => {
+            if (cookie.name.startsWith('sb-')) {
+                supabaseResponse.cookies.delete(cookie.name);
+            }
+        });
+    }
 
     return { user, supabaseResponse };
 }

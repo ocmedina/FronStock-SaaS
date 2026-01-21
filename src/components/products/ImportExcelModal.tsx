@@ -31,6 +31,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Download,
 } from "lucide-react";
 
 interface ImportExcelModalProps {
@@ -136,6 +137,37 @@ export function ImportExcelModal({
   const handleClose = () => {
     resetState();
     onClose();
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "Nombre",
+      "SKU",
+      "Código de Barras",
+      "Precio Minorista",
+      "Precio Costo",
+      "Precio Mayorista",
+      "Stock",
+      "Stock Mínimo",
+      "Descripción",
+    ];
+
+    const exampleRow = [
+      "Camiseta Ejemplo",
+      "CAM-001",
+      "7790000000001",
+      15000,
+      8000,
+      12000,
+      50,
+      10,
+      "Camiseta de algodón talles varios",
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Plantilla Productos");
+    XLSX.writeFile(wb, "plantilla_productos.xlsx");
   };
 
   const handleFileChange = useCallback(
@@ -363,24 +395,55 @@ export function ImportExcelModal({
 
         {/* Step 1: Upload */}
         {step === "upload" && (
-          <div
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
-          >
-            <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Arrastra un archivo Excel aquí o haz clic para seleccionar
-            </p>
-            <Input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={handleFileChange}
-              className="max-w-xs mx-auto"
-            />
-            <p className="text-xs text-muted-foreground mt-4">
-              Formatos soportados: .xlsx, .xls, .csv
-            </p>
+          <div className="space-y-4">
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-sm text-blue-700 dark:text-blue-300">Formatos Importantes</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    El único dato obligatorio es el <strong>Nombre</strong>.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Columnas sugeridas para detección automática:
+                    <span className="font-mono text-[10px] ml-1 bg-background/50 px-1 py-0.5 rounded">Nombre</span>,
+                    <span className="font-mono text-[10px] ml-1 bg-background/50 px-1 py-0.5 rounded">Precio</span>,
+                    <span className="font-mono text-[10px] ml-1 bg-background/50 px-1 py-0.5 rounded">Costo</span>,
+                    <span className="font-mono text-[10px] ml-1 bg-background/50 px-1 py-0.5 rounded">Stock</span>.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadTemplate}
+                className="w-full mt-2 border-blue-500/20 hover:bg-blue-500/10"
+              >
+                <Download className="h-4 w-4 mr-2 text-blue-500" />
+                Descargar Plantilla de Ejemplo
+              </Button>
+            </div>
+
+            <div
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-12 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            >
+              <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">
+                Arrastra un archivo Excel aquí o haz clic para seleccionar
+              </p>
+              <Input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileChange}
+                className="max-w-xs mx-auto"
+              />
+              <p className="text-xs text-muted-foreground mt-4">
+                Formatos soportados: .xlsx, .xls, .csv
+              </p>
+            </div>
           </div>
         )}
 

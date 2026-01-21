@@ -47,6 +47,14 @@ import {
   TrendingUp,
   Box as BoxIcon,
   AlertTriangle,
+  Wand2,
+  X,
+  Layers,
+  LayoutGrid,
+  List,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   ImportExcelModal,
@@ -78,8 +86,15 @@ export default function ProductsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
   const [showLabelModal, setShowLabelModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   const supabase = createClient();
+
+  // KPIs
+  const totalInventoryValue = products.reduce((acc, p) => acc + (p.cost_price || 0) * p.stock, 0);
+  const totalSalesValue = products.reduce((acc, p) => acc + (p.price || 0) * p.stock, 0); // Valor de venta potencial
+  const lowStockCount = products.filter(p => p.min_stock && p.stock <= p.min_stock).length;
+
 
   useEffect(() => {
     if (organizationId) {
@@ -89,20 +104,55 @@ export default function ProductsPage() {
 
   const handleSave = async (
     productData: Omit<Product, "id" | "organization_id" | "created_at">,
+    comboItems?: { child_product_id: string; quantity: number }[],
   ) => {
-    if (editingProduct) {
-      await update(editingProduct.id, productData);
-    } else {
-      await create(
-        productData as Omit<
-          Product,
-          keyof { id: string; organization_id: string; created_at: string }
-        >,
-      );
+    try {
+      let productId = editingProduct?.id;
+
+      if (editingProduct) {
+        await update(editingProduct.id, productData);
+      } else {
+        const newProduct = await create(
+          productData as Omit<
+            Product,
+            keyof { id: string; organization_id: string; created_at: string }
+          >,
+        );
+        productId = newProduct?.id;
+      }
+
+      // Guardar items del combo
+      if (productData.is_combo && comboItems && productId && organizationId) {
+        // 1. Eliminar items anteriores
+        await supabase
+          .from("product_combos")
+          .delete()
+          .eq("parent_product_id", productId);
+
+        // 2. Insertar nuevos items
+        if (comboItems.length > 0) {
+          const itemsToInsert = comboItems.map((item) => ({
+            organization_id: organizationId,
+            parent_product_id: productId,
+            child_product_id: item.child_product_id,
+            quantity: item.quantity,
+          }));
+
+          const { error: comboError } = await supabase
+            .from("product_combos")
+            .insert(itemsToInsert);
+
+          if (comboError) throw comboError;
+        }
+      }
+
+      setShowModal(false);
+      setEditingProduct(null);
+      getAll({ orderBy: { column: "created_at", ascending: false } });
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Error al guardar el producto. Verifica que los datos sean correctos.");
     }
-    setShowModal(false);
-    setEditingProduct(null);
-    getAll({ orderBy: { column: "created_at", ascending: false } });
   };
 
   const handleDelete = async (id: string) => {
@@ -202,6 +252,19 @@ export default function ProductsPage() {
       p.barcode?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  // Pagination Logic
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = viewMode === "grid" ? 12 : 10;
+
+  // Reset page when search or view changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, viewMode]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
   const selectedProducts = products.filter((p) => selectedIds.has(p.id));
 
   if (orgLoading || isLoading) {
@@ -221,81 +284,132 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 md:p-6 max-w-[1600px] mx-auto">
+      {/* Title & Stats */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Productos</h1>
-          <p className="text-muted-foreground">
-            {products.length} productos en inventario
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Inventario</h1>
+          <p className="text-muted-foreground">Gestión de productos, combos y stock.</p>
         </div>
         <div className="flex items-center gap-2">
           {canCreate("products") && (
-            <>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => setShowImportModal(true)}
+                className="hidden sm:flex"
               >
-                <FileSpreadsheet className="h-4 w-4" /> Importar Excel
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar
               </Button>
               <Button
                 onClick={() => {
                   setEditingProduct(null);
                   setShowModal(true);
                 }}
+                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
               >
-                <Plus /> Nuevo Producto
+                <Plus className="mr-2 h-4 w-4" /> Nuevo Producto
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Search and Bulk Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm flex-1">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 rounded-xl border bg-card/50 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Productos</p>
+              <h3 className="text-2xl font-bold mt-1">{products.length}</h3>
+            </div>
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-card/50 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Valor Inventario</p>
+              <h3 className="text-2xl font-bold mt-1">${totalInventoryValue.toLocaleString()}</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Potencial Venta: <span className="text-emerald-500 font-medium">${totalSalesValue.toLocaleString()}</span>
+              </p>
+            </div>
+            <div className="p-2 bg-emerald-500/10 rounded-lg">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border bg-card/50 backdrop-blur-sm text-card-foreground shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Stock Bajo</p>
+              <h3 className="text-2xl font-bold mt-1">{lowStockCount}</h3>
+              <p className="text-xs text-muted-foreground mt-1">Productos requieren atención</p>
+            </div>
+            <div className="p-2 bg-amber-500/10 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters & Controls */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card/50 p-3 rounded-xl border">
+        <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar productos..."
+            placeholder="Buscar por nombre, SKU o código..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-9 bg-background/50 border-input/50 focus:bg-background transition-colors"
           />
         </div>
 
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {selectedIds.size} seleccionados
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowBulkUpdateModal(true)}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 mr-2 animate-in fade-in slide-in-from-right-5 duration-200">
+              <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
+                {selectedIds.size} seleccionados
+              </span>
+              <Button variant="outline" size="icon-sm" onClick={() => setShowBulkUpdateModal(true)} title="Edición masiva">
+                <Edit3 className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon-sm" onClick={() => setShowLabelModal(true)} title="Etiquetas">
+                <Tag className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setSelectedIds(new Set())} title="Cancelar selección">
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="h-4 w-px bg-border mx-1" />
+            </div>
+          )}
+
+          <div className="flex items-center border rounded-lg overflow-hidden bg-background shadow-sm p-0.5">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}
+              title="Vista lista"
             >
-              <Edit3 className="h-4 w-4" /> Actualizar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowLabelModal(true)}
+              <List size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}
+              title="Vista cuadrícula"
             >
-              <Tag className="h-4 w-4" /> Etiquetas
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedIds(new Set())}
-            >
-              Limpiar
-            </Button>
+              <LayoutGrid size={16} />
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Products Table */}
-      <div className="rounded-lg border bg-card">
+      <div className={`rounded-lg border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden ${viewMode === 'grid' ? 'hidden' : 'block'}`}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -318,7 +432,7 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.length === 0 ? (
+            {paginatedProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-3">
@@ -339,7 +453,7 @@ export default function ProductsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredProducts.map((product) => (
+              paginatedProducts.map((product) => (
                 <TableRow
                   key={product.id}
                   className={selectedIds.has(product.id) ? "bg-muted/50" : ""}
@@ -413,7 +527,7 @@ export default function ProductsPage() {
                         product.stock <= 0
                           ? "destructive"
                           : product.min_stock &&
-                              product.stock <= product.min_stock
+                            product.stock <= product.min_stock
                             ? "secondary"
                             : product.stock <= 10
                               ? "secondary"
@@ -475,10 +589,127 @@ export default function ProductsPage() {
         </Table>
       </div>
 
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
+          {paginatedProducts.map((product) => {
+            const isSelected = selectedIds.has(product.id);
+            return (
+              <div
+                key={product.id}
+                className={`group relative flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+                onClick={(e) => {
+                  // Si hace click en la tarjeta (no botones), toggle selección o abrir editar? 
+                  // Mejor solo selección si clickea fondo
+                  // toggleSelect(product.id); 
+                }}
+              >
+                <div className="p-5 flex flex-col h-full gap-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(product.id)}
+                        className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                      />
+                      {product.is_combo && (
+                        <Badge variant="secondary" className="gap-1 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-200">
+                          <Layers className="h-3 w-3" /> Combo
+                        </Badge>
+                      )}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setEditingProduct(product); setShowModal(true); }}>
+                          <Edit3 className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(product.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="font-semibold leading-none tracking-tight truncate" title={product.name}>
+                      {product.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground truncate">SKU: {product.sku || '-'}</p>
+                  </div>
+
+                  <div className="flex items-end justify-between mt-auto pt-2">
+                    <div>
+                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        ${product.price}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Unitario</p>
+                    </div>
+                    <div className="text-right">
+                      <div className={`flex items-center gap-1 font-medium ${product.min_stock && product.stock <= product.min_stock
+                        ? "text-rose-500"
+                        : "text-foreground"
+                        }`}>
+                        <Package className="h-3.5 w-3.5" />
+                        {product.stock}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Stock</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer bar with visually distinct actions if needed, or just hover effect */}
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredProducts.length > 0 && (
+        <div className="flex items-center justify-between border-t pt-4 px-2">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-8"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Anterior
+            </Button>
+            <div className="text-sm font-medium min-w-[3rem] text-center">
+              {currentPage} / {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8"
+            >
+              Siguiente
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Product Modal */}
       <ProductModal
         open={showModal}
         product={editingProduct}
+        allProducts={products}
         onSave={handleSave}
         onClose={() => {
           setShowModal(false);
@@ -519,13 +750,15 @@ export default function ProductsPage() {
 interface ProductModalProps {
   open: boolean;
   product: Product | null;
+  allProducts: Product[];
   onSave: (
     data: Omit<Product, "id" | "organization_id" | "created_at">,
+    comboItems?: { child_product_id: string; quantity: number }[]
   ) => Promise<void>;
   onClose: () => void;
 }
 
-function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
+function ProductModal({ open, product, allProducts, onSave, onClose }: ProductModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -536,7 +769,10 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
     stock: "0",
     min_stock: "",
     description: "",
+    is_combo: false,
   });
+  const [comboItems, setComboItems] = useState<{ child_product_id: string; quantity: number }[]>([]);
+  const [comboSearch, setComboSearch] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -551,7 +787,23 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
         stock: product.stock?.toString() || "0",
         min_stock: product.min_stock?.toString() || "",
         description: product.description || "",
+        is_combo: product.is_combo || false,
       });
+
+      if (product.is_combo) {
+        const supabase = createClient();
+        supabase
+          .from("product_combos")
+          .select("child_product_id, quantity")
+          .eq("parent_product_id", product.id)
+          .then(({ data }) => {
+            if (data) {
+              setComboItems(data);
+            }
+          });
+      } else {
+        setComboItems([]);
+      }
     } else {
       setFormData({
         name: "",
@@ -563,7 +815,9 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
         stock: "0",
         min_stock: "",
         description: "",
+        is_combo: false,
       });
+      setComboItems([]);
     }
   }, [product]);
 
@@ -582,7 +836,8 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
       stock: parseInt(formData.stock) || 0,
       min_stock: formData.min_stock ? parseInt(formData.min_stock) : null,
       description: formData.description || null,
-    });
+      is_combo: formData.is_combo,
+    }, comboItems);
     setSaving(false);
   };
 
@@ -590,11 +845,88 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
   const profitMargin =
     formData.cost_price && formData.price
       ? (
-          ((parseFloat(formData.price) - parseFloat(formData.cost_price)) /
-            parseFloat(formData.cost_price)) *
-          100
-        ).toFixed(1)
+        ((parseFloat(formData.price) - parseFloat(formData.cost_price)) /
+          parseFloat(formData.cost_price)) *
+        100
+      ).toFixed(1)
       : null;
+
+  // Funciones de generación
+  const generateRandomBarcode = () => {
+    // Generar EAN-13 ficticio (sin checksum real estricto para demo, pero formato válido)
+    const prefix = "779"; // Argentina
+    const random = Math.floor(Math.random() * 1000000000).toString().padStart(9, "0");
+    const code = prefix + random;
+
+    // Calcular dígito verificador simple
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(code[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+
+    setFormData(prev => ({ ...prev, barcode: code + checkDigit }));
+  };
+
+  const generateRandomSKU = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let sku = "";
+    // Generar formato XXX-XXX-000
+    for (let i = 0; i < 3; i++) sku += chars.charAt(Math.floor(Math.random() * 26)); // Letras
+    sku += "-";
+    for (let i = 0; i < 3; i++) sku += chars.charAt(Math.floor(Math.random() * 36));
+    sku += "-";
+    for (let i = 0; i < 3; i++) sku += chars.charAt(Math.floor(Math.random() * 10) + 26); // Números
+
+    setFormData(prev => ({ ...prev, sku: sku }));
+  };
+
+  const addComboItem = (prod: Product) => {
+    setComboItems((prev) => {
+      const existing = prev.find((p) => p.child_product_id === prod.id);
+      if (existing) {
+        return prev.map((p) =>
+          p.child_product_id === prod.id
+            ? { ...p, quantity: p.quantity + 1 }
+            : p,
+        );
+      }
+      return [...prev, { child_product_id: prod.id, quantity: 1 }];
+    });
+    setComboSearch("");
+  };
+
+  const removeComboItem = (id: string) => {
+    setComboItems((prev) => prev.filter((p) => p.child_product_id !== id));
+  };
+
+  const updateComboQuantity = (id: string, qty: number) => {
+    if (qty < 1) return;
+    setComboItems((prev) =>
+      prev.map((p) => (p.child_product_id === id ? { ...p, quantity: qty } : p)),
+    );
+  };
+
+  // Calcular costo total del combo basado en componentes
+  const comboCost = comboItems.reduce((acc, item) => {
+    const prod = allProducts?.find((p) => p.id === item.child_product_id);
+    return acc + (prod?.cost_price || 0) * item.quantity;
+  }, 0);
+
+  // Actualizar costo en formData si es combo (opcional, o solo mostrarlo)
+  useEffect(() => {
+    if (formData.is_combo) {
+      setFormData(prev => ({ ...prev, cost_price: comboCost.toString() }));
+    }
+  }, [comboCost, formData.is_combo]);
+
+  const filteredComboProducts = allProducts?.filter(
+    (p) =>
+      !p.is_combo && // No permitir combos dentro de combos por ahora para simplificar
+      p.id !== product?.id && // No permitirse a sí mismo
+      (p.name.toLowerCase().includes(comboSearch.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(comboSearch.toLowerCase()))
+  ).slice(0, 5) || [];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -608,6 +940,26 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Tipo de Producto */}
+          <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <Checkbox
+              id="is_combo"
+              checked={formData.is_combo}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_combo: !!checked }))}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="is_combo"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Es Combo / Promoción
+              </label>
+              <p className="text-sm text-muted-foreground">
+                Selecciona esta opción si el producto está compuesto por otros productos.
+              </p>
+            </div>
+          </div>
+
           {/* Información básica */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -647,9 +999,21 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-muted-foreground" />
-                  SKU
+                <label className="text-sm font-medium flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    SKU
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="h-6 w-6 text-muted-foreground hover:text-primary"
+                    onClick={generateRandomSKU}
+                    title="Generar SKU aleatorio"
+                  >
+                    <Wand2 className="h-3 w-3" />
+                  </Button>
                 </label>
                 <Input
                   value={formData.sku}
@@ -660,9 +1024,21 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Barcode className="h-4 w-4 text-muted-foreground" />
-                  Código de Barras
+                <label className="text-sm font-medium flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Barcode className="h-4 w-4 text-muted-foreground" />
+                    Código de Barras
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="h-6 w-6 text-muted-foreground hover:text-primary"
+                    onClick={generateRandomBarcode}
+                    title="Generar EAN-13 aleatorio"
+                  >
+                    <Wand2 className="h-3 w-3" />
+                  </Button>
                 </label>
                 <Input
                   value={formData.barcode}
@@ -674,6 +1050,100 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
               </div>
             </div>
           </div>
+
+          {/* Componentes del Combo (Solo si es combo) */}
+          {formData.is_combo && (
+            <div className="space-y-4 rounded-lg border p-4 bg-slate-50 dark:bg-slate-800/50">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <Layers className="h-4 w-4" />
+                Componentes del Combo
+              </h3>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={comboSearch}
+                  onChange={e => setComboSearch(e.target.value)}
+                  placeholder="Buscar productos para agregar..."
+                  className="pl-9 bg-background"
+                />
+                {comboSearch && (
+                  <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    {filteredComboProducts.length === 0 ? (
+                      <div className="p-3 text-sm text-muted-foreground text-center">No se encontraron productos</div>
+                    ) : (
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredComboProducts.map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => addComboItem(p)}
+                            className="p-2.5 hover:bg-accent cursor-pointer flex justify-between items-center transition-colors border-b last:border-0"
+                          >
+                            <div>
+                              <p className="text-sm font-medium">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">SKU: {p.sku || '-'}</p>
+                            </div>
+                            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                              ${p.cost_price || 0}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="border rounded-md divide-y bg-background">
+                {comboItems.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
+                    <Layers className="h-8 w-8 opacity-20" />
+                    <p>Agrega productos para armar el combo</p>
+                  </div>
+                ) : (
+                  comboItems.map(item => {
+                    const product = allProducts?.find(p => p.id === item.child_product_id);
+                    return (
+                      <div key={item.child_product_id} className="p-2 flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{product?.name || "Producto desconocido"}</p>
+                          <p className="text-xs text-muted-foreground">Costo unit: ${product?.cost_price || 0}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center border rounded-md overflow-hidden bg-background">
+                            <span className="px-2 text-xs text-muted-foreground bg-muted border-r h-full flex items-center">Cant.</span>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateComboQuantity(item.child_product_id, parseInt(e.target.value) || 1)}
+                              className="w-12 h-8 text-center text-sm focus:outline-none bg-transparent"
+                              min="1"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => removeComboItem(item.child_product_id)}
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="flex justify-between items-center text-sm pt-2">
+                <span className="text-muted-foreground">Total items: {comboItems.reduce((a, b) => a + b.quantity, 0)}</span>
+                <span className="font-medium text-muted-foreground">
+                  Costo Sugerido: <span className="text-foreground font-bold">${comboCost.toFixed(2)}</span>
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Precios */}
           <div className="space-y-4">

@@ -34,6 +34,7 @@ export interface Product extends TenantEntity {
   cost_price: number | null; // Precio de costo
   wholesale_price: number | null; // Precio mayorista
   min_stock: number | null; // Stock mínimo para alertas
+  is_combo: boolean; // Si es un combo/promo
   description: string | null;
 }
 
