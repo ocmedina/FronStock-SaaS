@@ -28,8 +28,13 @@ export interface TenantEntity {
 export interface Product extends TenantEntity {
   name: string;
   sku: string | null;
+  barcode: string | null;
   stock: number;
-  price: number;
+  price: number; // Precio de venta (minorista)
+  cost_price: number | null; // Precio de costo
+  wholesale_price: number | null; // Precio mayorista
+  min_stock: number | null; // Stock mínimo para alertas
+  description: string | null;
 }
 
 // Tipos para inserción (sin campos auto-generados)

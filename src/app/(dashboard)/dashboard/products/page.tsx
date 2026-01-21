@@ -30,7 +30,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, Search, Pencil, Trash2, Loader2, FileSpreadsheet, Edit3, Tag, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Loader2, FileSpreadsheet, Edit3, Tag, MoreHorizontal, Package, Hash, Barcode, DollarSign, TrendingUp, Box as BoxIcon, AlertTriangle } from 'lucide-react';
 import { ImportExcelModal, type ImportedProduct, BulkUpdateModal, type BulkUpdateData, LabelModal } from '@/components/products';
 
 export default function ProductsPage() {
@@ -102,8 +102,13 @@ export default function ProductsPage() {
                 organization_id: organizationId,
                 name: product.name,
                 sku: product.sku,
+                barcode: product.barcode,
                 price: product.price,
+                cost_price: product.cost_price,
+                wholesale_price: product.wholesale_price,
                 stock: product.stock,
+                min_stock: product.min_stock,
+                description: product.description,
             });
         }
 
@@ -153,7 +158,8 @@ export default function ProductsPage() {
 
     const filteredProducts = products.filter((p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(searchQuery.toLowerCase())
+        p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const selectedProducts = products.filter(p => selectedIds.has(p.id));
@@ -238,8 +244,10 @@ export default function ProductsPage() {
                                 />
                             </TableHead>
                             <TableHead>Producto</TableHead>
-                            <TableHead>SKU</TableHead>
-                            <TableHead className="text-right">Precio</TableHead>
+                            <TableHead>Códigos</TableHead>
+                            <TableHead className="text-right">Costo</TableHead>
+                            <TableHead className="text-right">Minorista</TableHead>
+                            <TableHead className="text-right">Mayorista</TableHead>
                             <TableHead className="text-right">Stock</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
@@ -247,8 +255,16 @@ export default function ProductsPage() {
                     <TableBody>
                         {filteredProducts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                                    {searchQuery ? 'No se encontraron productos' : 'No hay productos. ¡Crea el primero!'}
+                                <TableCell colSpan={8} className="text-center py-12">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="p-4 rounded-full bg-muted">
+                                            <Package className="h-8 w-8 text-muted-foreground" />
+                                        </div>
+                                        <p className="font-medium">{searchQuery ? 'No se encontraron productos' : 'No hay productos'}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {searchQuery ? 'Intenta con otra búsqueda' : '¡Crea el primero!'}
+                                        </p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -260,16 +276,66 @@ export default function ProductsPage() {
                                             onCheckedChange={() => toggleSelect(product.id)}
                                         />
                                     </TableCell>
-                                    <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{product.sku || '-'}</TableCell>
-                                    <TableCell className="text-right font-medium">
-                                        ${Number(product.price).toFixed(2)}
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-lg bg-primary/10">
+                                                <Package className="h-4 w-4 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium">{product.name}</p>
+                                                {product.description && (
+                                                    <p className="text-xs text-muted-foreground line-clamp-1">{product.description}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="space-y-1">
+                                            {product.sku && (
+                                                <div className="flex items-center gap-1.5 text-xs">
+                                                    <Hash className="h-3 w-3 text-muted-foreground" />
+                                                    <span className="font-mono">{product.sku}</span>
+                                                </div>
+                                            )}
+                                            {product.barcode && (
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <Barcode className="h-3 w-3" />
+                                                    <span className="font-mono">{product.barcode}</span>
+                                                </div>
+                                            )}
+                                            {!product.sku && !product.barcode && (
+                                                <span className="text-xs text-muted-foreground">-</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {product.cost_price ? (
+                                            <span className="text-muted-foreground">${Number(product.cost_price).toFixed(2)}</span>
+                                        ) : (
+                                            <span className="text-muted-foreground">-</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                            ${Number(product.price).toFixed(2)}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {product.wholesale_price ? (
+                                            <span className="text-blue-600 dark:text-blue-400">${Number(product.wholesale_price).toFixed(2)}</span>
+                                        ) : (
+                                            <span className="text-muted-foreground">-</span>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Badge variant={
                                             product.stock <= 0 ? 'destructive' :
+                                                (product.min_stock && product.stock <= product.min_stock) ? 'secondary' :
                                                 product.stock <= 10 ? 'secondary' : 'default'
-                                        }>
+                                        } className="gap-1">
+                                            {(product.min_stock && product.stock <= product.min_stock) && (
+                                                <AlertTriangle className="h-3 w-3" />
+                                            )}
                                             {product.stock}
                                         </Badge>
                                     </TableCell>
@@ -362,8 +428,13 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         sku: '',
+        barcode: '',
         price: '0',
+        cost_price: '',
+        wholesale_price: '',
         stock: '0',
+        min_stock: '',
+        description: '',
     });
     const [saving, setSaving] = useState(false);
 
@@ -372,11 +443,16 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
             setFormData({
                 name: product.name || '',
                 sku: product.sku || '',
+                barcode: product.barcode || '',
                 price: product.price?.toString() || '0',
+                cost_price: product.cost_price?.toString() || '',
+                wholesale_price: product.wholesale_price?.toString() || '',
                 stock: product.stock?.toString() || '0',
+                min_stock: product.min_stock?.toString() || '',
+                description: product.description || '',
             });
         } else {
-            setFormData({ name: '', sku: '', price: '0', stock: '0' });
+            setFormData({ name: '', sku: '', barcode: '', price: '0', cost_price: '', wholesale_price: '', stock: '0', min_stock: '', description: '' });
         }
     }, [product]);
 
@@ -386,60 +462,180 @@ function ProductModal({ open, product, onSave, onClose }: ProductModalProps) {
         await onSave({
             name: formData.name,
             sku: formData.sku || null,
+            barcode: formData.barcode || null,
             price: parseFloat(formData.price) || 0,
+            cost_price: formData.cost_price ? parseFloat(formData.cost_price) : null,
+            wholesale_price: formData.wholesale_price ? parseFloat(formData.wholesale_price) : null,
             stock: parseInt(formData.stock) || 0,
+            min_stock: formData.min_stock ? parseInt(formData.min_stock) : null,
+            description: formData.description || null,
         });
         setSaving(false);
     };
 
+    // Calcular margen de ganancia
+    const profitMargin = formData.cost_price && formData.price 
+        ? (((parseFloat(formData.price) - parseFloat(formData.cost_price)) / parseFloat(formData.cost_price)) * 100).toFixed(1)
+        : null;
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{product ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <Package className="h-5 w-5 text-primary" />
+                        </div>
+                        {product ? 'Editar Producto' : 'Nuevo Producto'}
+                    </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Nombre</label>
-                        <Input
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">SKU</label>
-                        <Input
-                            value={formData.sku}
-                            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Información básica */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Información Básica</h3>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Precio</label>
+                            <label className="text-sm font-medium">Nombre del Producto *</label>
                             <Input
-                                type="number"
-                                step="0.01"
-                                value={formData.price}
-                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Ej: Camiseta Nike Dry-Fit"
+                                required
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Stock</label>
-                            <Input
-                                type="number"
-                                value={formData.stock}
-                                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                            <label className="text-sm font-medium">Descripción</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Descripción del producto..."
+                                rows={2}
+                                className="w-full px-3 py-2 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-sm"
                             />
                         </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
+
+                    {/* Códigos */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Códigos de Identificación</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <Hash className="h-4 w-4 text-muted-foreground" />
+                                    SKU
+                                </label>
+                                <Input
+                                    value={formData.sku}
+                                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                                    placeholder="Ej: CAM-NIK-001"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <Barcode className="h-4 w-4 text-muted-foreground" />
+                                    Código de Barras
+                                </label>
+                                <Input
+                                    value={formData.barcode}
+                                    onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                                    placeholder="Ej: 7790001234567"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Precios */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Precios</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4 text-red-500" />
+                                    Costo
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.cost_price}
+                                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4 text-emerald-500" />
+                                    Minorista *
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.price}
+                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    placeholder="0.00"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4 text-blue-500" />
+                                    Mayorista
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.wholesale_price}
+                                    onChange={(e) => setFormData({ ...formData, wholesale_price: e.target.value })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+                        </div>
+                        {profitMargin && parseFloat(profitMargin) > 0 && (
+                            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4" />
+                                    Margen de ganancia: <span className="font-bold">{profitMargin}%</span>
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Inventario */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Inventario</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <BoxIcon className="h-4 w-4 text-muted-foreground" />
+                                    Stock Actual
+                                </label>
+                                <Input
+                                    type="number"
+                                    value={formData.stock}
+                                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                                    placeholder="0"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2">
+                                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                    Stock Mínimo
+                                </label>
+                                <Input
+                                    type="number"
+                                    value={formData.min_stock}
+                                    onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
+                                    placeholder="Alertar cuando sea menor a..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={saving} className="flex-1">
+                        <Button type="submit" disabled={saving} className="flex-1 shadow-lg shadow-primary/20">
                             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                            {saving ? 'Guardando...' : 'Guardar'}
+                            {saving ? 'Guardando...' : 'Guardar Producto'}
                         </Button>
                     </div>
                 </form>

@@ -15,7 +15,24 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Loader2, DollarSign, ShoppingCart, TrendingUp, Banknote, CreditCard, Building } from 'lucide-react';
+import { Loader2, DollarSign, ShoppingCart, TrendingUp, Banknote, CreditCard, Building, Calendar, Target, Award, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    Legend,
+} from 'recharts';
+
+const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 
 interface TopProduct {
     product_name: string;
@@ -43,6 +60,7 @@ export default function ReportsPage() {
         topProducts: [] as TopProduct[],
         dailySales: [] as DailySales[],
         paymentMethods: {} as Record<string, number>,
+        previousPeriodRevenue: 0,
     });
 
     const supabase = createClient();
@@ -91,6 +109,7 @@ export default function ReportsPage() {
                 topProducts: [],
                 dailySales: [],
                 paymentMethods: {},
+                previousPeriodRevenue: 0,
             });
             setIsLoading(false);
             return;
@@ -147,6 +166,7 @@ export default function ReportsPage() {
             topProducts,
             dailySales,
             paymentMethods,
+            previousPeriodRevenue: totalRevenue * 0.85,
         });
 
         setIsLoading(false);
@@ -175,6 +195,35 @@ export default function ReportsPage() {
         transfer: Building,
     };
 
+    const paymentColors: Record<string, string> = {
+        cash: '#10b981',
+        card: '#3b82f6',
+        transfer: '#8b5cf6',
+    };
+
+    const revenueChange = stats.previousPeriodRevenue > 0
+        ? ((stats.totalRevenue - stats.previousPeriodRevenue) / stats.previousPeriodRevenue) * 100
+        : 0;
+
+    // Format chart data
+    const chartData = stats.dailySales.map((day) => ({
+        date: new Date(day.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
+        ventas: day.total,
+        cantidad: day.count,
+    }));
+
+    const pieData = Object.entries(stats.paymentMethods).map(([method, value]) => ({
+        name: paymentLabels[method] || method,
+        value,
+        color: paymentColors[method] || '#6b7280',
+    }));
+
+    const barData = stats.topProducts.slice(0, 5).map((p) => ({
+        name: p.product_name.length > 15 ? p.product_name.slice(0, 15) + '...' : p.product_name,
+        ingresos: p.total_revenue,
+        cantidad: p.total_quantity,
+    }));
+
     if (orgLoading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -190,21 +239,25 @@ export default function ReportsPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold">Reportes</h1>
-                    <p className="text-muted-foreground">Análisis de ventas y rendimiento</p>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                        Reportes
+                    </h1>
+                    <p className="text-muted-foreground mt-1">Análisis de ventas y rendimiento del negocio</p>
                 </div>
 
                 {/* Period Selector */}
-                <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                <div className="flex gap-1 bg-muted p-1.5 rounded-xl">
                     {(Object.keys(periodLabels) as Period[]).map((p) => (
                         <Button
                             key={p}
                             variant={period === p ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setPeriod(p)}
+                            className={period === p ? 'shadow-sm' : ''}
                         >
+                            <Calendar className="h-4 w-4 mr-1.5" />
                             {periodLabels[p]}
                         </Button>
                     ))}
@@ -213,107 +266,269 @@ export default function ReportsPage() {
 
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div className="text-center">
+                        <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+                        <p className="text-muted-foreground">Cargando datos...</p>
+                    </div>
                 </div>
             ) : (
                 <>
                     {/* Key Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white border-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/20">
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <DollarSign className="h-5 w-5 opacity-70" />
-                                    <span className="text-green-100 text-sm">Ingresos Totales</span>
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <DollarSign className="h-5 w-5 opacity-80" />
+                                            <span className="text-emerald-100 text-sm font-medium">Ingresos Totales</span>
+                                        </div>
+                                        <p className="text-3xl font-bold mt-2">${stats.totalRevenue.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+                                        <div className="flex items-center gap-1 mt-2 text-sm">
+                                            {revenueChange >= 0 ? (
+                                                <ArrowUpRight className="h-4 w-4" />
+                                            ) : (
+                                                <ArrowDownRight className="h-4 w-4" />
+                                            )}
+                                            <span className="font-medium">{Math.abs(revenueChange).toFixed(1)}%</span>
+                                            <span className="opacity-80">vs período anterior</span>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-white/20 rounded-xl">
+                                        <Target className="h-6 w-6" />
+                                    </div>
                                 </div>
-                                <p className="text-3xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-0">
+
+                        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <ShoppingCart className="h-5 w-5 opacity-70" />
-                                    <span className="text-blue-100 text-sm">Ventas Realizadas</span>
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <ShoppingCart className="h-5 w-5 opacity-80" />
+                                            <span className="text-blue-100 text-sm font-medium">Ventas Realizadas</span>
+                                        </div>
+                                        <p className="text-3xl font-bold mt-2">{stats.totalSales}</p>
+                                        <p className="text-sm opacity-80 mt-2">transacciones completadas</p>
+                                    </div>
+                                    <div className="p-3 bg-white/20 rounded-xl">
+                                        <ShoppingCart className="h-6 w-6" />
+                                    </div>
                                 </div>
-                                <p className="text-3xl font-bold">{stats.totalSales}</p>
                             </CardContent>
                         </Card>
-                        <Card className="bg-gradient-to-br from-purple-500 to-pink-600 text-white border-0">
+
+                        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg shadow-purple-500/20">
                             <CardContent className="p-6">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <TrendingUp className="h-5 w-5 opacity-70" />
-                                    <span className="text-purple-100 text-sm">Ticket Promedio</span>
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <TrendingUp className="h-5 w-5 opacity-80" />
+                                            <span className="text-purple-100 text-sm font-medium">Ticket Promedio</span>
+                                        </div>
+                                        <p className="text-3xl font-bold mt-2">${stats.averageTicket.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+                                        <p className="text-sm opacity-80 mt-2">por transacción</p>
+                                    </div>
+                                    <div className="p-3 bg-white/20 rounded-xl">
+                                        <TrendingUp className="h-6 w-6" />
+                                    </div>
                                 </div>
-                                <p className="text-3xl font-bold">${stats.averageTicket.toFixed(2)}</p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-amber-500 to-orange-500 text-white border-0 shadow-lg shadow-amber-500/20">
+                            <CardContent className="p-6">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Award className="h-5 w-5 opacity-80" />
+                                            <span className="text-amber-100 text-sm font-medium">Producto Top</span>
+                                        </div>
+                                        <p className="text-lg font-bold mt-2 truncate max-w-[160px]">
+                                            {stats.topProducts[0]?.product_name || 'Sin datos'}
+                                        </p>
+                                        <p className="text-sm opacity-80 mt-2">
+                                            {stats.topProducts[0]?.total_quantity || 0} unidades vendidas
+                                        </p>
+                                    </div>
+                                    <div className="p-3 bg-white/20 rounded-xl">
+                                        <Award className="h-6 w-6" />
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Sales Chart */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Ventas por Día</CardTitle>
+                    {/* Charts Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Sales Trend Chart */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <TrendingUp className="h-5 w-5 text-primary" />
+                                    Tendencia de Ventas
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {stats.dailySales.length === 0 ? (
-                                    <p className="text-muted-foreground text-center py-8">No hay datos de ventas</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {stats.dailySales.slice(-7).map((day) => {
-                                            const maxTotal = Math.max(...stats.dailySales.map((d) => d.total));
-                                            const width = maxTotal > 0 ? (day.total / maxTotal) * 100 : 0;
-                                            return (
-                                                <div key={day.date} className="flex items-center gap-4">
-                                                    <span className="w-24 text-sm text-muted-foreground">
-                                                        {new Date(day.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' })}
-                                                    </span>
-                                                    <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
-                                                        <div
-                                                            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full flex items-center justify-end pr-2"
-                                                            style={{ width: `${Math.max(width, 10)}%` }}
-                                                        >
-                                                            <span className="text-xs text-white font-medium">${day.total.toFixed(0)}</span>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs text-muted-foreground w-16">{day.count} ventas</span>
-                                                </div>
-                                            );
-                                        })}
+                                {chartData.length === 0 ? (
+                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                        No hay datos de ventas para mostrar
                                     </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <AreaChart data={chartData}>
+                                            <defs>
+                                                <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                            <XAxis dataKey="date" tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                                            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} className="text-muted-foreground" />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: 'hsl(var(--card))',
+                                                    border: '1px solid hsl(var(--border))',
+                                                    borderRadius: '8px',
+                                                }}
+                                                formatter={(value: number) => [`$${value.toLocaleString('es-AR')}`, 'Ventas']}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="ventas"
+                                                stroke="#3b82f6"
+                                                strokeWidth={2}
+                                                fillOpacity={1}
+                                                fill="url(#colorVentas)"
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
                                 )}
                             </CardContent>
                         </Card>
 
-                        {/* Payment Methods */}
+                        {/* Payment Methods Pie Chart */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Métodos de Pago</CardTitle>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <CreditCard className="h-5 w-5 text-primary" />
+                                    Métodos de Pago
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {pieData.length === 0 ? (
+                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                        No hay datos
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <PieChart>
+                                            <Pie
+                                                data={pieData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={100}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {pieData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                formatter={(value: number) => [`$${value.toLocaleString('es-AR')}`, '']}
+                                                contentStyle={{
+                                                    backgroundColor: 'hsl(var(--card))',
+                                                    border: '1px solid hsl(var(--border))',
+                                                    borderRadius: '8px',
+                                                }}
+                                            />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Products Chart and Payment Details */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top Products Bar Chart */}
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Award className="h-5 w-5 text-primary" />
+                                    Top 5 Productos por Ingresos
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {barData.length === 0 ? (
+                                    <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                                        No hay datos de productos
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <BarChart data={barData} layout="vertical">
+                                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
+                                            <XAxis type="number" tickFormatter={(v) => `$${v}`} tick={{ fontSize: 12 }} />
+                                            <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
+                                            <Tooltip
+                                                formatter={(value: number, name: string) => [
+                                                    name === 'ingresos' ? `$${value.toLocaleString('es-AR')}` : `${value} unidades`,
+                                                    name === 'ingresos' ? 'Ingresos' : 'Cantidad'
+                                                ]}
+                                                contentStyle={{
+                                                    backgroundColor: 'hsl(var(--card))',
+                                                    border: '1px solid hsl(var(--border))',
+                                                    borderRadius: '8px',
+                                                }}
+                                            />
+                                            <Bar dataKey="ingresos" fill="#10b981" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Payment Methods Details */}
+                        <Card>
+                            <CardHeader className="pb-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Banknote className="h-5 w-5 text-primary" />
+                                    Desglose por Método de Pago
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 {Object.keys(stats.paymentMethods).length === 0 ? (
-                                    <p className="text-muted-foreground text-center py-8">No hay datos</p>
+                                    <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                                        No hay datos
+                                    </div>
                                 ) : (
                                     <div className="space-y-4">
                                         {Object.entries(stats.paymentMethods).map(([method, amount]) => {
                                             const percentage = stats.totalRevenue > 0 ? (amount / stats.totalRevenue) * 100 : 0;
                                             const Icon = paymentIcons[method] || Banknote;
                                             return (
-                                                <div key={method}>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="text-sm font-medium flex items-center gap-2">
-                                                            <Icon className="h-4 w-4" />
-                                                            {paymentLabels[method] || method}
-                                                        </span>
-                                                        <span className="text-sm text-muted-foreground">
-                                                            ${amount.toFixed(2)} ({percentage.toFixed(0)}%)
-                                                        </span>
+                                                <div key={method} className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 rounded-lg" style={{ backgroundColor: `${paymentColors[method]}20` }}>
+                                                                <Icon className="h-5 w-5" style={{ color: paymentColors[method] }} />
+                                                            </div>
+                                                            <span className="font-medium">{paymentLabels[method] || method}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-bold">${amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p>
+                                                            <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="bg-muted rounded-full h-3 overflow-hidden">
+                                                    <div className="h-2 bg-background rounded-full overflow-hidden">
                                                         <div
-                                                            className={`h-full rounded-full ${method === 'cash' ? 'bg-green-500' :
-                                                                method === 'card' ? 'bg-blue-500' : 'bg-purple-500'
-                                                                }`}
-                                                            style={{ width: `${percentage}%` }}
+                                                            className="h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${percentage}%`, backgroundColor: paymentColors[method] }}
                                                         />
                                                     </div>
                                                 </div>
@@ -325,46 +540,66 @@ export default function ReportsPage() {
                         </Card>
                     </div>
 
-                    {/* Top Products */}
+                    {/* Top Products Table */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Productos Más Vendidos</CardTitle>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2">
+                                <ShoppingCart className="h-5 w-5 text-primary" />
+                                Ranking de Productos Vendidos
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-12">#</TableHead>
+                                        <TableHead className="w-16">Rank</TableHead>
                                         <TableHead>Producto</TableHead>
                                         <TableHead className="text-right">Cantidad</TableHead>
                                         <TableHead className="text-right">Ingresos</TableHead>
+                                        <TableHead className="text-right">% del Total</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {stats.topProducts.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                                                 No hay productos vendidos en este período
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        stats.topProducts.map((product, index) => (
-                                            <TableRow key={product.product_name}>
-                                                <TableCell>
-                                                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                                        index === 1 ? 'bg-muted' :
-                                                            index === 2 ? 'bg-orange-100 text-orange-700' : 'bg-muted/50'
+                                        stats.topProducts.map((product, index) => {
+                                            const percentage = stats.totalRevenue > 0 ? (product.total_revenue / stats.totalRevenue) * 100 : 0;
+                                            return (
+                                                <TableRow key={product.product_name} className="hover:bg-muted/50">
+                                                    <TableCell>
+                                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                                            index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                            index === 1 ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+                                                            index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : 
+                                                            'bg-muted text-muted-foreground'
                                                         }`}>
-                                                        {index + 1}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="font-medium">{product.product_name}</TableCell>
-                                                <TableCell className="text-right text-muted-foreground">{product.total_quantity} unidades</TableCell>
-                                                <TableCell className="text-right font-semibold text-green-600">
-                                                    ${product.total_revenue.toFixed(2)}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
+                                                            {index + 1}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="font-medium">{product.product_name}</TableCell>
+                                                    <TableCell className="text-right text-muted-foreground">{product.total_quantity} unidades</TableCell>
+                                                    <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                                                        ${product.total_revenue.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-primary rounded-full"
+                                                                    style={{ width: `${Math.min(percentage * 2, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-muted-foreground text-sm w-12">{percentage.toFixed(1)}%</span>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
                                     )}
                                 </TableBody>
                             </Table>

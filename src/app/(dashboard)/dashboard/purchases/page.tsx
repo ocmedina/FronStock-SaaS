@@ -1,9 +1,35 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Plus, ShoppingBag, Clock, CheckCircle, XCircle, Truck, Package, DollarSign, Loader2, Eye, Trash2, AlertTriangle } from 'lucide-react';
 
 interface Supplier {
     id: string;
@@ -34,11 +60,11 @@ interface OrderItem {
     unit_cost: number;
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
-    ordered: { label: 'Ordenado', color: 'bg-blue-100 text-blue-700' },
-    received: { label: 'Recibido', color: 'bg-green-100 text-green-700' },
-    cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-700' },
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
+    ordered: { label: 'Ordenado', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: Truck },
+    received: { label: 'Recibido', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
+    cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
 };
 
 export default function PurchaseOrdersPage() {
@@ -206,10 +232,20 @@ export default function PurchaseOrdersPage() {
 
     const filteredOrders = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
 
+    // Calcular estadísticas
+    const stats = useMemo(() => {
+        const pending = orders.filter(o => o.status === 'pending').length;
+        const ordered = orders.filter(o => o.status === 'ordered').length;
+        const received = orders.filter(o => o.status === 'received').length;
+        const totalSpent = orders.filter(o => o.status === 'received').reduce((sum, o) => sum + Number(o.total), 0);
+        const pendingTotal = orders.filter(o => o.status === 'pending' || o.status === 'ordered').reduce((sum, o) => sum + Number(o.total), 0);
+        return { pending, ordered, received, totalSpent, pendingTotal };
+    }, [orders]);
+
     if (orgLoading || isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
@@ -217,211 +253,324 @@ export default function PurchaseOrdersPage() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Órdenes de Compra</h1>
-                    <p className="text-slate-500">{orders.length} órdenes</p>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                        Órdenes de Compra
+                    </h1>
+                    <p className="text-muted-foreground mt-1">Gestiona las compras a proveedores</p>
                 </div>
                 {canCreate('products') && suppliers.length > 0 && (
-                    <button
-                        onClick={handleOpenNew}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-                    >
-                        <span>+</span> Nueva Orden
-                    </button>
+                    <Button onClick={handleOpenNew} className="shadow-lg shadow-primary/20">
+                        <Plus className="h-4 w-4" /> Nueva Orden
+                    </Button>
                 )}
             </div>
 
             {suppliers.length === 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
-                    ⚠️ Primero debes registrar al menos un proveedor antes de crear órdenes de compra.
-                </div>
+                <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
+                    <CardContent className="p-4 flex items-center gap-3">
+                        <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                        <p className="text-amber-700 dark:text-amber-300">
+                            Primero debes registrar al menos un proveedor antes de crear órdenes de compra.
+                        </p>
+                    </CardContent>
+                </Card>
             )}
 
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-br from-amber-500 to-orange-500 text-white border-0 shadow-lg shadow-amber-500/20">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-amber-100 text-sm">Pendientes</p>
+                                <p className="text-2xl font-bold mt-1">{stats.pending}</p>
+                            </div>
+                            <Clock className="h-8 w-8 opacity-50" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-blue-100 text-sm">En Camino</p>
+                                <p className="text-2xl font-bold mt-1">{stats.ordered}</p>
+                            </div>
+                            <Truck className="h-8 w-8 opacity-50" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/20">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-emerald-100 text-sm">Recibidas</p>
+                                <p className="text-2xl font-bold mt-1">{stats.received}</p>
+                            </div>
+                            <CheckCircle className="h-8 w-8 opacity-50" />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-muted-foreground text-sm">Total Invertido</p>
+                                <p className="text-2xl font-bold mt-1">${stats.totalSpent.toLocaleString('es-AR')}</p>
+                            </div>
+                            <DollarSign className="h-8 w-8 text-muted-foreground/30" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Filters */}
-            <div className="flex gap-2">
-                {['all', 'pending', 'ordered', 'received'].map((status) => (
-                    <button
-                        key={status}
-                        onClick={() => setFilter(status)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === status ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                    >
-                        {status === 'all' ? 'Todas' : STATUS_LABELS[status]?.label}
-                    </button>
-                ))}
+            <div className="flex gap-2 flex-wrap">
+                {['all', 'pending', 'ordered', 'received'].map((status) => {
+                    const statusInfo = STATUS_LABELS[status];
+                    const Icon = statusInfo?.icon || ShoppingBag;
+                    const count = status === 'all' ? orders.length : orders.filter(o => o.status === status).length;
+                    return (
+                        <Button
+                            key={status}
+                            variant={filter === status ? 'default' : 'outline'}
+                            onClick={() => setFilter(status)}
+                            className="gap-2"
+                        >
+                            {status !== 'all' && <Icon className="h-4 w-4" />}
+                            {status === 'all' ? 'Todas' : statusInfo?.label}
+                            <Badge variant="secondary" className="ml-1 text-xs">{count}</Badge>
+                        </Button>
+                    );
+                })}
             </div>
 
             {/* Orders Table */}
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Orden</th>
-                            <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Proveedor</th>
-                            <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Estado</th>
-                            <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Total</th>
-                            <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                        {filteredOrders.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                    No hay órdenes de compra
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredOrders.map((order) => (
-                                <tr key={order.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4">
-                                        <span className="font-medium text-slate-800">{order.order_number || order.id.slice(0, 8)}</span>
-                                        <p className="text-xs text-slate-500">{new Date(order.created_at).toLocaleDateString('es-AR')}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">{order.supplier?.name || '-'}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_LABELS[order.status]?.color}`}>
-                                            {STATUS_LABELS[order.status]?.label}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-medium text-slate-800">${Number(order.total).toFixed(2)}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button onClick={() => handleViewOrder(order)} className="text-blue-600 hover:text-blue-800">
-                                            Ver detalle
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Orden</TableHead>
+                                <TableHead>Proveedor</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredOrders.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-16">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="p-4 rounded-full bg-muted">
+                                                <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+                                            </div>
+                                            <p className="font-medium">No hay órdenes de compra</p>
+                                            <p className="text-sm text-muted-foreground">Crea una nueva orden para empezar</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredOrders.map((order) => {
+                                    const statusInfo = STATUS_LABELS[order.status] || STATUS_LABELS.pending;
+                                    const StatusIcon = statusInfo.icon;
+                                    return (
+                                        <TableRow key={order.id} className="hover:bg-muted/50">
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-primary/10">
+                                                        <Package className="h-5 w-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold">{order.order_number || order.id.slice(0, 8)}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {new Date(order.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{order.supplier?.name || '-'}</TableCell>
+                                            <TableCell>
+                                                <Badge className={`gap-1.5 ${statusInfo.color}`} variant="secondary">
+                                                    <StatusIcon className="h-3.5 w-3.5" />
+                                                    {statusInfo.label}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold">
+                                                ${Number(order.total).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order)}>
+                                                    <Eye className="h-4 w-4" />
+                                                    Ver
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             {/* Modal: New Order */}
-            {showModal && !selectedOrder && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-slate-200">
-                            <h2 className="text-xl font-semibold text-slate-800">Nueva Orden de Compra</h2>
-                        </div>
-                        <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Proveedor</label>
-                                <select
-                                    value={formData.supplier_id}
-                                    onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
+            <Dialog open={showModal && !selectedOrder} onOpenChange={() => setShowModal(false)}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Plus className="h-5 w-5 text-primary" />
+                            Nueva Orden de Compra
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSave} className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Proveedor</label>
+                            <Select value={formData.supplier_id} onValueChange={(v) => setFormData({ ...formData, supplier_id: v })}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar proveedor" />
+                                </SelectTrigger>
+                                <SelectContent>
                                     {suppliers.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                     ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-medium text-slate-700">Productos</label>
-                                    <button type="button" onClick={addItem} className="text-sm text-blue-600 hover:text-blue-800">
-                                        + Agregar producto
-                                    </button>
-                                </div>
-                                <div className="space-y-2">
-                                    {items.map((item, index) => (
-                                        <div key={index} className="flex gap-2 items-center">
-                                            <select
-                                                value={item.product_id}
-                                                onChange={(e) => updateItem(index, 'product_id', e.target.value)}
-                                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                                            >
-                                                {products.map((p) => (
-                                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="number"
-                                                value={item.quantity}
-                                                onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                                                min="1"
-                                                className="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                                                placeholder="Cant."
-                                            />
-                                            <input
-                                                type="number"
-                                                value={item.unit_cost}
-                                                onChange={(e) => updateItem(index, 'unit_cost', parseFloat(e.target.value) || 0)}
-                                                step="0.01"
-                                                className="w-24 px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                                                placeholder="Costo"
-                                            />
-                                            <span className="w-24 text-right text-sm font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</span>
-                                            <button type="button" onClick={() => removeItem(index)} className="text-red-500 hover:text-red-700">✕</button>
-                                        </div>
-                                    ))}
-                                </div>
-                                {items.length > 0 && (
-                                    <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
-                                        <span className="text-lg font-bold">Total: ${calculateTotal().toFixed(2)}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50">
-                                    Cancelar
-                                </button>
-                                <button type="submit" disabled={saving || items.length === 0} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                                    {saving ? 'Guardando...' : 'Crear Orden'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal: View Order */}
-            {showModal && selectedOrder && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-                        <div className="p-6 border-b border-slate-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-slate-800">Orden {selectedOrder.order_number}</h2>
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_LABELS[selectedOrder.status]?.color}`}>
-                                    {STATUS_LABELS[selectedOrder.status]?.label}
-                                </span>
-                            </div>
-                            <p className="text-slate-500 text-sm">Proveedor: {selectedOrder.supplier?.name}</p>
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div className="p-6">
-                            <h3 className="font-semibold text-slate-800 mb-3">Productos</h3>
-                            <div className="space-y-2">
-                                {orderItems.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between py-2 border-b border-slate-100">
-                                        <div>
-                                            <span className="font-medium">{item.product_name}</span>
-                                            <span className="text-slate-500 text-sm ml-2">x{item.quantity}</span>
-                                        </div>
-                                        <span className="font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</span>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium">Productos</label>
+                                <Button type="button" variant="ghost" size="sm" onClick={addItem}>
+                                    <Plus className="h-4 w-4" /> Agregar
+                                </Button>
+                            </div>
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {items.map((item, index) => (
+                                    <div key={index} className="flex gap-2 items-center p-3 rounded-lg bg-muted/50">
+                                        <Select
+                                            value={item.product_id}
+                                            onValueChange={(v) => updateItem(index, 'product_id', v)}
+                                        >
+                                            <SelectTrigger className="flex-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {products.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Input
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                            min="1"
+                                            className="w-20"
+                                            placeholder="Cant."
+                                        />
+                                        <Input
+                                            type="number"
+                                            value={item.unit_cost}
+                                            onChange={(e) => updateItem(index, 'unit_cost', parseFloat(e.target.value) || 0)}
+                                            step="0.01"
+                                            className="w-24"
+                                            placeholder="Costo"
+                                        />
+                                        <span className="w-24 text-right text-sm font-medium">
+                                            ${(item.quantity * item.unit_cost).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                        </span>
+                                        <Button type="button" variant="ghost" size="icon-sm" onClick={() => removeItem(index)} className="text-destructive">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between">
+                            {items.length > 0 && (
+                                <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                                    <span className="text-muted-foreground">Total de la orden</span>
+                                    <span className="text-2xl font-bold text-primary">${calculateTotal().toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                            <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={saving || items.length === 0} className="flex-1">
+                                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                                {saving ? 'Creando...' : 'Crear Orden'}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal: View Order */}
+            <Dialog open={showModal && !!selectedOrder} onOpenChange={() => { setShowModal(false); setSelectedOrder(null); }}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="flex items-center gap-2">
+                                <Package className="h-5 w-5 text-primary" />
+                                Orden {selectedOrder?.order_number}
+                            </DialogTitle>
+                            {selectedOrder && (
+                                <Badge className={`${STATUS_LABELS[selectedOrder.status]?.color}`} variant="secondary">
+                                    {STATUS_LABELS[selectedOrder.status]?.label}
+                                </Badge>
+                            )}
+                        </div>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4">
+                        <div className="p-4 rounded-xl bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Proveedor</p>
+                            <p className="font-semibold">{selectedOrder?.supplier?.name}</p>
+                        </div>
+
+                        <div>
+                            <h3 className="font-semibold mb-3">Productos</h3>
+                            <div className="space-y-2">
+                                {orderItems.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between py-3 border-b last:border-0">
+                                        <div>
+                                            <span className="font-medium">{item.product_name}</span>
+                                            <span className="text-muted-foreground text-sm ml-2">x{item.quantity}</span>
+                                        </div>
+                                        <span className="font-medium">${(item.quantity * item.unit_cost).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-4 pt-4 border-t flex justify-between">
                                 <span className="font-semibold">Total:</span>
-                                <span className="text-xl font-bold text-green-600">${Number(selectedOrder.total).toFixed(2)}</span>
+                                <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                    ${selectedOrder ? Number(selectedOrder.total).toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '0'}
+                                </span>
                             </div>
                         </div>
-                        <div className="p-6 bg-slate-50 rounded-b-xl flex gap-3">
-                            <button onClick={() => { setShowModal(false); setSelectedOrder(null); }} className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-white">
+
+                        <div className="flex gap-3 pt-4">
+                            <Button variant="outline" onClick={() => { setShowModal(false); setSelectedOrder(null); }} className="flex-1">
                                 Cerrar
-                            </button>
-                            {selectedOrder.status === 'pending' && canEdit('products') && (
-                                <button onClick={() => handleReceiveOrder(selectedOrder.id)} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                                    ✓ Marcar Recibido
-                                </button>
+                            </Button>
+                            {selectedOrder?.status === 'pending' && canEdit('products') && (
+                                <Button onClick={() => selectedOrder && handleReceiveOrder(selectedOrder.id)} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                                    <CheckCircle className="h-4 w-4" />
+                                    Marcar Recibido
+                                </Button>
                             )}
                         </div>
                     </div>
-                </div>
-            )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

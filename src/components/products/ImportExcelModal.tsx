@@ -36,20 +36,42 @@ interface ImportExcelModalProps {
 export interface ImportedProduct {
     name: string;
     sku: string | null;
+    barcode: string | null;
     price: number;
+    cost_price: number | null;
+    wholesale_price: number | null;
     stock: number;
+    min_stock: number | null;
+    description: string | null;
 }
 
 interface ColumnMapping {
     name: string;
     sku: string;
+    barcode: string;
     price: string;
+    cost_price: string;
+    wholesale_price: string;
     stock: string;
+    min_stock: string;
+    description: string;
 }
 
 const REQUIRED_FIELDS = ['name'] as const;
-const OPTIONAL_FIELDS = ['sku', 'price', 'stock'] as const;
+const OPTIONAL_FIELDS = ['sku', 'barcode', 'price', 'cost_price', 'wholesale_price', 'stock', 'min_stock', 'description'] as const;
 const ALL_FIELDS = [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS] as const;
+
+const FIELD_LABELS: Record<string, string> = {
+    name: 'Nombre *',
+    sku: 'SKU',
+    barcode: 'Código de Barras',
+    price: 'Precio Minorista',
+    cost_price: 'Precio Costo',
+    wholesale_price: 'Precio Mayorista',
+    stock: 'Stock',
+    min_stock: 'Stock Mínimo',
+    description: 'Descripción',
+};
 
 export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalProps) {
     const [file, setFile] = useState<File | null>(null);
@@ -58,8 +80,13 @@ export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalPr
     const [columnMapping, setColumnMapping] = useState<ColumnMapping>({
         name: '',
         sku: '',
+        barcode: '',
         price: '',
+        cost_price: '',
+        wholesale_price: '',
         stock: '',
+        min_stock: '',
+        description: '',
     });
     const [step, setStep] = useState<'upload' | 'mapping' | 'preview' | 'importing' | 'done'>('upload');
     const [errors, setErrors] = useState<string[]>([]);
@@ -69,7 +96,7 @@ export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalPr
         setFile(null);
         setRawData([]);
         setHeaders([]);
-        setColumnMapping({ name: '', sku: '', price: '', stock: '' });
+        setColumnMapping({ name: '', sku: '', barcode: '', price: '', cost_price: '', wholesale_price: '', stock: '', min_stock: '', description: '' });
         setStep('upload');
         setErrors([]);
         setImportedCount(0);
@@ -104,17 +131,27 @@ export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalPr
                 setRawData(jsonData);
 
                 // Auto-detect column mapping
-                const autoMapping: ColumnMapping = { name: '', sku: '', price: '', stock: '' };
+                const autoMapping: ColumnMapping = { name: '', sku: '', barcode: '', price: '', cost_price: '', wholesale_price: '', stock: '', min_stock: '', description: '' };
                 fileHeaders.forEach((header) => {
                     const lowerHeader = header.toLowerCase();
                     if (lowerHeader.includes('nombre') || lowerHeader === 'name' || lowerHeader === 'producto') {
                         autoMapping.name = header;
-                    } else if (lowerHeader.includes('sku') || lowerHeader.includes('codigo') || lowerHeader.includes('código') || lowerHeader.includes('barcode')) {
+                    } else if (lowerHeader.includes('sku') || lowerHeader.includes('codigo interno') || lowerHeader.includes('código interno')) {
                         autoMapping.sku = header;
-                    } else if (lowerHeader.includes('precio') || lowerHeader === 'price') {
+                    } else if (lowerHeader.includes('barcode') || lowerHeader.includes('barra') || lowerHeader.includes('ean') || lowerHeader.includes('upc')) {
+                        autoMapping.barcode = header;
+                    } else if ((lowerHeader.includes('precio') && lowerHeader.includes('costo')) || lowerHeader === 'cost' || lowerHeader === 'costo') {
+                        autoMapping.cost_price = header;
+                    } else if ((lowerHeader.includes('precio') && lowerHeader.includes('mayor')) || lowerHeader === 'wholesale') {
+                        autoMapping.wholesale_price = header;
+                    } else if (lowerHeader.includes('precio') || lowerHeader === 'price' || lowerHeader.includes('minorista')) {
                         autoMapping.price = header;
                     } else if (lowerHeader.includes('stock') || lowerHeader.includes('cantidad') || lowerHeader.includes('inventario')) {
                         autoMapping.stock = header;
+                    } else if (lowerHeader.includes('minimo') || lowerHeader.includes('mínimo') || lowerHeader.includes('min')) {
+                        autoMapping.min_stock = header;
+                    } else if (lowerHeader.includes('descripcion') || lowerHeader.includes('descripción') || lowerHeader === 'description') {
+                        autoMapping.description = header;
                     }
                 });
 
@@ -161,8 +198,13 @@ export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalPr
         return rawData.map((row) => ({
             name: String(row[columnMapping.name] || '').trim(),
             sku: columnMapping.sku ? String(row[columnMapping.sku] || '').trim() || null : null,
+            barcode: columnMapping.barcode ? String(row[columnMapping.barcode] || '').trim() || null : null,
             price: columnMapping.price ? parseFloat(String(row[columnMapping.price])) || 0 : 0,
+            cost_price: columnMapping.cost_price ? parseFloat(String(row[columnMapping.cost_price])) || null : null,
+            wholesale_price: columnMapping.wholesale_price ? parseFloat(String(row[columnMapping.wholesale_price])) || null : null,
             stock: columnMapping.stock ? parseInt(String(row[columnMapping.stock])) || 0 : 0,
+            min_stock: columnMapping.min_stock ? parseInt(String(row[columnMapping.min_stock])) || null : null,
+            description: columnMapping.description ? String(row[columnMapping.description] || '').trim() || null : null,
         })).filter((p) => p.name); // Filter out empty names
     };
 
@@ -239,11 +281,11 @@ export function ImportExcelModal({ open, onClose, onImport }: ImportExcelModalPr
                             {' '}({rawData.length} filas)
                         </p>
 
-                        <div className="grid gap-4">
+                        <div className="grid gap-3 max-h-80 overflow-y-auto pr-2">
                             {ALL_FIELDS.map((field) => (
                                 <div key={field} className="flex items-center gap-4">
-                                    <label className="w-24 text-sm font-medium capitalize">
-                                        {field === 'name' ? 'Nombre *' : field === 'sku' ? 'SKU' : field === 'price' ? 'Precio' : 'Stock'}
+                                    <label className="w-32 text-sm font-medium">
+                                        {FIELD_LABELS[field] || field}
                                     </label>
                                     <Select
                                         value={columnMapping[field as keyof ColumnMapping]}
