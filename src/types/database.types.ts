@@ -36,6 +36,7 @@ export interface Product extends TenantEntity {
   min_stock: number | null; // Stock mínimo para alertas
   is_combo: boolean; // Si es un combo/promo
   description: string | null;
+  plu: string | null;
 }
 
 // Tipos para inserción (sin campos auto-generados)

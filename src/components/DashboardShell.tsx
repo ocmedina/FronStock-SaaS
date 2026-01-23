@@ -1,8 +1,47 @@
 'use client';
 
-import { SidebarProvider, Sidebar } from '@/components/Sidebar';
+import { SidebarProvider, Sidebar, MobileMenuButton, useSidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
+
+function MobileHeader() {
+    const { organization } = useOrganization();
+
+    return (
+        <header className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+                <MobileMenuButton />
+                <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs shrink-0"
+                        style={{ background: 'var(--gradient-primary)' }}>
+                        FS
+                    </div>
+                    <div>
+                        <h1 className="text-sm font-bold text-white leading-none">FrontStock</h1>
+                        {organization && (
+                            <p className="text-[9px] text-slate-500 truncate max-w-[120px] uppercase tracking-wide">{organization.name}</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+}
+
+function SidebarLayoutContent({ children }: { children: React.ReactNode }) {
+    return (
+        <SidebarProvider>
+            <div className="min-h-screen flex flex-col md:flex-row" style={{ background: 'var(--background)' }}>
+                <Sidebar />
+                <div className="flex-1 flex flex-col min-w-0">
+                    <MobileHeader />
+                    {children}
+                </div>
+            </div>
+        </SidebarProvider>
+    );
+}
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { layoutMode } = useLayout();
@@ -19,16 +58,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     // Default: sidebar layout
-    return (
-        <SidebarProvider>
-            <div className="min-h-screen flex" style={{ background: 'var(--background)' }}>
-                <Sidebar />
-                <div className="flex-1 flex flex-col min-w-0">
-                    {children}
-                </div>
-            </div>
-        </SidebarProvider>
-    );
+    return <SidebarLayoutContent>{children}</SidebarLayoutContent>;
 }
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {

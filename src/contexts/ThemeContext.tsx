@@ -38,17 +38,25 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         const savedTheme = localStorage.getItem('theme') as Theme;
         if (savedTheme) {
             setThemeState(savedTheme);
-            document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : '');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             setThemeState('dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark');
         }
     }, []);
 
     const setTheme = (newTheme: Theme) => {
         setThemeState(newTheme);
         localStorage.setItem('theme', newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme === 'dark' ? 'dark' : '');
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     };
 
     const toggleTheme = () => {

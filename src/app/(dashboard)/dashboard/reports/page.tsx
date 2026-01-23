@@ -219,8 +219,8 @@ export default function ReportsPage() {
   const revenueChange =
     stats.previousPeriodRevenue > 0
       ? ((stats.totalRevenue - stats.previousPeriodRevenue) /
-          stats.previousPeriodRevenue) *
-        100
+        stats.previousPeriodRevenue) *
+      100
       : 0;
 
   // Format chart data
@@ -471,8 +471,8 @@ export default function ReportsPage() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "8px",
                         }}
-                        formatter={(value: number) => [
-                          `$${value.toLocaleString("es-AR")}`,
+                        formatter={(value: any) => [
+                          `$${Number(value).toLocaleString("es-AR")}`,
                           "Ventas",
                         ]}
                       />
@@ -520,8 +520,8 @@ export default function ReportsPage() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [
-                          `$${value.toLocaleString("es-AR")}`,
+                        formatter={(value: any) => [
+                          `$${Number(value).toLocaleString("es-AR")}`,
                           "",
                         ]}
                         contentStyle={{
@@ -573,9 +573,9 @@ export default function ReportsPage() {
                         width={100}
                       />
                       <Tooltip
-                        formatter={(value: number, name: string) => [
+                        formatter={(value: any, name: any) => [
                           name === "ingresos"
-                            ? `$${value.toLocaleString("es-AR")}`
+                            ? `$${Number(value).toLocaleString("es-AR")}`
                             : `${value} unidades`,
                           name === "ingresos" ? "Ingresos" : "Cantidad",
                         ]}
@@ -713,15 +713,14 @@ export default function ReportsPage() {
                         >
                           <TableCell>
                             <span
-                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                index === 0
-                                  ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                                  : index === 1
-                                    ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                                    : index === 2
-                                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                                      : "bg-muted text-muted-foreground"
-                              }`}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0
+                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : index === 1
+                                  ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                  : index === 2
+                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
                             >
                               {index + 1}
                             </span>

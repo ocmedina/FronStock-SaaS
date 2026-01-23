@@ -21,12 +21,49 @@ export async function middleware(request: NextRequest) {
     }
 
     // Rutas protegidas: requieren autenticación
-    if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) {
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding') || pathname.startsWith('/delivery')) {
         if (!user) {
             // Guardar la URL original para redirigir después del login
             const redirectUrl = new URL('/login', request.url);
             redirectUrl.searchParams.set('redirect', pathname);
             return Response.redirect(redirectUrl);
+        }
+
+        // Obtener rol del usuario
+        // Nota: Idealmente el rol debería estar en user_metadata para evitar llamada a DB.
+
+        const { createServerClient } = require('@supabase/ssr');
+        const supabaseClient = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() { return request.cookies.getAll(); },
+                    setAll() { } // No escribimos cookies aquí
+                }
+            }
+        );
+
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const role = profile?.role;
+
+        // Redirección para repartidores
+        if (role === 'delivery') {
+            if (pathname.startsWith('/dashboard')) {
+                return Response.redirect(new URL('/delivery', request.url));
+            }
+        }
+
+        // Redirección para NO repartidores intentando entrar a delivery
+        if (role !== 'delivery' && pathname.startsWith('/delivery')) {
+            if (role !== 'owner' && role !== 'admin') {
+                return Response.redirect(new URL('/dashboard', request.url));
+            }
         }
     }
 

@@ -37,6 +37,7 @@ import {
     X,
     Bell,
     Search,
+    FileText,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const menuSections: MenuSection[] = [
         items: [
             { href: '/dashboard/sales', label: 'Punto de Venta', icon: ShoppingCart, description: 'Registrar ventas' },
             { href: '/dashboard/sales/history', label: 'Historial', icon: ClipboardList, description: 'Ver ventas realizadas' },
+            { href: '/dashboard/invoices', label: 'Facturación', icon: FileText, description: 'Facturas y comprobantes' },
         ],
     },
     {
@@ -118,25 +120,19 @@ export function Navbar() {
 
     return (
         <>
-            <nav className="h-16 border-b backdrop-blur-lg sticky top-0 z-40"
-                style={{
-                    background: 'var(--background-sidebar)',
-                    borderColor: 'rgba(255,255,255,0.1)'
-                }}
-            >
+            <nav className="h-16 border-b border-white/5 backdrop-blur-lg sticky top-0 z-40 bg-sidebar/95 supports-[backdrop-filter]:bg-sidebar/60">
                 <div className="h-full flex items-center px-4 gap-2">
                     {/* Logo */}
                     <Link href="/dashboard" className="flex items-center gap-3 mr-6">
                         <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg"
-                            style={{ background: 'var(--gradient-primary)' }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shadow-lg bg-sidebar-primary"
                         >
                             FS
                         </div>
                         <div className="hidden sm:block">
-                            <span className="text-white font-bold text-lg">FrontStock</span>
+                            <span className="text-sidebar-foreground font-bold text-lg">FrontStock</span>
                             {organization && (
-                                <p className="text-slate-400 text-xs -mt-0.5">{organization.name}</p>
+                                <p className="text-sidebar-foreground/60 text-xs -mt-0.5">{organization.name}</p>
                             )}
                         </div>
                     </Link>
@@ -146,7 +142,7 @@ export function Navbar() {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className={`hidden md:flex text-slate-300 hover:text-white hover:bg-white/10 ${pathname === '/dashboard' ? 'bg-white/10 text-white' : ''
+                            className={`hidden md:flex text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent ${pathname === '/dashboard' ? 'bg-sidebar-accent text-sidebar-foreground' : ''
                                 }`}
                         >
                             <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -169,7 +165,7 @@ export function Navbar() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className={`text-slate-300 hover:text-white hover:bg-white/10 ${hasActiveItem ? 'bg-white/10 text-white' : ''
+                                            className={`text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent ${hasActiveItem ? 'bg-sidebar-accent text-sidebar-foreground' : ''
                                                 }`}
                                         >
                                             <SectionIcon className="h-4 w-4 mr-1.5" />
@@ -179,30 +175,30 @@ export function Navbar() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                         align="start"
-                                        className="w-56"
+                                        className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground"
                                         sideOffset={8}
                                     >
-                                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                        <DropdownMenuLabel className="text-xs text-sidebar-foreground/50">
                                             {section.title}
                                         </DropdownMenuLabel>
-                                        <DropdownMenuSeparator />
+                                        <DropdownMenuSeparator className="bg-sidebar-border" />
                                         {section.items.map((item) => {
                                             const Icon = item.icon;
                                             const isActive = pathname === item.href ||
                                                 (item.href !== '/dashboard' && pathname.startsWith(item.href));
                                             return (
-                                                <DropdownMenuItem key={item.href} asChild>
+                                                <DropdownMenuItem key={item.href} asChild className="focus:bg-sidebar-accent focus:text-sidebar-foreground">
                                                     <Link
                                                         href={item.href}
-                                                        className={`flex items-start gap-3 py-2 ${isActive ? 'bg-accent' : ''}`}
+                                                        className={`flex items-start gap-3 py-2 ${isActive ? 'bg-sidebar-accent/50' : ''}`}
                                                     >
-                                                        <div className={`p-1.5 rounded-md ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                                        <div className={`p-1.5 rounded-md ${isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'bg-sidebar-accent text-sidebar-foreground/70'}`}>
                                                             <Icon className="h-4 w-4" />
                                                         </div>
                                                         <div className="flex-1">
                                                             <p className="font-medium">{item.label}</p>
                                                             {item.description && (
-                                                                <p className="text-xs text-muted-foreground">{item.description}</p>
+                                                                <p className="text-xs text-sidebar-foreground/60">{item.description}</p>
                                                             )}
                                                         </div>
                                                     </Link>
@@ -223,9 +219,9 @@ export function Navbar() {
                         {/* Theme Toggle */}
                         <Button
                             variant="ghost"
-                            size="icon-sm"
+                            size="icon"
                             onClick={toggleTheme}
-                            className="text-slate-300 hover:text-white hover:bg-white/10"
+                            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-9 w-9"
                         >
                             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                         </Button>
@@ -233,11 +229,11 @@ export function Navbar() {
                         {/* Notifications */}
                         <Button
                             variant="ghost"
-                            size="icon-sm"
-                            className="text-slate-300 hover:text-white hover:bg-white/10 relative"
+                            size="icon"
+                            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent relative h-9 w-9"
                         >
                             <Bell className="h-4 w-4" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
                         </Button>
 
                         {/* User Menu */}
@@ -245,11 +241,10 @@ export function Navbar() {
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="ghost"
-                                    className="text-slate-300 hover:text-white hover:bg-white/10 gap-2 pl-2 pr-3"
+                                    className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent gap-2 pl-2 pr-3"
                                 >
                                     <div
-                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-semibold"
-                                        style={{ background: 'var(--gradient-primary)' }}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-sidebar-primary-foreground text-sm font-semibold bg-sidebar-primary"
                                     >
                                         {userInitials}
                                     </div>
@@ -259,26 +254,26 @@ export function Navbar() {
                                     <ChevronDown className="h-3 w-3 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuContent align="end" className="w-56 bg-sidebar border-sidebar-border text-sidebar-foreground">
                                 <DropdownMenuLabel>
                                     <div className="flex flex-col">
                                         <span>{profile?.full_name || 'Usuario'}</span>
-                                        <span className="text-xs font-normal text-muted-foreground">
+                                        <span className="text-xs font-normal text-sidebar-foreground/60">
                                             {profile?.role === 'admin' ? 'Administrador' : profile?.role}
                                         </span>
                                     </div>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
+                                <DropdownMenuSeparator className="bg-sidebar-border" />
+                                <DropdownMenuItem asChild className="focus:bg-sidebar-accent focus:text-sidebar-foreground">
                                     <Link href="/dashboard/settings" className="flex items-center gap-2">
                                         <Settings className="h-4 w-4" />
                                         Configuración
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
+                                <DropdownMenuSeparator className="bg-sidebar-border" />
                                 <DropdownMenuItem
                                     onClick={handleLogout}
-                                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
                                 >
                                     <LogOut className="h-4 w-4 mr-2" />
                                     Cerrar Sesión
@@ -290,7 +285,7 @@ export function Navbar() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="md:hidden text-slate-300 hover:text-white"
+                            className="md:hidden text-sidebar-foreground/70 hover:text-sidebar-foreground"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         >
                             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -313,11 +308,7 @@ export function Navbar() {
 
                     {/* Menu */}
                     <div
-                        className="absolute left-0 right-0 top-0 max-h-[80vh] overflow-y-auto border-b shadow-2xl"
-                        style={{
-                            background: 'var(--background-sidebar)',
-                            borderColor: 'rgba(255,255,255,0.1)'
-                        }}
+                        className="absolute left-0 right-0 top-0 max-h-[80vh] overflow-y-auto border-b shadow-2xl bg-sidebar border-sidebar-border"
                     >
                         <div className="p-4">
                             {/* Dashboard Link */}
@@ -325,8 +316,8 @@ export function Navbar() {
                                 href="/dashboard"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 ${pathname === '/dashboard'
-                                        ? 'bg-primary text-white'
-                                        : 'text-slate-300 hover:bg-white/10'
+                                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent'
                                     }`}
                             >
                                 <LayoutDashboard className="h-5 w-5" />
@@ -337,7 +328,7 @@ export function Navbar() {
                             <div className="space-y-4">
                                 {menuSections.map((section) => (
                                     <div key={section.title}>
-                                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 mb-2">
+                                        <p className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-4 mb-2">
                                             {section.title}
                                         </p>
                                         <div className="space-y-1">
@@ -351,15 +342,15 @@ export function Navbar() {
                                                         href={item.href}
                                                         onClick={() => setMobileMenuOpen(false)}
                                                         className={`flex items-center gap-3 px-4 py-3 rounded-xl ${isActive
-                                                                ? 'bg-primary text-white'
-                                                                : 'text-slate-300 hover:bg-white/10'
+                                                            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                                                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent'
                                                             }`}
                                                     >
                                                         <Icon className="h-5 w-5" />
                                                         <div>
                                                             <p className="font-medium">{item.label}</p>
                                                             {item.description && (
-                                                                <p className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                                                <p className={`text-xs ${isActive ? 'text-sidebar-primary-foreground/70' : 'text-sidebar-foreground/50'}`}>
                                                                     {item.description}
                                                                 </p>
                                                             )}

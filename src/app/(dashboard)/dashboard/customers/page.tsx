@@ -307,7 +307,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Clientes</h1>
           <p className="text-muted-foreground">Gestión de clientes y cuentas corrientes.</p>
         </div>
         <Button onClick={() => {
@@ -396,95 +396,97 @@ export default function CustomersPage() {
 
       {/* Table */}
       <div className="rounded-lg border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Contacto</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Saldo Pendiente</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedCustomers.length === 0 ? (
+        <div className="overflow-x-auto">
+          <Table className="min-w-[700px]">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                  {customers.length === 0 ? "No hay clientes registrados." : "No se encontraron clientes."}
-                </TableCell>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Contacto</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead className="text-right">Saldo Pendiente</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            ) : (
-              paginatedCustomers.map((customer) => (
-                <TableRow key={customer.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="font-medium">{customer.name}</div>
-                    {customer.address && (
-                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <MapPin className="h-3 w-3" /> {customer.address}
-                      </div>
-                    )}
-                    {customer.reference && (
-                      <div className="text-xs text-blue-600/80 dark:text-blue-400 flex items-center gap-1 mt-0.5 italic">
-                        <MapPin className="h-3 w-3" /> Ref: {customer.reference}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      {customer.email && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> {customer.email}
-                        </div>
-                      )}
-                      {customer.phone && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" /> {customer.phone}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={customer.customer_type === 'wholesale' ? 'secondary' : 'outline'}>
-                      {customer.customer_type === 'wholesale' ? 'Mayorista' : 'Minorista'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className={`font-bold ${customer.balance > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
-                      ${customer.balance.toLocaleString()}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleViewHistory(customer)} title="Ver Cuenta">
-                        <History className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingCustomer(customer);
-                          setFormData({
-                            name: customer.name || "",
-                            email: customer.email || "",
-                            phone: customer.phone || "",
-                            address: customer.address || "",
-                            reference: customer.reference || "",
-                            customer_type: customer.customer_type,
-                          }); setShowModal(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDelete(customer.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {paginatedCustomers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                    {customers.length === 0 ? "No hay clientes registrados." : "No se encontraron clientes."}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                paginatedCustomers.map((customer) => (
+                  <TableRow key={customer.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="font-medium">{customer.name}</div>
+                      {customer.address && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3 w-3" /> {customer.address}
+                        </div>
+                      )}
+                      {customer.reference && (
+                        <div className="text-xs text-blue-600/80 dark:text-blue-400 flex items-center gap-1 mt-0.5 italic">
+                          <MapPin className="h-3 w-3" /> Ref: {customer.reference}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {customer.email && (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" /> {customer.email}
+                          </div>
+                        )}
+                        {customer.phone && (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" /> {customer.phone}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={customer.customer_type === 'wholesale' ? 'secondary' : 'outline'}>
+                        {customer.customer_type === 'wholesale' ? 'Mayorista' : 'Minorista'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className={`font-bold ${customer.balance > 0 ? 'text-rose-500' : 'text-emerald-600'}`}>
+                        ${customer.balance.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleViewHistory(customer)} title="Ver Cuenta">
+                          <History className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingCustomer(customer);
+                            setFormData({
+                              name: customer.name || "",
+                              email: customer.email || "",
+                              phone: customer.phone || "",
+                              address: customer.address || "",
+                              reference: customer.reference || "",
+                              customer_type: customer.customer_type,
+                            }); setShowModal(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDelete(customer.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination Controls */}

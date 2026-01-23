@@ -187,8 +187,17 @@ export default function PurchaseOrdersPage() {
           product_name: product.name,
         };
       }
+    } else if (field === "quantity" || field === "unit_cost") {
+      updated[index] = {
+        ...updated[index],
+        [field]: Number(value),
+      };
     } else {
-      (updated[index] as Record<string, string | number>)[field] = value;
+      // Fallback for other fields if any
+      updated[index] = {
+        ...updated[index],
+        [field]: value
+      } as OrderItem
     }
     setItems(updated);
   };
@@ -738,8 +747,8 @@ export default function PurchaseOrdersPage() {
                   $
                   {selectedOrder
                     ? Number(selectedOrder.total).toLocaleString("es-AR", {
-                        minimumFractionDigits: 2,
-                      })
+                      minimumFractionDigits: 2,
+                    })
                     : "0"}
                 </span>
               </div>

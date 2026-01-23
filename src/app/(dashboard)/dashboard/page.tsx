@@ -269,7 +269,7 @@ export default function DashboardPage() {
   const weekChange =
     stats.lastWeekRevenue > 0
       ? ((stats.weekRevenue - stats.lastWeekRevenue) / stats.lastWeekRevenue) *
-        100
+      100
       : stats.weekRevenue > 0
         ? 100
         : 0;
@@ -302,16 +302,16 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="rounded-2xl p-8 text-primary-foreground relative overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-600 dark:from-primary dark:via-purple-700 dark:to-pink-700 shadow-xl shadow-primary/20">
+      <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-primary-foreground relative overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-600 dark:from-primary dark:via-purple-700 dark:to-pink-700 shadow-xl shadow-primary/20">
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5" />
             <span className="text-sm opacity-90">Panel de Control</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
             ¡Hola, {profile?.full_name?.split(" ")[0] || "Usuario"}! 👋
           </h1>
-          <p className="opacity-90 text-lg">
+          <p className="opacity-90 text-sm sm:text-base md:text-lg">
             {organization?.name} •{" "}
             {new Date().toLocaleDateString("es-AR", {
               weekday: "long",
@@ -332,7 +332,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="opacity-80 text-sm font-medium">Hoy</p>
-                <p className="text-3xl font-bold mt-1">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
                   ${stats.todayRevenue.toLocaleString("es-AR")}
                 </p>
                 <p className="opacity-80 text-sm mt-1 flex items-center gap-1">
@@ -365,7 +365,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="opacity-80 text-sm font-medium">Esta Semana</p>
-                <p className="text-3xl font-bold mt-1">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
                   ${stats.weekRevenue.toLocaleString("es-AR")}
                 </p>
                 <div className="flex items-center gap-1.5 text-sm mt-1">
@@ -411,7 +411,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between relative z-10">
               <div>
                 <p className="opacity-80 text-sm font-medium">Este Mes</p>
-                <p className="text-3xl font-bold mt-1">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
                   ${stats.monthRevenue.toLocaleString("es-AR")}
                 </p>
                 <p className="opacity-80 text-sm mt-1 flex items-center gap-1">
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                 <p className="text-muted-foreground text-sm font-medium">
                   Ticket Promedio
                 </p>
-                <p className="text-3xl font-bold mt-1">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
                   $
                   {stats.todaySales > 0
                     ? (stats.todayRevenue / stats.todaySales).toFixed(0)
@@ -476,11 +476,10 @@ export default function DashboardPage() {
           >
             <CardContent className="p-4 flex items-center gap-4">
               <div
-                className={`p-3 rounded-xl transition-colors ${
-                  stats.lowStockProducts > 0
-                    ? "bg-orange-500/10 text-orange-500 dark:bg-orange-500/20 dark:text-orange-400 group-hover:bg-orange-500 group-hover:text-white"
-                    : "bg-muted text-muted-foreground group-hover:bg-slate-500 group-hover:text-white"
-                }`}
+                className={`p-3 rounded-xl transition-colors ${stats.lowStockProducts > 0
+                  ? "bg-orange-500/10 text-orange-500 dark:bg-orange-500/20 dark:text-orange-400 group-hover:bg-orange-500 group-hover:text-white"
+                  : "bg-muted text-muted-foreground group-hover:bg-slate-500 group-hover:text-white"
+                  }`}
               >
                 <AlertTriangle className="h-6 w-6" />
               </div>
@@ -547,38 +546,40 @@ export default function DashboardPage() {
                 No hay ventas recientes
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Hora</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Pago</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentSales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(sale.created_at).toLocaleTimeString("es-AR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell>{sale.items_count} productos</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {paymentLabels[sale.payment_method] ||
-                            sale.payment_method}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        ${Number(sale.total).toLocaleString("es-AR")}
-                      </TableCell>
+              <div className="overflow-x-auto -mx-6 px-6">
+                <Table className="min-w-[500px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Hora</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead>Pago</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(sale.created_at).toLocaleTimeString("es-AR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </TableCell>
+                        <TableCell>{sale.items_count} productos</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {paymentLabels[sale.payment_method] ||
+                              sale.payment_method}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          ${Number(sale.total).toLocaleString("es-AR")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -601,15 +602,14 @@ export default function DashboardPage() {
                 {topProducts.map((product, i) => (
                   <div key={product.name} className="flex items-center gap-3">
                     <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        i === 0
-                          ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
-                          : i === 1
-                            ? "bg-muted"
-                            : i === 2
-                              ? "bg-orange-500/20 text-orange-600 dark:text-orange-400"
-                              : "bg-muted/50"
-                      }`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0
+                        ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400"
+                        : i === 1
+                          ? "bg-muted"
+                          : i === 2
+                            ? "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                            : "bg-muted/50"
+                        }`}
                     >
                       {i + 1}
                     </span>
