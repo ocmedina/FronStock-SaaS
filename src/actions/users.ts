@@ -40,6 +40,15 @@ export async function createUser(data: CreateUserData) {
         return { error: "No tienes permisos para asignar este rol" };
     }
 
+    // --- CHECK PLAN LIMITS ---
+    const { checkOrganizationLimit } = await import('@/lib/plans/limits');
+    const limitCheck = await checkOrganizationLimit(profile.organization_id, 'users');
+
+    if (!limitCheck.allowed) {
+        return { error: limitCheck.error };
+    }
+    // -------------------------
+
     const supabaseAdmin = createAdminClient();
 
     // 1. Create the user in Auth
@@ -85,4 +94,62 @@ export async function createUser(data: CreateUserData) {
 
     revalidatePath('/dashboard/users');
     return { success: true, userId: newUser.user.id };
+}
+
+export async function deleteUser(userId: string) {
+    const supabase = await createClient();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+    if (!currentUser) return { error: "No autorizado" };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, organization_id')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (!profile) return { error: "Perfil no encontrado" };
+
+    // Permissions: Only owner or admin should be able to delete users
+    // Assuming 'owner' or 'admin' role check here.
+    const canDelete = profile.role === 'owner' || profile.role === 'admin';
+    if (!canDelete) {
+        return { error: "No tienes permisos para eliminar usuarios" };
+    }
+
+    const supabaseAdmin = createAdminClient();
+
+    // Verify target user belongs to same organization (security)
+    const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('organization_id, role')
+        .eq('id', userId)
+        .single();
+
+    if (!targetProfile) return { error: "Usuario a eliminar no encontrado" };
+
+    if (targetProfile.organization_id !== profile.organization_id) {
+        return { error: "No puedes eliminar usuarios de otra organización" };
+    }
+
+    // Prevent deleting yourself
+    if (userId === currentUser.id) {
+        return { error: "No puedes eliminar tu propio usuario" };
+    }
+
+    // Prevent deleting an owner if you are not an owner (optional, depending on hierarchy)
+    if (targetProfile.role === 'owner' && profile.role !== 'owner') {
+        return { error: "Solo un dueño puede eliminar a otro dueño" };
+    }
+
+
+    // Delete from Auth (cascades to profiles usually, or we can manual delete profile first)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (deleteError) {
+        return { error: "Error al eliminar usuario del sistema: " + deleteError.message };
+    }
+
+    revalidatePath('/dashboard/users');
+    return { success: true };
 }

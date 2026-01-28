@@ -124,7 +124,7 @@ export function POSCart({
             </div>
 
             <div className="p-4 bg-card border-t border-border">
-                <div className="flex items-center justify-between text-muted-foreground mb-2">
+                <div className="flex items-center justify-between text-muted-foreground">
                     <span>Subtotal</span>
                     <span>${subtotal.toLocaleString("es-AR")}</span>
                 </div>

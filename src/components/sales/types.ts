@@ -25,12 +25,19 @@ export interface CartItem {
 
 export type PaymentMethod = "cash" | "card" | "transfer" | "credit";
 
+export interface Payment {
+    method: PaymentMethod;
+    amount: number;
+}
+
 export interface SaleTab {
     id: string;
     name: string;
     cart: CartItem[];
     customerId: string | null;
-    paymentMethod: PaymentMethod;
+    payments: Payment[];
+    discount?: number;
+    surcharge?: number;
 }
 
 export const paymentMethods = [

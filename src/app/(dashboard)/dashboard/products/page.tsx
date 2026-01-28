@@ -103,6 +103,15 @@ export default function ProductsPage() {
       if (editingProduct) {
         await update(editingProduct.id, productData);
       } else {
+        // Check limits before creating
+        const { checkProductLimit } = await import('@/actions/products');
+        const limitCheck = await checkProductLimit();
+
+        if (limitCheck.error) {
+          alert(limitCheck.error);
+          return;
+        }
+
         const newProduct = await create(
           productData as Omit<Product, keyof { id: string; organization_id: string; created_at: string }>,
         );

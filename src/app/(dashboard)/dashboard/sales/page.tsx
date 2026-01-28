@@ -25,14 +25,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { TicketView } from "@/components/sales/TicketView";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, Printer } from "lucide-react";
 import React from "react";
 
 export default function POSPage() {
   const { organizationId, isLoading: orgLoading } = useOrganization();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]); // New state for suppliers
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -43,7 +45,9 @@ export default function POSPage() {
       name: "Venta 1",
       cart: [],
       customerId: null,
-      paymentMethod: "cash",
+      payments: [],
+      // @ts-ignore - dynamic extension
+      supplierPayment: null, // NEW: Store supplier payment choice
     },
   ]);
   const [activeTabId, setActiveTabId] = useState("1");
@@ -55,6 +59,10 @@ export default function POSPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+
+  // Ticket State
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [lastSaleData, setLastSaleData] = useState<any>(null);
 
   // Search State for POSProductSearch
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,7 +78,7 @@ export default function POSPage() {
     if (!organizationId) return;
     setIsLoading(true);
 
-    const [productsRes, customersRes] = await Promise.all([
+    const [productsRes, customersRes, suppliersRes] = await Promise.all([
       supabase
         .from("products")
         .select("id, name, sku, barcode, plu, price, wholesale_price, stock")
@@ -82,10 +90,45 @@ export default function POSPage() {
         .select("id, name, customer_type")
         .eq("organization_id", organizationId)
         .order("name"),
+      supabase
+        .from("suppliers")
+        .select("id, name")
+        .eq("organization_id", organizationId)
+        .order("name"),
     ]);
 
     if (productsRes.data) setProducts(productsRes.data as Product[]);
-    if (customersRes.data) setCustomers(customersRes.data);
+
+    if (customersRes.data) {
+      setCustomers(customersRes.data);
+      // AUTO-SELECT "Consumidor Final" for existing empty tabs
+      const finalConsumer = customersRes.data.find(c => c.name === "Consumidor Final");
+      if (finalConsumer) {
+        setTabs(prev => prev.map(t => ({
+          ...t,
+          customerId: t.customerId || finalConsumer.id
+        })));
+      }
+    }
+
+    // DEBUG: Log supplier fetch results
+    console.log("🔍 Suppliers fetch result:", {
+      data: suppliersRes.data,
+      error: suppliersRes.error,
+      count: suppliersRes.data?.length || 0
+    });
+
+    if (suppliersRes.error) {
+      console.error("❌ Error fetching suppliers:", suppliersRes.error);
+    }
+
+    if (suppliersRes.data) {
+      console.log("✅ Setting suppliers:", suppliersRes.data);
+      setSuppliers(suppliersRes.data);
+    } else {
+      console.warn("⚠️ No supplier data received");
+    }
+
     setIsLoading(false);
   }, [organizationId, supabase]);
 
@@ -99,13 +142,15 @@ export default function POSPage() {
   };
 
   const addNewTab = () => {
+    const finalConsumer = customers.find(c => c.name === "Consumidor Final");
+
     const newId = String(Date.now());
     const newTab: SaleTab = {
       id: newId,
       name: `Venta ${tabs.length + 1}`,
       cart: [],
-      customerId: null,
-      paymentMethod: "cash",
+      customerId: finalConsumer ? finalConsumer.id : null,
+      payments: [],
     };
     setTabs([...tabs, newTab]);
     setActiveTabId(newId);
@@ -203,19 +248,57 @@ export default function POSPage() {
     });
   };
 
-  const handlePaymentMethodChange = (method: PaymentMethod) => {
-    updateActiveTab({ paymentMethod: method });
-  }
+  const handleAddPayment = (payment: { method: any, amount: number }) => {
+    const currentPayments = activeTab.payments || [];
+    updateActiveTab({ payments: [...currentPayments, payment] });
+  };
+
+  const handleRemovePayment = (index: number) => {
+    const currentPayments = activeTab.payments || [];
+    updateActiveTab({ payments: currentPayments.filter((_, i) => i !== index) });
+  };
+
+  const handleSetPayments = (payments: { method: any, amount: number }[]) => {
+    updateActiveTab({ payments });
+  };
+
+  const handleSupplierPaymentChange = (payment: { supplierId: string, amount: number } | null) => {
+    // @ts-ignore
+    updateActiveTab({ supplierPayment: payment });
+  };
 
   // Sales Processing
   const processSale = async () => {
     if (cart.length === 0 || !organizationId) return;
 
+    // If no payments explicitly added, assume FULL CASH (Basic fallback if logic fails, though UI should prevent)
+    // Actually, UI now forces payments for Mixed. For Simple, we must ensure state IS updated.
+    // I will rely on POSPaymentPanel updating the state via handleSetPayments.
+
+    // Safety check: specific for mixed/partial logic
+    const totalPaid = (activeTab.payments || []).reduce((sum, p) => sum + p.amount, 0);
+
+    // If payments array is empty, this logic blocks. 
+    // Is that what we want? 
+    // If I'm in "Simple - Cash", I want `processSale` to just work.
+    // If `POSPaymentPanel` updates state immediately on click, then `activeTab.payments` will have the data.
+    // If `POSPaymentPanel` updates state ONLY on "Confirm", then here it's empty.
+    // My previous thought in `POSPaymentPanel` was to update it immediately.
+    // So if I add `handleSetPayments` and use it in `POSPaymentPanel`, I can ensure state is always sync.
+
+    // Permitir un pequeño margen de error por decimales
+    if (Math.abs(totalPaid - total) > 0.01) {
+      // If totalPaid is 0, allow ONLY if we assume default cash? 
+      // No, safer to enforce explicit payments in state.
+      alert(`El total de los pagos ($${totalPaid}) debe ser igual al total de la venta ($${total}). Diferencia: $${Math.abs(totalPaid - total)}`);
+      return;
+    }
+
     setIsProcessing(true);
     setShowConfirmModal(false);
 
     try {
-      const isCredit = activeTab.paymentMethod === "credit";
+      const isCredit = activeTab.payments.some(p => p.method === "credit");
       if (isCredit && !activeTab.customerId) {
         alert("Para ventas a crédito (fiado) debe seleccionar un cliente");
         setIsProcessing(false);
@@ -229,18 +312,30 @@ export default function POSPage() {
         unit_price: item.product.price ?? 0,
       }));
 
+      // Simplificar pagos para enviar
+      const paymentsPayload = activeTab.payments.map(p => ({
+        method: p.method,
+        amount: p.amount
+      }));
+
       console.log("Calling process_sale with:", {
         p_org_id: organizationId,
         p_customer_id: activeTab.customerId || null,
-        p_payment_method: isCredit ? "credit" : activeTab.paymentMethod,
+        p_payments: paymentsPayload,
         p_items: items,
+        p_discount: activeTab.discount || 0,
+        p_surcharge: activeTab.surcharge || 0
       });
 
       const { data, error } = await supabase.rpc("process_sale", {
         p_org_id: organizationId,
         p_customer_id: activeTab.customerId || null,
-        p_payment_method: isCredit ? "credit" : activeTab.paymentMethod,
+        p_payments: paymentsPayload,
         p_items: items,
+        p_discount: activeTab.discount || 0,
+        p_surcharge: activeTab.surcharge || 0,
+        // @ts-ignore
+        p_supplier_payment: activeTab.supplierPayment || null // NEW PARAM
       });
 
       if (error) {
@@ -248,14 +343,35 @@ export default function POSPage() {
         throw error;
       }
 
-      const result = data as { success: boolean; sale_id?: string; error?: string; total?: number };
+      const result = data as { success: boolean; sale_id?: string; sale_number?: number; error?: string; total?: number };
       console.log("RPC Result:", result);
 
       if (!result.success) {
         throw new Error(result.error || "Error al procesar la venta");
       }
 
-      setLastSaleTotal(result.total || subtotal);
+      setLastSaleTotal(result.total || total);
+
+      // Prepare Ticket Data
+      setLastSaleData({
+        date: new Date(),
+        id: result.sale_id || "N/A",
+        saleNumber: result.sale_number,
+        items: cart.map(item => ({
+          quantity: item.quantity,
+          product_name: item.product.name,
+          total: item.quantity * (item.product.price || 0) // Approximation if not returned
+        })),
+        subtotal: subtotal,
+        total: total,
+        discount: activeTab.discount || 0,
+        surcharge: activeTab.surcharge || 0,
+        payments: activeTab.payments,
+        customer: activeTab.customerId ? customers.find(c => c.id === activeTab.customerId) : undefined,
+        // TODO: Get real org data
+        organization: { name: "Mi Negocio" }
+      });
+
       clearCart();
       setShowSuccessModal(true);
       fetchData();
@@ -298,7 +414,7 @@ export default function POSPage() {
   // Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const total = subtotal;
+  const total = Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0));
 
   if (orgLoading || isLoading) {
     return (
@@ -343,11 +459,19 @@ export default function POSPage() {
           activeTab={activeTab}
           customers={customers}
           subtotal={subtotal}
-          total={total}
+          total={Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0))}
           onCustomerChange={handleCustomerChange}
-          onPaymentMethodChange={handlePaymentMethodChange}
+          onAddPayment={handleAddPayment}
+          onRemovePayment={handleRemovePayment}
+          onSetPayments={handleSetPayments}
           onProcessSale={processSale}
           processing={isProcessing}
+          discount={activeTab.discount}
+          surcharge={activeTab.surcharge}
+          onUpdateDiscount={(val) => updateActiveTab({ discount: val })}
+          onUpdateSurcharge={(val) => updateActiveTab({ surcharge: val })}
+          suppliers={suppliers}
+          onSupplierPaymentChange={handleSupplierPaymentChange}
         />
       </div>
 
@@ -396,10 +520,19 @@ export default function POSPage() {
               <p className="text-3xl font-bold text-emerald-500">${lastSaleTotal.toLocaleString("es-AR")}</p>
             </div>
           </div>
-          <DialogFooter className="sm:justify-center">
+          <DialogFooter className="sm:justify-center gap-2 flex-col sm:flex-row">
             <Button
-              className="w-full"
-              variant="secondary"
+              variant="outline"
+              onClick={() => {
+                setShowSuccessModal(false);
+                setShowTicketModal(true);
+              }}
+              className="gap-2"
+            >
+              <Printer className="h-4 w-4" /> Imprimir Ticket
+            </Button>
+            <Button
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500"
               onClick={() => setShowSuccessModal(false)}
             >
               Cerrar y Nueva Venta
@@ -407,6 +540,12 @@ export default function POSPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TicketView
+        open={showTicketModal}
+        onClose={() => setShowTicketModal(false)}
+        saleData={lastSaleData}
+      />
     </div>
   );
 }

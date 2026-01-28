@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Toaster } from "@/components/ui/sonner";
+import { SessionTimeout } from "@/components/auth/SessionTimeout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,7 +27,9 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
         <ThemeProvider>
+          <SessionTimeout timeoutInMinutes={60} />
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

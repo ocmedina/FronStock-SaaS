@@ -19,9 +19,14 @@ export async function updateSession(request: NextRequest) {
                     supabaseResponse = NextResponse.next({
                         request,
                     });
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    );
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        // Make cookie session-only
+                        const sessionOptions = { ...options };
+                        delete sessionOptions.maxAge;
+                        delete sessionOptions.expires;
+
+                        supabaseResponse.cookies.set(name, value, sessionOptions);
+                    });
                 },
             },
         }

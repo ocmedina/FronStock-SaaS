@@ -29,6 +29,7 @@ import {
     Menu,
     X,
     FileText,
+    CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -76,6 +77,7 @@ const menuSections: MenuSection[] = [
         title: 'Contactos',
         items: [
             { href: '/dashboard/customers', label: 'Clientes', icon: Users },
+            { href: '/dashboard/customers/debtors', label: 'Deudores', icon: CreditCard },
             { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory },
         ],
     },
