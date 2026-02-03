@@ -91,14 +91,14 @@ export function POSProductSearch({
     }, [searchInputRef]);
 
     return (
-        <div className="p-4 bg-card border-b border-border z-20 relative">
+        <div className="p-3 md:p-4 bg-card border-b border-border z-20 relative">
             <div className="relative max-w-3xl mx-auto">
                 <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                     <Input
                         ref={searchInputRef}
                         placeholder="Buscar por nombre, código de barras, SKU o PLU..."
-                        className="pl-12 h-14 text-lg bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-emerald-500/50"
+                        className="pl-10 md:pl-12 pr-12 md:pr-24 h-12 md:h-14 text-base md:text-lg bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-emerald-500/50"
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                         onFocus={() => {
@@ -107,7 +107,7 @@ export function POSProductSearch({
                             }
                         }}
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2">
                         <kbd className="hidden md:inline-flex h-6 select-none items-center gap-1 rounded border border-border bg-muted px-2 font-mono text-[10px] font-medium text-muted-foreground">
                             <span className="text-xs">F3</span>
                             Catálogo
@@ -115,10 +115,10 @@ export function POSProductSearch({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 text-muted-foreground hover:text-emerald-500 hover:bg-muted"
+                            className="h-8 w-8 md:h-9 md:w-9 text-muted-foreground hover:text-emerald-500 hover:bg-muted"
                             onClick={onOpenCatalog}
                         >
-                            <List className="h-5 w-5" />
+                            <List className="h-4 w-4 md:h-5 md:w-5" />
                         </Button>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ export function POSProductSearch({
                         ref={dropdownRef}
                         className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100"
                     >
-                        <div className="max-h-[300px] overflow-y-auto p-2 space-y-1">
+                        <div className="max-h-[250px] md:max-h-[300px] overflow-y-auto p-1 md:p-2 space-y-1">
                             {filteredProducts.map((product, index) => (
                                 <button
                                     key={product.id}
@@ -138,35 +138,35 @@ export function POSProductSearch({
                                         onSearchChange("");
                                         setShowDropdown(false);
                                     }}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left group
+                                    className={`w-full flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg transition-all text-left group
                     ${index === selectedIndex
                                             ? "bg-emerald-500/20 shadow-sm ring-1 ring-emerald-500/50"
                                             : "hover:bg-muted"
                                         }
                   `}
                                 >
-                                    <div className={`p-2 rounded-md ${index === selectedIndex ? "bg-emerald-500/20 text-emerald-500" : "bg-muted text-muted-foreground group-hover:text-foreground"
+                                    <div className={`p-1.5 md:p-2 rounded-md ${index === selectedIndex ? "bg-emerald-500/20 text-emerald-500" : "bg-muted text-muted-foreground group-hover:text-foreground"
                                         }`}>
-                                        <Package className="h-5 w-5" />
+                                        <Package className="h-4 w-4 md:h-5 md:w-5" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className={`font-medium truncate ${index === selectedIndex ? "text-emerald-500" : "text-foreground"
+                                        <div className={`text-sm md:text-base font-medium truncate ${index === selectedIndex ? "text-emerald-500" : "text-foreground"
                                             }`}>
                                             {product.name}
                                         </div>
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                                        <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground mt-0.5 md:mt-1">
                                             {product.stock <= 0 ? (
                                                 <span className="text-destructive font-medium">Sin stock</span>
                                             ) : (
                                                 <span>{product.stock} unid.</span>
                                             )}
                                             {product.barcode && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="hidden sm:flex items-center gap-1">
                                                     <Barcode className="h-3 w-3" /> {product.barcode}
                                                 </span>
                                             )}
                                             {product.sku && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="hidden sm:flex items-center gap-1">
                                                     <Hash className="h-3 w-3" /> {product.sku}
                                                 </span>
                                             )}
@@ -178,7 +178,7 @@ export function POSProductSearch({
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className={`text-lg font-bold ${index === selectedIndex ? "text-emerald-500" : "text-emerald-600"
+                                        <div className={`text-sm md:text-lg font-bold ${index === selectedIndex ? "text-emerald-500" : "text-emerald-600"
                                             }`}>
                                             ${product.price.toLocaleString("es-AR")}
                                         </div>

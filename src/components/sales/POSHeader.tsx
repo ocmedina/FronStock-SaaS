@@ -20,14 +20,14 @@ export function POSHeader({
     onShowShortcuts,
 }: POSHeaderProps) {
     return (
-        <div className="flex items-center gap-2 p-2 bg-card border-b border-border">
-            <div className="flex items-center gap-1 overflow-x-auto flex-1 no-scrollbar">
+        <div className="flex items-center gap-1 md:gap-2 p-1.5 md:p-2 bg-card border-b border-border">
+            <div className="flex items-center gap-1 overflow-x-auto flex-1 no-scrollbar scrollbar-hide">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
                         onClick={() => onTabChange(tab.id)}
                         className={`
-              group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all border min-w-fit
+              group flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg cursor-pointer transition-all border min-w-fit
               ${tab.id === activeTabId
                                 ? "bg-muted border-primary/20 text-foreground shadow-sm"
                                 : "bg-transparent border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -35,16 +35,16 @@ export function POSHeader({
             `}
                     >
                         <div
-                            className={`p-1.5 rounded-md ${tab.id === activeTabId
+                            className={`p-1 md:p-1.5 rounded-md ${tab.id === activeTabId
                                 ? "bg-emerald-500/10 text-emerald-500"
                                 : "bg-muted text-muted-foreground group-hover:text-foreground"
                                 }`}
                         >
-                            <ShoppingCart className="h-3.5 w-3.5" />
+                            <ShoppingCart className="h-3 w-3 md:h-3.5 md:w-3.5" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-medium leading-none">{tab.name}</span>
-                            <span className="text-[10px] text-muted-foreground mt-0.5">
+                            <span className="text-xs md:text-sm font-medium leading-none">{tab.name}</span>
+                            <span className="text-[9px] md:text-[10px] text-muted-foreground mt-0.5">
                                 {tab.cart.length} items • $
                                 {tab.cart
                                     .reduce((acc, item) => acc + item.product.price * item.quantity, 0)
@@ -72,20 +72,20 @@ export function POSHeader({
                 ))}
                 <button
                     onClick={onAddTab}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors border border-dashed border-border hover:border-emerald-500/30 ml-1"
+                    className="flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors border border-dashed border-border hover:border-emerald-500/30 ml-1"
                     title="Nueva Venta (F4)"
                 >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     <span className="text-xs font-medium hidden sm:inline">Nueva</span>
                 </button>
             </div>
 
-            <div className="flex items-center gap-2 border-l border-border pl-2">
+            <div className="flex items-center gap-1 md:gap-2 border-l border-border pl-1.5 md:pl-2">
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={onShowShortcuts}
-                    className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground hover:bg-muted"
+                    className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground hover:bg-muted h-8"
                 >
                     <Keyboard className="h-4 w-4" />
                     <span className="text-xs hidden lg:inline">Atajos</span>

@@ -18,11 +18,19 @@ export interface Invoice {
     sale?: {
         total: number;
         created_at: string;
-        items?: any[];
+        sale_items: {
+            quantity: number;
+            unit_price: number;
+            total: number;
+            product: {
+                name: string;
+            } | null;
+        }[];
     } | null;
     customer?: {
+        id?: string;
         name: string;
-        tax_id: string | null; // CUIT
+        cuit: string | null;
     } | null;
 
     invoice_number: string;

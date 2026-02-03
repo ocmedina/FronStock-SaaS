@@ -252,8 +252,8 @@ export function POSPaymentPanel({
     const isFullyPaid = remaining <= 0.01;
 
     return (
-        <div className="w-full lg:w-[450px] flex flex-col bg-card border-l border-border shadow-2xl z-10">
-            <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        <div className="w-full lg:w-[450px] flex flex-col bg-card lg:border-l border-border shadow-2xl z-10">
+            <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto">
 
                 {/* 1. SELECCIÓN DE CLIENTE */}
                 <div className="space-y-3">
@@ -310,7 +310,7 @@ export function POSPaymentPanel({
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <Wallet className="h-4 w-4" /> Forma de Pago
                     </h3>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                         {paymentMethods.map((m) => {
                             const Icon = methodIcons[m.iconName];
                             // Is active if mode is simple AND method matches
@@ -321,14 +321,14 @@ export function POSPaymentPanel({
                                     key={m.value}
                                     onClick={() => handleSimpleMethodSelect(m.value)}
                                     className={cn(
-                                        "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200",
+                                        "flex flex-col items-center justify-center gap-2 p-3 md:p-4 rounded-xl border-2 transition-all duration-200 min-h-[80px] md:min-h-[90px]",
                                         isActive
                                             ? "bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-md"
                                             : "bg-background border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"
                                     )}
                                 >
-                                    <Icon className={cn("h-6 w-6", isActive && "animate-bounce")} />
-                                    <span className="text-xs font-medium">{m.label}</span>
+                                    <Icon className={cn("h-5 w-5 md:h-6 md:w-6", isActive && "animate-bounce")} />
+                                    <span className="text-xs font-medium text-center">{m.label}</span>
                                 </button>
                             );
                         })}
@@ -337,14 +337,14 @@ export function POSPaymentPanel({
                         <button
                             onClick={handleSwitchToMixed}
                             className={cn(
-                                "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200",
+                                "flex flex-col items-center justify-center gap-2 p-3 md:p-4 rounded-xl border-2 transition-all duration-200 min-h-[80px] md:min-h-[90px]",
                                 mode === "mixed"
                                     ? "bg-blue-500/10 border-blue-500 text-blue-500 shadow-md"
                                     : "bg-background border-transparent text-muted-foreground hover:bg-muted hover:border-border hover:text-foreground"
                             )}
                         >
-                            <Wallet className={cn("h-6 w-6", mode === "mixed" && "animate-pulse")} />
-                            <span className="text-xs font-medium">Mixto</span>
+                            <Wallet className={cn("h-5 w-5 md:h-6 md:w-6", mode === "mixed" && "animate-pulse")} />
+                            <span className="text-xs font-medium text-center">Mixto</span>
                         </button>
                     </div>
 
@@ -471,7 +471,7 @@ export function POSPaymentPanel({
             </div>
 
             {/* AREA DE CONFIRMACION */}
-            <div className="p-6 bg-card/50 backdrop-blur-sm border-t border-border">
+            <div className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-t border-border">
                 {/* Descuentos y Recargos */}
                 <div className="flex gap-2 mb-4">
                     <div className="flex-1">
@@ -479,7 +479,7 @@ export function POSPaymentPanel({
                         <div className="relative">
                             <input
                                 type="number"
-                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm text-right focus:outline-none focus:border-primary"
+                                className="w-full bg-background border border-input rounded px-2 py-2 md:py-1 text-sm text-right focus:outline-none focus:border-primary h-10 md:h-auto"
                                 placeholder="0.00"
                                 value={discount > 0 ? discount : ""}
                                 onChange={(e) => onUpdateDiscount(parseFloat(e.target.value) || 0)}
@@ -491,7 +491,7 @@ export function POSPaymentPanel({
                         <div className="relative">
                             <input
                                 type="number"
-                                className="w-full bg-background border border-input rounded px-2 py-1 text-sm text-right focus:outline-none focus:border-primary"
+                                className="w-full bg-background border border-input rounded px-2 py-2 md:py-1 text-sm text-right focus:outline-none focus:border-primary h-10 md:h-auto"
                                 placeholder="0.00"
                                 value={surcharge > 0 ? surcharge : ""}
                                 onChange={(e) => onUpdateSurcharge(parseFloat(e.target.value) || 0)}
@@ -507,7 +507,7 @@ export function POSPaymentPanel({
 
                 <Button
                     className={cn(
-                        "w-full h-14 text-lg font-bold shadow-xl transition-all duration-300 relative overflow-hidden group",
+                        "w-full h-12 md:h-14 text-base md:text-lg font-bold shadow-xl transition-all duration-300 relative overflow-hidden group",
                         (!isFullyPaid && mode === "mixed")
                             ? "bg-muted text-muted-foreground cursor-not-allowed"
                             : "bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-500/25 hover:-translate-y-0.5 text-white"

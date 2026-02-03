@@ -101,6 +101,13 @@ const menuSections: MenuSection[] = [
             { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
         ],
     },
+    {
+        title: 'Logística',
+        items: [
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Package },
+            { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList },
+        ],
+    },
 ];
 
 // Sidebar Context for sharing collapsed state and mobile open state

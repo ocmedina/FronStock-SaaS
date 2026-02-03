@@ -6,3 +6,5 @@ export * from "./RoleLegend";
 export * from "./EditRoleModal";
 export * from "./InviteUserModal";
 export * from "./CreateUserModal";
+export * from "./UserFilters";
+export * from "./PasswordGenerator";

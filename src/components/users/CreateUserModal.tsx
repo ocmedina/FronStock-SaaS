@@ -9,6 +9,7 @@ import { UserPlus, Mail, Shield, Eye, Lock, User as UserIcon, Loader2 } from "lu
 import { roleLabels, Role } from "@/lib/permissions";
 import { ROLE_ICONS } from "./types";
 import { createUser } from "@/actions/users";
+import { PasswordGenerator } from "./PasswordGenerator";
 // remove use-toast
 interface CreateUserModalProps {
     open: boolean;
@@ -101,20 +102,10 @@ export function CreateUserModal({
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium flex items-center gap-2">
-                            <Lock className="h-4 w-4 text-muted-foreground" />
-                            Contraseña
-                        </label>
-                        <Input
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                            minLength={6}
-                            placeholder="******"
-                        />
-                    </div>
+                    <PasswordGenerator
+                        value={formData.password}
+                        onChange={(password) => setFormData({ ...formData, password })}
+                    />
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium flex items-center gap-2">

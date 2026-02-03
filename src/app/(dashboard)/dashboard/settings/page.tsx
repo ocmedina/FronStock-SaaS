@@ -24,6 +24,7 @@ import {
     CreditCard,
 } from 'lucide-react';
 import { PlansClientWrapper } from './plans/PlansClientWrapper';
+import { OrganizationSettingsForm } from '@/components/settings/OrganizationSettingsForm';
 
 export default function SettingsPage() {
     const { organization, profile, refetch } = useOrganization();
@@ -153,35 +154,7 @@ export default function SettingsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleSaveOrg} className="space-y-6">
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Nombre de la Organización</label>
-                                        <Input
-                                            value={orgName}
-                                            onChange={(e) => setOrgName(e.target.value)}
-                                            placeholder="Mi Empresa"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Plan Actual</label>
-                                        <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
-                                            <Badge variant="secondary" className="uppercase">
-                                                {organization?.plan_type || 'free'}
-                                            </Badge>
-                                            <span className="text-xs text-muted-foreground ml-auto">
-                                                {organization?.plan_type === 'enterprise' ? 'Plan Empresarial' : 'Plan Gratuito'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex justify-end">
-                                    <Button type="submit" disabled={savingOrg}>
-                                        {savingOrg ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                        {savingOrg ? 'Guardando...' : 'Guardar Cambios'}
-                                    </Button>
-                                </div>
-                            </form>
+                            <OrganizationSettingsForm />
                         </CardContent>
                     </Card>
                 </TabsContent>

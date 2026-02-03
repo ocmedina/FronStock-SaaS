@@ -40,8 +40,13 @@ import {
     ArrowUpRight,
     User,
     ShoppingBag,
-    Loader2
+    Loader2,
+    ScrollText
 } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { DeliveryNotePDF } from "@/components/sales/DeliveryNotePDF";
+import { TicketPDF } from "@/components/sales/TicketPDF";
+import { InvoicePDF } from "@/components/invoices/InvoicePDF";
 
 interface Sale {
     id: string;
@@ -50,7 +55,8 @@ interface Sale {
     payment_method: string;
     status: string;
     created_at: string;
-    customer?: { name: string } | null;
+    customer?: { name: string; cuit?: string } | null;
+    invoices?: { id: string; invoice_number: string; type: string }[];
 }
 
 interface SaleItem {
@@ -130,11 +136,19 @@ export default function SalesHistoryPage() {
     }, [organizationId, fetchSales]);
 
     const viewSaleDetails = async (sale: Sale) => {
+        setSaleItems([]); // Clear previous items to avoid stale data in PDF
         setSelectedSale(sale);
-        const { data } = await supabase
+
+        const { data, error } = await supabase
             .from("sale_items")
             .select("*")
             .eq("sale_id", sale.id);
+
+        if (error) {
+            console.error("Error fetching items:", error);
+            return;
+        }
+
         if (data) setSaleItems(data);
     };
 
@@ -177,6 +191,26 @@ export default function SalesHistoryPage() {
             case 'credit': return { label: 'Cta. Corriente', icon: FileText, color: 'text-amber-500' };
             default: return { label: method, icon: Banknote, color: 'text-muted-foreground' };
         }
+    };
+
+    // Prepare Invoice Object for PDF (Transformation)
+    const getInvoiceForPDF = (sale: Sale) => {
+        if (!sale.invoices || sale.invoices.length === 0) return null;
+        const inv = sale.invoices[0];
+
+        // Transform to match Invoice interface expected by InvoicePDF
+        return {
+            ...inv,
+            customer: sale.customer,
+            sale: {
+                sale_items: saleItems.map(item => ({
+                    ...item,
+                    product: { name: item.product_name }
+                })),
+                total: sale.total,
+                created_at: sale.created_at
+            }
+        } as any; // Cast as any because simplified for PDF
     };
 
     if (orgLoading || isLoading && sales.length === 0) {
@@ -442,11 +476,67 @@ export default function SalesHistoryPage() {
                                 <span className="text-2xl font-bold text-primary">${selectedSale.total.toLocaleString()}</span>
                             </div>
 
-                            <div className="flex justify-end gap-2 print:hidden">
-                                <Button variant="outline" onClick={() => window.print()}>
-                                    Imprimir
-                                </Button>
-                                <Button onClick={() => setSelectedSale(null)}>
+                            <div className="flex gap-2 justify-end pt-2 print:hidden">
+                                {/* Ticket Thermal Button */}
+                                {saleItems.length > 0 ? (
+                                    <div className="flex gap-2">
+                                        <PDFDownloadLink
+                                            document={<TicketPDF sale={selectedSale} items={saleItems} organization={useOrganization().organization} />}
+                                            fileName={`ticket-${selectedSale.id.slice(0, 8)}.pdf`}
+                                        >
+                                            {({ loading, error }) => (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={loading || !!error}
+                                                    title={error ? `Error: ${error}` : "Formato Ticket 80mm"}
+                                                    className={error ? "border-red-500 text-red-500" : ""}
+                                                >
+                                                    <ScrollText className="h-4 w-4 mr-2" />
+                                                    {loading ? "Generando..." : error ? "Error" : "Ticket"}
+                                                </Button>
+                                            )}
+                                        </PDFDownloadLink>
+
+                                        <PDFDownloadLink
+                                            document={<DeliveryNotePDF sale={selectedSale} items={saleItems} organization={useOrganization().organization} />}
+                                            fileName={`remito-${selectedSale.id.slice(0, 8)}.pdf`}
+                                        >
+                                            {({ loading }) => (
+                                                <Button variant="ghost" size="icon" disabled={loading} title="Formato A4">
+                                                    <FileText className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </PDFDownloadLink>
+                                    </div>
+                                ) : (
+                                    <Button variant="outline" size="sm" disabled>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Cargando...
+                                    </Button>
+                                )}
+
+                                {/* Invoice Button */}
+                                {selectedSale.invoices && selectedSale.invoices.length > 0 ? (
+                                    <PDFDownloadLink
+                                        document={<InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={useOrganization().organization} />}
+                                        fileName={`factura-${selectedSale.invoices[0].type}-${selectedSale.invoices[0].invoice_number}.pdf`}
+                                    >
+                                        {({ loading }) => (
+                                            <Button size="sm" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+                                                <Receipt className="h-4 w-4 mr-2" />
+                                                {loading ? "..." : "Fiscal"}
+                                            </Button>
+                                        )}
+                                    </PDFDownloadLink>
+                                ) : (
+                                    <Button size="sm" variant="secondary" className="opacity-50 cursor-not-allowed">
+                                        <Receipt className="h-4 w-4 mr-2" />
+                                        Fiscal Pendiente
+                                    </Button>
+                                )}
+
+                                <Button onClick={() => setSelectedSale(null)} variant="ghost" size="sm">
                                     Cerrar
                                 </Button>
                             </div>

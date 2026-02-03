@@ -6,6 +6,12 @@ export interface Organization {
   name: string;
   plan_type: string;
   created_at: string;
+  address?: string | null;
+  cuit?: string | null;
+  logo_url?: string | null;
+  tax_condition?: string | null;
+  activity_start_date?: string | null;
+  gross_income_number?: string | null;
 }
 
 export interface Profile {

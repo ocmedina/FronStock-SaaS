@@ -35,7 +35,7 @@ export function POSCart({
 
     return (
         <div className="flex-1 flex flex-col min-h-0 bg-secondary/20">
-            <div className="flex items-center justify-between p-2 px-4 border-b border-border bg-card">
+            <div className="flex items-center justify-between p-2 px-3 md:px-4 border-b border-border bg-card">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Items en carrito ({totalItems})
                 </span>
@@ -55,14 +55,14 @@ export function POSCart({
                     {items.map((item) => (
                         <div
                             key={item.product.id}
-                            className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group animate-in fade-in slide-in-from-left-2 duration-200"
+                            className="flex items-center gap-2 md:gap-4 p-3 md:p-4 hover:bg-muted/50 transition-colors group animate-in fade-in slide-in-from-left-2 duration-200"
                         >
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
-                                    <h4 className="font-medium text-foreground truncate pr-2">
+                                    <h4 className="text-sm md:text-base font-medium text-foreground truncate pr-2">
                                         {item.product.name}
                                     </h4>
-                                    <span className="font-bold text-emerald-500">
+                                    <span className="text-sm md:text-base font-bold text-emerald-500 whitespace-nowrap">
                                         ${(item.product.price * item.quantity).toLocaleString("es-AR")}
                                     </span>
                                 </div>
@@ -83,36 +83,36 @@ export function POSCart({
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 md:gap-3">
                                 <div className="flex items-center bg-background rounded-lg border border-border">
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 rounded-l-lg hover:bg-muted text-muted-foreground"
+                                        className="h-9 w-9 md:h-8 md:w-8 rounded-l-lg hover:bg-muted text-muted-foreground"
                                         onClick={() =>
                                             onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1))
                                         }
                                     >
-                                        <Minus className="h-3 w-3" />
+                                        <Minus className="h-4 w-4 md:h-3 md:w-3" />
                                     </Button>
-                                    <span className="w-8 text-center text-sm font-medium text-foreground">
+                                    <span className="w-9 md:w-8 text-center text-sm font-medium text-foreground">
                                         {item.quantity}
                                     </span>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 rounded-r-lg hover:bg-muted text-emerald-500 hover:text-emerald-600"
+                                        className="h-9 w-9 md:h-8 md:w-8 rounded-r-lg hover:bg-muted text-emerald-500 hover:text-emerald-600"
                                         onClick={() =>
                                             onUpdateQuantity(item.product.id, item.quantity + 1)
                                         }
                                     >
-                                        <Plus className="h-3 w-3" />
+                                        <Plus className="h-4 w-4 md:h-3 md:w-3" />
                                     </Button>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
+                                    className="h-9 w-9 md:h-8 md:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 md:opacity-0 md:group-hover:opacity-100 transition-all"
                                     onClick={() => onRemove(item.product.id)}
                                 >
                                     <Trash2 className="h-4 w-4" />
@@ -123,10 +123,10 @@ export function POSCart({
                 </div>
             </div>
 
-            <div className="p-4 bg-card border-t border-border">
-                <div className="flex items-center justify-between text-muted-foreground">
+            <div className="p-3 md:p-4 bg-card border-t border-border">
+                <div className="flex items-center justify-between text-sm md:text-base text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>${subtotal.toLocaleString("es-AR")}</span>
+                    <span className="font-semibold">${subtotal.toLocaleString("es-AR")}</span>
                 </div>
             </div>
         </div>

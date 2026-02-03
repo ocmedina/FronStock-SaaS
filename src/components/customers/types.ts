@@ -6,6 +6,7 @@ export interface Customer {
     phone: string | null;
     address: string | null;
     reference: string | null;
+    cuit: string | null;
     balance: number;
     customer_type: "retail" | "wholesale";
     created_at: string;

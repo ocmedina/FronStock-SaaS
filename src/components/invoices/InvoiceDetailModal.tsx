@@ -7,17 +7,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { FileText, Printer, Download } from "lucide-react";
 import { Invoice } from "./types";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { InvoicePDF } from "./InvoicePDF";
+
+import { Organization } from "@/types/database.types";
 
 interface InvoiceDetailModalProps {
     invoice: Invoice | null;
     onClose: () => void;
-    organizationName?: string;
+    organization?: Organization | null;
 }
 
 export function InvoiceDetailModal({
     invoice,
     onClose,
-    organizationName,
+    organization,
 }: InvoiceDetailModalProps) {
     if (!invoice) return null;
 
@@ -35,9 +39,24 @@ export function InvoiceDetailModal({
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8 border-b pb-4">
                         <div>
-                            <h2 className="text-2xl font-bold">{organizationName || "Organización"}</h2>
-                            <p className="text-gray-500">Dirección de la empresa</p>
-                            <p className="text-gray-500">Buenos Aires, Argentina</p>
+                            {organization?.logo_url && (
+                                <img
+                                    src={organization.logo_url}
+                                    alt="Logo"
+                                    className="h-20 w-auto object-contain mb-3"
+                                />
+                            )}
+                            <h2 className="text-2xl font-bold">{organization?.name || "Organización"}</h2>
+                            <div className="text-gray-500 space-y-1">
+                                <p>{organization?.address || "Dirección de la empresa"}</p>
+                                <p>Buenos Aires, Argentina</p>
+                                <p>{organization?.tax_condition || "Condición IVA: Responsable Inscripto"}</p>
+                                <div className="flex flex-wrap gap-4 text-xs mt-2 font-mono">
+                                    <span>CUIT: {organization?.cuit || "30-00000000-0"}</span>
+                                    <span>IIBB: {organization?.gross_income_number || "-"}</span>
+                                    <span>Inicio: {organization?.activity_start_date ? new Date(organization.activity_start_date).toLocaleDateString("es-AR") : "-"}</span>
+                                </div>
+                            </div>
                         </div>
                         <div className="text-right">
                             <div className="bg-gray-100 border text-center p-2 rounded mb-2 inline-block min-w-[100px]">
@@ -58,7 +77,7 @@ export function InvoiceDetailModal({
                             </div>
                             <div>
                                 <p className="font-bold">CUIT:</p>
-                                <p>{invoice.customer?.tax_id || "-"}</p>
+                                <p>{invoice.customer?.cuit || "-"}</p>
                             </div>
                             <div>
                                 <p className="font-bold">Condición IVA:</p>
@@ -82,13 +101,23 @@ export function InvoiceDetailModal({
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {/* If we had items we would map them here. For now we show a summary line based on sale total */}
-                            <tr>
-                                <td className="py-2">Venta #{invoice.sale_id?.split('-')[0]}</td>
-                                <td className="text-right py-2">1</td>
-                                <td className="text-right py-2">${Number(invoice.total).toLocaleString("es-AR")}</td>
-                                <td className="text-right py-2 font-bold">${Number(invoice.total).toLocaleString("es-AR")}</td>
-                            </tr>
+                            {invoice.sale?.sale_items && invoice.sale.sale_items.length > 0 ? (
+                                invoice.sale.sale_items.map((item, index) => (
+                                    <tr key={index}>
+                                        <td className="py-2">{item.product?.name || "Producto sin nombre"}</td>
+                                        <td className="text-right py-2">{item.quantity}</td>
+                                        <td className="text-right py-2">${Number(item.unit_price).toLocaleString("es-AR")}</td>
+                                        <td className="text-right py-2 font-bold">${Number(item.total).toLocaleString("es-AR")}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td className="py-2">Venta #{invoice.sale_id?.split('-')[0]}</td>
+                                    <td className="text-right py-2">1</td>
+                                    <td className="text-right py-2">${Number(invoice.total).toLocaleString("es-AR")}</td>
+                                    <td className="text-right py-2 font-bold">${Number(invoice.total).toLocaleString("es-AR")}</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
 
@@ -127,10 +156,21 @@ export function InvoiceDetailModal({
                     <Button variant="outline" onClick={onClose}>
                         Cerrar
                     </Button>
-                    <Button>
+                    <Button variant="outline" onClick={() => window.print()}>
                         <Printer className="mr-2 h-4 w-4" />
                         Imprimir
                     </Button>
+                    <PDFDownloadLink
+                        document={<InvoicePDF invoice={invoice} organization={organization} />}
+                        fileName={`factura-${invoice.type}-${invoice.invoice_number}.pdf`}
+                    >
+                        {({ blob, url, loading, error }) => (
+                            <Button disabled={loading}>
+                                <Download className="mr-2 h-4 w-4" />
+                                {loading ? "Generando..." : "Descargar PDF"}
+                            </Button>
+                        )}
+                    </PDFDownloadLink>
                 </div>
             </DialogContent>
         </Dialog>
