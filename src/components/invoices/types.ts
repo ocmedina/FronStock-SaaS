@@ -33,6 +33,17 @@ export interface Invoice {
         cuit: string | null;
     } | null;
 
+    order?: {
+        id: string;
+        created_at: string;
+        order_items: {
+            product_name: string;
+            quantity: number;
+            unit_price: number;
+            total: number;
+        }[];
+    } | null;
+
     invoice_number: string;
     type: InvoiceType;
     total: number;

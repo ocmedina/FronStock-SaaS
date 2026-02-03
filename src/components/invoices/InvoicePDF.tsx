@@ -176,7 +176,7 @@ export const InvoicePDF = ({ invoice, organization }: InvoicePDFProps) => {
                     <View style={styles.headerLeft}>
                         {organization?.logo_url ? (
                             <View>
-                                <Image src={organization.logo_url} style={styles.logo} />
+                                <Image src={organization.logo_url} style={styles.logo} cache={false} />
                                 <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization.name}</Text>
                             </View>
                         ) : (
@@ -248,24 +248,46 @@ export const InvoicePDF = ({ invoice, organization }: InvoicePDFProps) => {
                 </View>
 
                 {/* Table Items */}
+                {/* Table Items */}
                 <View style={styles.table}>
-                    {invoice.sale?.sale_items && invoice.sale.sale_items.length > 0 ? (
-                        invoice.sale.sale_items.map((item, index) => (
-                            <View style={styles.tableRow} key={index}>
-                                <Text style={styles.colDesc}>{item.product?.name || "Producto sin nombre"}</Text>
-                                <Text style={styles.colQty}>{item.quantity}</Text>
-                                <Text style={styles.colPrice}>$ {Number(item.unit_price).toLocaleString("es-AR")}</Text>
-                                <Text style={styles.colTotal}>$ {Number(item.total).toLocaleString("es-AR")}</Text>
-                            </View>
-                        ))
-                    ) : (
-                        <View style={styles.tableRow}>
-                            <Text style={styles.colDesc}>Venta #{invoice.sale_id?.split('-')[0] || "-"}</Text>
-                            <Text style={styles.colQty}>1</Text>
-                            <Text style={styles.colPrice}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
-                            <Text style={styles.colTotal}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
-                        </View>
-                    )}
+                    {(() => {
+                        // Normalize items from Sale or Order
+                        const saleItems = invoice.sale?.sale_items?.map((item: any) => ({
+                            description: item.product?.name || "Producto",
+                            quantity: item.quantity,
+                            price: item.unit_price,
+                            total: item.total
+                        })) || [];
+
+                        const orderItems = invoice.order?.order_items?.map((item: any) => ({
+                            description: item.product_name || "Producto", // order_items usually stores product_name directly
+                            quantity: item.quantity,
+                            price: item.unit_price,
+                            total: item.total
+                        })) || [];
+
+                        const items = [...saleItems, ...orderItems];
+
+                        if (items.length > 0) {
+                            return items.map((item, index) => (
+                                <View style={styles.tableRow} key={index}>
+                                    <Text style={styles.colDesc}>{item.description}</Text>
+                                    <Text style={styles.colQty}>{item.quantity}</Text>
+                                    <Text style={styles.colPrice}>$ {Number(item.price).toLocaleString("es-AR")}</Text>
+                                    <Text style={styles.colTotal}>$ {Number(item.total).toLocaleString("es-AR")}</Text>
+                                </View>
+                            ));
+                        } else {
+                            return (
+                                <View style={styles.tableRow}>
+                                    <Text style={styles.colDesc}>Venta/Pedido #{invoice.invoice_number}</Text>
+                                    <Text style={styles.colQty}>1</Text>
+                                    <Text style={styles.colPrice}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
+                                    <Text style={styles.colTotal}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
+                                </View>
+                            );
+                        }
+                    })()}
                 </View>
 
                 {/* Totals */}

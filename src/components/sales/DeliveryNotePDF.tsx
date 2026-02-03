@@ -154,7 +154,7 @@ export const DeliveryNotePDF = ({ sale, items, organization }: DeliveryNotePDFPr
                     <View style={styles.headerLeft}>
                         {organization?.logo_url ? (
                             <View>
-                                <Image src={organization.logo_url} style={styles.logo} />
+                                <Image src={organization.logo_url} style={styles.logo} cache={false} />
                                 <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization.name}</Text>
                             </View>
                         ) : (

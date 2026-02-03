@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
+import { DeliveryConfirmationModal } from "@/components/delivery/DeliveryConfirmationModal";
 import { toast } from "sonner";
 
 type DeliveryOrder = {
@@ -31,6 +32,8 @@ export default function DeliveryHomePage() {
     const [loading, setLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
+    const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
+    const [orderToDeliver, setOrderToDeliver] = useState<any>(null);
     const supabase = createClient();
 
     const handleViewDetails = (id: string) => {
@@ -120,6 +123,17 @@ export default function DeliveryHomePage() {
     };
 
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+        // If marking as delivered, open confirmation modal
+        if (newStatus === 'delivered') {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                setOrderToDeliver(order);
+                setDeliveryConfirmOpen(true);
+            }
+            return;
+        }
+
+        // For other status updates, proceed normally
         try {
             const { error } = await supabase
                 .from('orders')
@@ -322,6 +336,15 @@ export default function DeliveryHomePage() {
                 orderId={selectedOrderId}
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
+            />
+
+            <DeliveryConfirmationModal
+                orderId={orderToDeliver?.id || null}
+                orderTotal={orderToDeliver?.total || 0}
+                currentPaymentMethod={orderToDeliver?.payment_method || "cash"}
+                open={deliveryConfirmOpen}
+                onOpenChange={setDeliveryConfirmOpen}
+                onSuccess={fetchOrders}
             />
         </div >
     );

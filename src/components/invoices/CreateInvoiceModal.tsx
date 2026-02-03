@@ -26,6 +26,7 @@ interface CreateInvoiceModalProps {
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
     organizationId: string;
+    preselectedOrder?: any; // Added prop
 }
 
 export function CreateInvoiceModal({
@@ -33,6 +34,7 @@ export function CreateInvoiceModal({
     onOpenChange,
     onSuccess,
     organizationId,
+    preselectedOrder,
 }: CreateInvoiceModalProps) {
     const [loading, setLoading] = useState(false);
     const [sales, setSales] = useState<any[]>([]);
@@ -49,9 +51,45 @@ export function CreateInvoiceModal({
     // Fetch pending sales and customers when modal opens
     useEffect(() => {
         if (open && organizationId) {
-            fetchData();
+            if (preselectedOrder) {
+                // If preselected order, just setup that data
+                handlePreselectedOrder();
+            } else {
+                fetchData();
+            }
         }
-    }, [open, organizationId]);
+    }, [open, organizationId, preselectedOrder]);
+
+    const handlePreselectedOrder = async () => {
+        // Mock a sale object from the order to make it compatible with the form
+        const mockSale = {
+            id: preselectedOrder.id,
+            created_at: preselectedOrder.created_at,
+            total: preselectedOrder.total,
+            customer_id: preselectedOrder.customer_id,
+            customers: preselectedOrder.customer,
+            is_order: true // Flag to identify it's an order
+        };
+
+        setSales([mockSale]);
+        setSelectedSaleId(mockSale.id);
+
+        // Fetch customers for the dropdown just in case they want to change it (though usually fixed for order)
+        // or we just use the one from order
+        if (preselectedOrder.customer_id) {
+            // We might need to fetch this customer's CUIT if not in the order object
+            const { data } = await supabase.from('customers').select('*').eq('id', preselectedOrder.customer_id).single();
+            if (data) {
+                setCustomers([data]);
+                setSelectedCustomerId(data.id);
+                if (data.cuit) setCuit(data.cuit);
+            }
+        } else {
+            // Fetch all if no customer or clean state
+            const { data } = await supabase.from("customers").select("id, name, cuit").eq("organization_id", organizationId).order("name");
+            setCustomers(data || []);
+        }
+    };
 
     const fetchData = async () => {
         console.log("🔍 CreateInvoiceModal: Fetching data...", { organizationId, open });
@@ -131,7 +169,7 @@ export function CreateInvoiceModal({
 
     // Auto-fill customer when sale is selected
     useEffect(() => {
-        if (selectedSaleId) {
+        if (selectedSaleId && !preselectedOrder) {
             const selectedSale = sales.find((s) => s.id === selectedSaleId);
 
             if (selectedSale?.customer_id) {
@@ -148,7 +186,7 @@ export function CreateInvoiceModal({
                 setCuit("");
             }
         }
-    }, [selectedSaleId, sales, customers]);
+    }, [selectedSaleId, sales, customers, preselectedOrder]);
 
     // Auto-fill CUIT when customer is selected manually
     const handleCustomerChange = (customerId: string | undefined) => {
@@ -197,14 +235,17 @@ export function CreateInvoiceModal({
             // This handles Numbering (RPC) + AFIP (Simulation/Real) + DB Insert
             const { generateInvoiceAction } = await import('@/app/(dashboard)/dashboard/invoices/actions');
 
+            const isOrder = selectedSale.is_order;
+
             const result = await generateInvoiceAction(
                 organizationId,
-                selectedSaleId,
+                isOrder ? null : selectedSaleId, // saleId
                 invoiceType,
                 finalCustomerId,
                 finalCuit,
                 selectedSale.total,
-                withArca
+                withArca,
+                isOrder ? selectedSaleId : null // orderId
             );
 
             if (!result.success) {
@@ -245,7 +286,7 @@ export function CreateInvoiceModal({
                 <form onSubmit={handleSubmit} className="space-y-4 py-2">
                     {/* Venta a Facturar */}
                     <div className="space-y-2">
-                        <Label>Venta a Facturar</Label>
+                        <Label>Venta / Pedido a Facturar</Label>
                         <Select value={selectedSaleId || undefined} onValueChange={setSelectedSaleId}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccione una venta..." />

@@ -8,12 +8,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function generateInvoiceAction(
     organizationId: string,
-    saleId: string,
+    saleId: string | null, // Made optional to support order-only invoices
     invoiceType: string, // "A", "B", "C"
     customerId: string | null,
     cuit: string | null,
     total: number,
-    simulateArca: boolean = false
+    simulateArca: boolean = false,
+    orderId?: string | null // New optional parameter
 ) {
     const supabase = await createClient();
 
@@ -76,7 +77,8 @@ export async function generateInvoiceAction(
         // 4. Insert Invoice into DB
         const invoiceData = {
             organization_id: organizationId,
-            sale_id: saleId,
+            sale_id: saleId || null,
+            order_id: orderId || null, // Link to order
             customer_id: customerId,
             invoice_number: invoiceNumber,
             type: invoiceType,
@@ -84,7 +86,7 @@ export async function generateInvoiceAction(
             status: "issued",
             afip_status: afipStatus,
             cae: cae,
-            cae_expiration: caeExpiration,
+            cae_expiration: caeExpiration || null,
         };
 
         const { data: newInvoice, error: insertError } = await supabase
