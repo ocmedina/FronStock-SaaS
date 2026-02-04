@@ -361,6 +361,8 @@ export function POSPaymentPanel({
                                         <span className="absolute left-3 top-2.5 text-muted-foreground text-xs">$</span>
                                         <Input
                                             type="number"
+                                            inputMode="decimal"
+                                            enterKeyHint="done"
                                             className="pl-6 h-9 text-sm bg-background"
                                             placeholder="0.00"
                                             value={downPayment}
@@ -452,6 +454,8 @@ export function POSPaymentPanel({
                                 <div className="flex gap-2">
                                     <Input
                                         type="number"
+                                        inputMode="decimal"
+                                        enterKeyHint="done"
                                         className="h-9 text-sm"
                                         placeholder="Monto"
                                         value={amount}
@@ -479,6 +483,7 @@ export function POSPaymentPanel({
                         <div className="relative">
                             <input
                                 type="number"
+                                inputMode="decimal"
                                 className="w-full bg-background border border-input rounded px-2 py-2 md:py-1 text-sm text-right focus:outline-none focus:border-primary h-10 md:h-auto"
                                 placeholder="0.00"
                                 value={discount > 0 ? discount : ""}
@@ -491,6 +496,7 @@ export function POSPaymentPanel({
                         <div className="relative">
                             <input
                                 type="number"
+                                inputMode="decimal"
                                 className="w-full bg-background border border-input rounded px-2 py-2 md:py-1 text-sm text-right focus:outline-none focus:border-primary h-10 md:h-auto"
                                 placeholder="0.00"
                                 value={surcharge > 0 ? surcharge : ""}
@@ -576,6 +582,7 @@ export function POSPaymentPanel({
                                     <span className="absolute left-2 top-1.5 text-xs">$</span>
                                     <Input
                                         type="number"
+                                        inputMode="decimal"
                                         className="h-7 text-xs pl-5"
                                         placeholder="0.00"
                                         value={supplierPayment.amount}

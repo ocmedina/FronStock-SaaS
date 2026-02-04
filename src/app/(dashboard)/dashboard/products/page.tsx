@@ -326,8 +326,8 @@ export default function ProductsPage() {
 
       {/* Pagination Controls */}
       {filteredProducts.length > 0 && (
-        <div className="flex items-center justify-between border-t pt-4 px-2">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-t pt-4 px-2 gap-4 sm:gap-0">
+          <div className="text-sm text-muted-foreground text-center sm:text-left">
             Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
           </div>
           <div className="flex items-center gap-2">

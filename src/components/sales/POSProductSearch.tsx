@@ -97,6 +97,10 @@ export function POSProductSearch({
                     <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                     <Input
                         ref={searchInputRef}
+                        type="search"
+                        inputMode="search"
+                        enterKeyHint="search"
+                        autoComplete="off"
                         placeholder="Buscar por nombre, código de barras, SKU o PLU..."
                         className="pl-10 md:pl-12 pr-12 md:pr-24 h-12 md:h-14 text-base md:text-lg bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-emerald-500/50"
                         value={searchQuery}

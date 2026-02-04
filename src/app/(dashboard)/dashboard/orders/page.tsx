@@ -323,13 +323,13 @@ export default function DashboardOrdersPage() {
     return (
         <div className="p-6 space-y-6 bg-slate-950 min-h-screen">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-white">Pedidos</h1>
                     <p className="text-slate-400 mt-1">Gestiona todos los pedidos de delivery</p>
                 </div>
-                <Link href="/dashboard/orders/new">
-                    <Button className="bg-emerald-600 hover:bg-emerald-500">
+                <Link href="/dashboard/orders/new" className="w-full sm:w-auto">
+                    <Button className="bg-emerald-600 hover:bg-emerald-500 w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" />
                         Nuevo Pedido
                     </Button>
@@ -662,9 +662,9 @@ export default function DashboardOrdersPage() {
                                             <th className="text-left p-4 text-slate-400 font-medium text-sm">Cliente</th>
                                             <th className="text-left p-4 text-slate-400 font-medium text-sm">Estado</th>
                                             <th className="text-left p-4 text-slate-400 font-medium text-sm">Monto</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Pago</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Estado Pago</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Fecha</th>
+                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Pago</th>
+                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Estado Pago</th>
+                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Fecha</th>
                                             <th className="text-right p-4 text-slate-400 font-medium text-sm">Acciones</th>
                                         </tr>
                                     </thead>
@@ -680,13 +680,13 @@ export default function DashboardOrdersPage() {
                                                 <td className="p-4 font-mono text-emerald-400">
                                                     ${order.total.toLocaleString()}
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-4 hidden md:table-cell">
                                                     {getPaymentMethodBadge(order.payment_method)}
                                                 </td>
-                                                <td className="p-4">
+                                                <td className="p-4 hidden md:table-cell">
                                                     {getPaymentStatusBadge(order.payment_status, order.payment_amount, order.total)}
                                                 </td>
-                                                <td className="p-4 text-slate-400 text-sm">
+                                                <td className="p-4 text-slate-400 text-sm hidden md:table-cell">
                                                     {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
                                                 </td>
                                                 <td className="p-4">

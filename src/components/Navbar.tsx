@@ -38,6 +38,7 @@ import {
     Bell,
     Search,
     FileText,
+    Truck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const menuSections: MenuSection[] = [
         icon: ShoppingCart,
         items: [
             { href: '/dashboard/sales', label: 'Punto de Venta', icon: ShoppingCart, description: 'Registrar ventas' },
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck, description: 'Delivery y encargos' },
             { href: '/dashboard/sales/history', label: 'Historial', icon: ClipboardList, description: 'Ver ventas realizadas' },
             { href: '/dashboard/invoices', label: 'Facturación', icon: FileText, description: 'Facturas y comprobantes' },
         ],

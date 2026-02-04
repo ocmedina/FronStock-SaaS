@@ -1,0 +1,21 @@
+{
+  "name": "FrontStock - Gestión de Inventario",
+  "short_name": "FrontStock",
+  "description": "Sistema de gestión de inventario y punto de venta.",
+  "start_url": "/dashboard/sales",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

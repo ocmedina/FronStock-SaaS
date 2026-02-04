@@ -30,6 +30,7 @@ import {
     X,
     FileText,
     CreditCard,
+    Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +62,7 @@ const menuSections: MenuSection[] = [
         title: 'Ventas',
         items: [
             { href: '/dashboard/sales', label: 'Punto de Venta', icon: ShoppingCart },
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
             { href: '/dashboard/sales/history', label: 'Historial Ventas', icon: ClipboardList },
             { href: '/dashboard/invoices', label: 'Facturación', icon: FileText },
         ],
@@ -104,7 +106,6 @@ const menuSections: MenuSection[] = [
     {
         title: 'Logística',
         items: [
-            { href: '/dashboard/orders', label: 'Pedidos', icon: Package },
             { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList },
         ],
     },

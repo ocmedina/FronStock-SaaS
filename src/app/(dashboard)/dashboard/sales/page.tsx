@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Loader2 } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   POSHeader,
   POSProductSearch,
@@ -37,6 +39,10 @@ export default function POSPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]); // New state for suppliers
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Mobile Responsiveness
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const [showMobilePayment, setShowMobilePayment] = useState(false);
 
   // Tabs State
   const [tabs, setTabs] = useState<SaleTab[]>([
@@ -375,6 +381,8 @@ export default function POSPage() {
       clearCart();
       setShowSuccessModal(true);
       fetchData();
+      // Close mobile payment if open
+      setShowMobilePayment(false);
     } catch (error: any) {
       console.error("Error processing sale (full):", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
@@ -397,6 +405,7 @@ export default function POSPage() {
         setShowConfirmModal(false);
         setShowSuccessModal(false);
         setShowShortcutsModal(false);
+        setShowMobilePayment(false);
       }
       // Ctrl+1-9 Tabs
       if (e.ctrlKey && e.key >= "1" && e.key <= "9") {
@@ -424,8 +433,30 @@ export default function POSPage() {
     );
   }
 
+  // Define Payment Panel here to reuse or just use component directly
+  const PaymentPanelComponent = (
+    <POSPaymentPanel
+      activeTab={activeTab}
+      customers={customers}
+      subtotal={subtotal}
+      total={Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0))}
+      onCustomerChange={handleCustomerChange}
+      onAddPayment={handleAddPayment}
+      onRemovePayment={handleRemovePayment}
+      onSetPayments={handleSetPayments}
+      onProcessSale={processSale}
+      processing={isProcessing}
+      discount={activeTab.discount}
+      surcharge={activeTab.surcharge}
+      onUpdateDiscount={(val) => updateActiveTab({ discount: val })}
+      onUpdateSurcharge={(val) => updateActiveTab({ surcharge: val })}
+      suppliers={suppliers}
+      onSupplierPaymentChange={handleSupplierPaymentChange}
+    />
+  );
+
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[100vh] -m-3 md:-m-6 bg-background shadow-2xl">
+    <div className="flex flex-col h-[100dvh] md:h-[100vh] -m-3 md:-m-6 bg-background shadow-2xl relative">
       <POSHeader
         tabs={tabs}
         activeTabId={activeTabId}
@@ -435,7 +466,7 @@ export default function POSPage() {
         onShowShortcuts={() => setShowShortcutsModal(true)}
       />
 
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0 bg-background">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 bg-background pb-32 lg:pb-0">
         <div className="flex-1 flex flex-col min-h-0 lg:border-r border-border">
           <POSProductSearch
             products={products}
@@ -455,25 +486,39 @@ export default function POSPage() {
           />
         </div>
 
-        <POSPaymentPanel
-          activeTab={activeTab}
-          customers={customers}
-          subtotal={subtotal}
-          total={Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0))}
-          onCustomerChange={handleCustomerChange}
-          onAddPayment={handleAddPayment}
-          onRemovePayment={handleRemovePayment}
-          onSetPayments={handleSetPayments}
-          onProcessSale={processSale}
-          processing={isProcessing}
-          discount={activeTab.discount}
-          surcharge={activeTab.surcharge}
-          onUpdateDiscount={(val) => updateActiveTab({ discount: val })}
-          onUpdateSurcharge={(val) => updateActiveTab({ surcharge: val })}
-          suppliers={suppliers}
-          onSupplierPaymentChange={handleSupplierPaymentChange}
-        />
+        {isDesktop && PaymentPanelComponent}
       </div>
+
+      {!isDesktop && (
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 bg-background border-t border-border p-3 flex items-center justify-between z-30 px-4 pb-4 md:pb-6 shadow-top">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total a Cobrar</span>
+            <span className="text-xl font-extrabold text-emerald-500">${total.toLocaleString("es-AR")}</span>
+          </div>
+          <Button
+            size="lg"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 px-8 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            onClick={() => setShowMobilePayment(true)}
+            disabled={activeTab.cart.length === 0}
+          >
+            <Check className="mr-2 h-5 w-5" />
+            Cobrar
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Payment Drawer */}
+      <Drawer open={showMobilePayment} onOpenChange={setShowMobilePayment}>
+        <DrawerContent className="h-[90vh] flex flex-col bg-background">
+          <div className="p-4 border-b border-border bg-muted/10">
+            <DrawerTitle className="text-lg font-bold text-center">Procesar Venta</DrawerTitle>
+            <DrawerDescription className="sr-only">Panel de cobro y selección de método de pago</DrawerDescription>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {PaymentPanelComponent}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <POSProductModal
         open={showProductModal}
