@@ -73,10 +73,12 @@ export function CustomersView({
         }
     }, [organizationId, fetchCustomers]);
 
+    const [selectedChannel, setSelectedChannel] = useState<"all" | "delivery" | "counter" | "general">("all");
+
     // Reset pagination on filter change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, showDebtorsOnly]);
+    }, [searchQuery, showDebtorsOnly, selectedChannel]);
 
     // Filter Logic
     const filteredCustomers = customers.filter((c) => {
@@ -89,7 +91,10 @@ export function CustomersView({
         const effectiveShowDebtors = hideDebtorsToggle ? true : showDebtorsOnly;
         const matchesDebt = effectiveShowDebtors ? c.balance > 0 : true;
 
-        return matchesSearch && matchesDebt;
+        // Channel filter
+        const matchesChannel = selectedChannel === "all" || c.sales_channel === selectedChannel;
+
+        return matchesSearch && matchesDebt && matchesChannel;
     });
 
     // Pagination Logic
@@ -243,13 +248,46 @@ export function CustomersView({
 
             <CustomerKPIs stats={stats} />
 
-            <CustomerFilters
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                showDebtorsOnly={showDebtorsOnly}
-                setShowDebtorsOnly={setShowDebtorsOnly}
-                hideDebtorsToggle={hideDebtorsToggle}
-            />
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                <CustomerFilters
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    showDebtorsOnly={showDebtorsOnly}
+                    setShowDebtorsOnly={setShowDebtorsOnly}
+                    hideDebtorsToggle={hideDebtorsToggle}
+                />
+                <div className="flex items-center bg-muted p-1 rounded-lg">
+                    <button
+                        onClick={() => setSelectedChannel("all")}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'all' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        Todos
+                    </button>
+                    <button
+                        onClick={() => setSelectedChannel("delivery")}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'delivery' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        Reparto
+                    </button>
+                    <button
+                        onClick={() => setSelectedChannel("counter")}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'counter' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        Mostrador
+                    </button>
+                    <button
+                        onClick={() => setSelectedChannel("general")}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'general' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                    >
+                        Mixtos
+                    </button>
+                </div>
+            </div>
 
             <CustomerTable
                 customers={paginatedCustomers}

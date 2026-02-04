@@ -196,11 +196,14 @@ export function POSPaymentPanel({
     // Let's rely on the previous logic but add the exception.
 
     // Sort customers: "Consumidor Final" first, then alphabetical
-    const sortedCustomers = [...customers].sort((a, b) => {
-        if (a.name === "Consumidor Final") return -1;
-        if (b.name === "Consumidor Final") return 1;
-        return a.name.localeCompare(b.name);
-    });
+    // Also FILTER: only show "counter" or "general" customers in POS
+    const sortedCustomers = [...customers]
+        .filter(c => !c.sales_channel || c.sales_channel === 'counter' || c.sales_channel === 'general')
+        .sort((a, b) => {
+            if (a.name === "Consumidor Final") return -1;
+            if (b.name === "Consumidor Final") return 1;
+            return a.name.localeCompare(b.name);
+        });
 
     // Calculate totals
     const totalPaid = (activeTab.payments || []).reduce((sum, p) => sum + p.amount, 0);

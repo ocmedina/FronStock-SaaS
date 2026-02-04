@@ -15,6 +15,7 @@ export interface Customer {
     id: string;
     name: string;
     customer_type: "retail" | "wholesale";
+    sales_channel?: "general" | "delivery" | "counter";
 }
 
 export interface CartItem {

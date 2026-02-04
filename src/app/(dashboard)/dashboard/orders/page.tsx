@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { Plus, Search, Filter, Truck, CheckCircle, Clock, AlertCircle, ChefHat, MapPin, Phone, DollarSign, Calendar, LayoutGrid, LayoutList, ArrowUpDown, X, User, Edit, ListPlus } from "lucide-react";
+import { Plus, Search, Filter, Truck, CheckCircle, Clock, AlertCircle, ChefHat, MapPin, Phone, DollarSign, Calendar, LayoutGrid, LayoutList, ArrowUpDown, X, User, Edit, ListPlus, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { format, formatDistanceToNow, startOfDay, endOfDay } from "date-fns";
+import { format, formatDistanceToNow, startOfDay, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
 import { DeliveryConfirmationModal } from "@/components/delivery/DeliveryConfirmationModal";
@@ -16,9 +16,10 @@ import { DownloadRemitoButton } from "@/components/orders/DownloadRemitoButton";
 import { ViewInvoiceButton } from "@/components/orders/ViewInvoiceButton";
 import { CreateInvoiceModal } from "@/components/invoices/CreateInvoiceModal";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
-type ViewMode = "grid" | "list" | "expanded";
+type ViewMode = "grid" | "list";
 type SortField = "created_at" | "total" | "customer" | "status";
 type SortOrder = "asc" | "desc";
 
@@ -27,7 +28,7 @@ export default function DashboardOrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [statusFilter, setStatusFilter] = useState<string>("active"); // Show only active orders by default
     const [paymentFilter, setPaymentFilter] = useState<string>("all");
     const [dateFilter, setDateFilter] = useState<string>("all");
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -42,6 +43,53 @@ export default function DashboardOrdersPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
     const [orderForInvoice, setOrderForInvoice] = useState<any>(null);
+
+    // State for collapsible groups (expanded by default for better UX)
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+
+    // State for bulk actions
+    const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+
+    const toggleGroup = (groupKey: string) => {
+        setExpandedGroups(prev => ({
+            ...prev,
+            [groupKey]: !prev[groupKey]
+        }));
+    };
+
+    const toggleOrderSelection = (orderId: string) => {
+        setSelectedOrders(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(orderId)) {
+                newSet.delete(orderId);
+            } else {
+                newSet.add(orderId);
+            }
+            return newSet;
+        });
+    };
+
+    const selectAllInGroup = (groupOrders: any[]) => {
+        setSelectedOrders(prev => {
+            const newSet = new Set(prev);
+            groupOrders.forEach(order => newSet.add(order.id));
+            return newSet;
+        });
+    };
+
+    const deselectAllInGroup = (groupOrders: any[]) => {
+        setSelectedOrders(prev => {
+            const newSet = new Set(prev);
+            groupOrders.forEach(order => newSet.delete(order.id));
+            return newSet;
+        });
+    };
+
+    // Helper to format item summary
+    const getOrderSummary = (items: any[]) => {
+        if (!items || items.length === 0) return "Sin items";
+        return items.map(i => `${i.quantity}x ${i.product_name}`).join(", ");
+    };
 
     const handleCreateInvoice = (order: any) => {
         setOrderForInvoice(order);
@@ -161,6 +209,62 @@ export default function DashboardOrdersPage() {
         }
     };
 
+    // Filter label mappings for chips
+    const statusLabels: Record<string, string> = {
+        active: "Activos",
+        all: "Todos",
+        pending: "Pendientes",
+        preparing: "En Cocina",
+        ready: "Listos",
+        out_for_delivery: "En Camino",
+        delivered: "Entregados",
+        cancelled: "Cancelados"
+    };
+
+    const paymentLabels: Record<string, string> = {
+        all: "Todos",
+        cash: "Efectivo",
+        card: "Tarjeta",
+        transfer: "Transferencia",
+        credit: "Cuenta Corriente"
+    };
+
+    const dateLabels: Record<string, string> = {
+        all: "Todas",
+        today: "Hoy",
+        yesterday: "Ayer",
+        week: "Esta Semana",
+        month: "Este Mes"
+    };
+
+    // Urgency indicator based on time and status
+    const getUrgencyIndicator = (createdAt: string, status: string) => {
+        const minutesAgo = differenceInMinutes(new Date(), new Date(createdAt));
+
+        if (status === 'pending' && minutesAgo > 30) {
+            return (
+                <Badge className="animate-pulse bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                    ¡Urgente! {minutesAgo}min
+                </Badge>
+            );
+        }
+        if (status === 'preparing' && minutesAgo > 45) {
+            return (
+                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
+                    Revisar {minutesAgo}min
+                </Badge>
+            );
+        }
+        if (status === 'ready' && minutesAgo > 20) {
+            return (
+                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                    Listo hace {minutesAgo}min
+                </Badge>
+            );
+        }
+        return null;
+    };
+
     // Filtering and Sorting
     const getFilteredOrders = () => {
         let filtered = [...orders];
@@ -176,7 +280,12 @@ export default function DashboardOrdersPage() {
         }
 
         // Status filter
-        if (statusFilter !== "all") {
+        if (statusFilter === "active") {
+            // Show only active orders (exclude delivered and cancelled)
+            filtered = filtered.filter(o =>
+                o.delivery_status !== 'delivered' && o.delivery_status !== 'cancelled'
+            );
+        } else if (statusFilter !== "all") {
             filtered = filtered.filter(o => o.delivery_status === statusFilter);
         }
 
@@ -237,6 +346,96 @@ export default function DashboardOrdersPage() {
     };
 
     const filteredOrders = getFilteredOrders();
+
+    // Grouping Logic for Grid View
+    const groupedOrders = filteredOrders.reduce((acc, order) => {
+        const customerId = order.customer?.id || order.customer?.name || 'guest'; // specific fallback
+        const key = `${customerId}-${order.customer?.name}`; // composite key to be safe
+
+        if (!acc[key]) {
+            acc[key] = {
+                key,
+                customerId,
+                customerName: order.customer?.name || "Cliente Ocasional",
+                customerAddress: order.customer?.address || order.delivery_address || "",
+                orders: [],
+                totalAmount: 0,
+                lastCreatedAt: order.created_at
+            };
+        }
+
+        acc[key].orders.push(order);
+        acc[key].totalAmount += order.total;
+        if (new Date(order.created_at) > new Date(acc[key].lastCreatedAt)) {
+            acc[key].lastCreatedAt = order.created_at;
+        }
+
+        return acc;
+    }, {} as Record<string, any>);
+
+    const sortedGroups = Object.values(groupedOrders).sort((a: any, b: any) =>
+        new Date(b.lastCreatedAt).getTime() - new Date(a.lastCreatedAt).getTime()
+    );
+
+    // Initialize expanded groups when sortedGroups changes (expand all by default)
+    useEffect(() => {
+        const initialExpanded: Record<string, boolean> = {};
+        sortedGroups.forEach((group: any) => {
+            if (!(group.key in expandedGroups)) {
+                initialExpanded[group.key] = true; // Expand by default
+            }
+        });
+        if (Object.keys(initialExpanded).length > 0) {
+            setExpandedGroups(prev => ({ ...prev, ...initialExpanded }));
+        }
+    }, [sortedGroups.length]);
+
+    const handleDeliverGroup = (groupOrders: any[]) => {
+        setOrderToDeliver(groupOrders);
+        setDeliveryConfirmOpen(true);
+    };
+
+    const handleMarkGroupReady = async (groupOrders: any[]) => {
+        try {
+            const orderIds = groupOrders.map(o => o.id);
+            const { error } = await supabase
+                .from('orders')
+                .update({ delivery_status: 'ready' })
+                .in('id', orderIds);
+
+            if (error) throw error;
+            toast.success(`${groupOrders.length} pedidos marcados como listos`);
+            fetchOrders();
+        } catch (error: any) {
+            toast.error('Error al actualizar pedidos: ' + error.message);
+        }
+    };
+
+    const handleBulkDeliver = async (orderIds: string[]) => {
+        try {
+            const ordersToDeliver = orders.filter(o => orderIds.includes(o.id));
+            setOrderToDeliver(ordersToDeliver);
+            setDeliveryConfirmOpen(true);
+        } catch (error: any) {
+            toast.error('Error: ' + error.message);
+        }
+    };
+
+    const handleBulkStatusChange = async (orderIds: string[], status: string) => {
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ delivery_status: status })
+                .in('id', orderIds);
+
+            if (error) throw error;
+            toast.success(`${orderIds.length} pedidos actualizados`);
+            setSelectedOrders(new Set());
+            fetchOrders();
+        } catch (error: any) {
+            toast.error('Error al actualizar pedidos: ' + error.message);
+        }
+    };
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
@@ -421,14 +620,6 @@ export default function DashboardOrdersPage() {
                         >
                             <LayoutList className="h-4 w-4" />
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className={`border-slate-800 ${viewMode === 'expanded' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
-                            onClick={() => handleViewModeChange('expanded')}
-                        >
-                            <ListPlus className="h-4 w-4" />
-                        </Button>
                     </div>
                 </div>
 
@@ -442,6 +633,7 @@ export default function DashboardOrdersPage() {
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
+                                <option value="active">Activos</option>
                                 <option value="all">Todos</option>
                                 <option value="pending">Pendientes</option>
                                 <option value="preparing">En Cocina</option>
@@ -496,6 +688,48 @@ export default function DashboardOrdersPage() {
                 )}
             </div>
 
+            {/* Active Filter Chips */}
+            {(statusFilter !== 'active' || paymentFilter !== 'all' || dateFilter !== 'all') && (
+                <div className="flex gap-2 flex-wrap">
+                    {statusFilter !== 'active' && (
+                        <Badge
+                            variant="secondary"
+                            className="gap-2 px-3 py-1.5 bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"
+                        >
+                            <span className="text-xs">Estado: <span className="font-semibold">{statusLabels[statusFilter]}</span></span>
+                            <X
+                                className="h-3 w-3 cursor-pointer hover:text-red-400 transition-colors"
+                                onClick={() => setStatusFilter('active')}
+                            />
+                        </Badge>
+                    )}
+                    {paymentFilter !== 'all' && (
+                        <Badge
+                            variant="secondary"
+                            className="gap-2 px-3 py-1.5 bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"
+                        >
+                            <span className="text-xs">Pago: <span className="font-semibold">{paymentLabels[paymentFilter]}</span></span>
+                            <X
+                                className="h-3 w-3 cursor-pointer hover:text-red-400 transition-colors"
+                                onClick={() => setPaymentFilter('all')}
+                            />
+                        </Badge>
+                    )}
+                    {dateFilter !== 'all' && (
+                        <Badge
+                            variant="secondary"
+                            className="gap-2 px-3 py-1.5 bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"
+                        >
+                            <span className="text-xs">Fecha: <span className="font-semibold">{dateLabels[dateFilter]}</span></span>
+                            <X
+                                className="h-3 w-3 cursor-pointer hover:text-red-400 transition-colors"
+                                onClick={() => setDateFilter('all')}
+                            />
+                        </Badge>
+                    )}
+                </div>
+            )}
+
             {/* Orders Grid/List */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -518,389 +752,255 @@ export default function DashboardOrdersPage() {
                 <>
                     {viewMode === "grid" && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {filteredOrders.map((order) => (
-                                <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition-colors">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <h3 className="font-medium text-white text-lg">{order.customer?.name || "Cliente Ocasional"}</h3>
-                                            <p className="text-slate-500 text-sm">#{order.id.slice(0, 8)}</p>
+                            {sortedGroups.map((group: any) => (
+                                <div key={group.key} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-colors shadow-sm">
+                                    {/* Group Header */}
+                                    <div className="p-4 bg-slate-900/50 border-b border-slate-800">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <User className="h-4 w-4 text-emerald-500" />
+                                                <h3 className="font-bold text-white text-base truncate max-w-[150px]" title={group.customerName}>
+                                                    {group.customerName}
+                                                </h3>
+                                            </div>
+                                            <Badge variant="outline" className="text-xs border-slate-700 text-slate-300">
+                                                {group.orders.length} pedidos
+                                            </Badge>
                                         </div>
-                                        {getStatusBadge(order.delivery_status || 'pending')}
-                                    </div>
 
-                                    <div className="flex items-center justify-between py-2 border-y border-slate-800">
-                                        <div className="flex items-center gap-2 text-slate-300">
-                                            <DollarSign className="h-4 w-4 text-emerald-500" />
-                                            <span className="font-semibold text-lg">${order.total.toLocaleString()}</span>
-                                        </div>
-                                        <div className="text-right text-xs text-slate-500">
-                                            {order.order_items?.length || 0} items
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2 text-sm">
-                                        {order.delivery_status !== 'delivered' && order.delivery_status !== 'cancelled' && (
-                                            <div className="flex items-start gap-2">
-                                                <Clock className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
-                                                <span className="text-amber-400 font-medium">
-                                                    Entrega est: {order.estimated_mins} min
+                                        <div className="flex justify-between items-end">
+                                            <div className="flex items-start gap-1.5 text-slate-500 text-xs mt-1 max-w-[70%]">
+                                                <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                                                <span className="line-clamp-2 leading-tight">
+                                                    {group.customerAddress || "Sin dirección"}
                                                 </span>
                                             </div>
-                                        )}
-                                        {order.delivery_address && (
-                                            <div className="flex items-start gap-2">
-                                                <MapPin className="h-3.5 w-3.5 text-slate-500 mt-0.5 shrink-0" />
-                                                <span className="line-clamp-2">{order.customer?.address || order.delivery_address}</span>
+                                            <div className="text-right">
+                                                <span className="block text-xl font-mono font-bold text-emerald-400">
+                                                    ${group.totalAmount.toLocaleString()}
+                                                </span>
                                             </div>
-                                        )}
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            {getPaymentMethodBadge(order.payment_method)}
-                                            {getPaymentStatusBadge(order.payment_status, order.payment_amount, order.total)}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-slate-500 text-xs">
-                                            <Calendar className="h-3.5 w-3.5" />
-                                            <span>{formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2 mb-2 items-center">
-                                        {/* Remito */}
-                                        <div className="flex-1">
-                                            <DownloadRemitoButton order={order} className="w-full" />
-                                        </div>
-                                        {/* Factura */}
-                                        <div className="flex-1">
-                                            {order.invoices && order.invoices.length > 0 ? (
-                                                <ViewInvoiceButton invoice={order.invoices[0]} order={order} className="w-full" />
-                                            ) : (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="w-full border-slate-700 text-slate-300 hover:bg-slate-800"
-                                                    onClick={() => handleCreateInvoice(order)}
-                                                >
-                                                    <DollarSign className="h-3.5 w-3.5 mr-1 text-slate-400" />
-                                                    Facturar
-                                                </Button>
-                                            )}
-                                        </div>
+                                    {/* Mini List of Orders */}
+                                    <div className="p-2 gap-2 flex flex-col bg-slate-950/20 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        {group.orders.map((order: any, index: number) => (
+                                            <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors relative overflow-hidden shrink-0">
+                                                {/* Numbering Badge */}
+                                                <div className="absolute top-0 right-0 bg-slate-800 text-[10px] text-slate-400 px-2 py-0.5 rounded-bl-lg font-mono border-b border-l border-slate-700">
+                                                    #{group.orders.length - index}
+                                                </div>
+
+                                                <div className="flex justify-between items-start mb-2 pr-6">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            {getStatusBadge(order.delivery_status || 'pending')}
+                                                            {getUrgencyIndicator(order.created_at, order.delivery_status || 'pending')}
+                                                            <span className="text-[10px] text-slate-500 font-mono">#{order.id.slice(0, 4)}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                                            <Clock className="h-3 w-3" />
+                                                            <span>{formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-mono font-medium text-white text-sm">
+                                                        ${order.total.toLocaleString()}
+                                                    </span>
+                                                </div>
+
+                                                {/* Item Summary */}
+                                                <div className="mb-2 text-[10px] text-slate-300 bg-slate-950/50 p-1.5 rounded border border-slate-800/50">
+                                                    {getOrderSummary(order.order_items)}
+                                                </div>
+
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="h-6 px-2 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800"
+                                                        onClick={() => handleViewDetails(order.id)}
+                                                    >
+                                                        Ver Detalles
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2">
+                                    {/* Footer Actions */}
+                                    <div className="p-3 bg-slate-900 border-t border-slate-800 flex gap-2">
                                         <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="border-blue-700 text-blue-400 hover:bg-blue-500/10"
-                                            onClick={() => handleEditOrder(order)}
+                                            className="flex-1 bg-emerald-600/90 hover:bg-emerald-500 text-white h-9 text-xs"
+                                            onClick={() => handleDeliverGroup(group.orders)}
                                         >
-                                            <Edit className="h-3.5 w-3.5 mr-1" />
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                                            onClick={() => handleViewDetails(order.id)}
-                                        >
-                                            Ver Detalles
+                                            <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                                            Cobrar / Entregar
                                         </Button>
                                     </div>
-
-                                    <div className="flex gap-2 mt-2">
-                                        {order.delivery_status === 'pending' && (
-                                            <Button
-                                                size="sm"
-                                                className="flex-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20"
-                                                onClick={() => handleUpdateStatus(order.id, 'preparing')}
-                                            >
-                                                <ChefHat className="h-3.5 w-3.5 mr-1" />
-                                                A Cocina
-                                            </Button>
-                                        )}
-                                        {order.delivery_status === 'preparing' && (
-                                            <Button
-                                                size="sm"
-                                                className="flex-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20"
-                                                onClick={() => handleUpdateStatus(order.id, 'ready')}
-                                            >
-                                                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                                Listo
-                                            </Button>
-                                        )}
-                                        {order.delivery_status === 'ready' && (
-                                            <Button
-                                                size="sm"
-                                                className="flex-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20"
-                                                onClick={() => handleUpdateStatus(order.id, 'out_for_delivery')}
-                                            >
-                                                <Truck className="h-3.5 w-3.5 mr-1" />
-                                                Enviar
-                                            </Button>
-                                        )}
-                                        {order.delivery_status === 'out_for_delivery' && (
-                                            <Button
-                                                size="sm"
-                                                className="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                                                onClick={() => handleUpdateStatus(order.id, 'delivered')}
-                                            >
-                                                <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                                Entregar
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                </div >
+                            ))
+                            }
+                        </div >
                     )}
 
-                    {viewMode === "list" && (
-                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-900 border-b border-slate-800">
-                                        <tr>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Cliente</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Estado</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm">Monto</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Pago</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Estado Pago</th>
-                                            <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Fecha</th>
-                                            <th className="text-right p-4 text-slate-400 font-medium text-sm">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800">
-                                        {filteredOrders.map((order) => (
-                                            <tr key={order.id} className="border-b border-slate-800/50 hover:bg-slate-800/50">
-                                                <td className="p-4 font-medium text-white">
-                                                    {order.customer?.name || "Cliente Ocasional"}
-                                                </td>
-                                                <td className="p-4">
-                                                    {getStatusBadge(order.delivery_status || 'pending')}
-                                                </td>
-                                                <td className="p-4 font-mono text-emerald-400">
-                                                    ${order.total.toLocaleString()}
-                                                </td>
-                                                <td className="p-4 hidden md:table-cell">
-                                                    {getPaymentMethodBadge(order.payment_method)}
-                                                </td>
-                                                <td className="p-4 hidden md:table-cell">
-                                                    {getPaymentStatusBadge(order.payment_status, order.payment_amount, order.total)}
-                                                </td>
-                                                <td className="p-4 text-slate-400 text-sm hidden md:table-cell">
-                                                    {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex justify-end gap-2 items-center">
-                                                        {/* Documentos */}
-                                                        <div className="flex gap-1 mr-2 border-r border-slate-800 pr-2">
-                                                            <DownloadRemitoButton order={order} className="w-8" compact={true} />
+                    {
+                        viewMode === "list" && (
+                            <div className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-slate-900 border-b border-slate-800">
+                                            <tr>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm w-[30%]">Detalles del Pedido</th>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm">Estado</th>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm">Monto</th>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Pago</th>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Estado Pago</th>
+                                                <th className="text-left p-4 text-slate-400 font-medium text-sm hidden md:table-cell">Fecha</th>
+                                                <th className="text-right p-4 text-slate-400 font-medium text-sm">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        {sortedGroups.map((group: any) => (
+                                            <tbody key={group.key} className="border-b-4 border-slate-950/50">
+                                                {/* Group Header */}
+                                                <tr
+                                                    className="bg-slate-900/80 border-b border-slate-800 hover:bg-slate-800 transition-colors"
+                                                >
+                                                    <td colSpan={7} className="p-3 px-4">
+                                                        <div className="flex justify-between items-center gap-4">
+                                                            <div className="flex items-center gap-3 flex-1">
+                                                                <div
+                                                                    className="text-slate-500 cursor-pointer hover:text-slate-300"
+                                                                    onClick={() => toggleGroup(group.key)}
+                                                                >
+                                                                    {expandedGroups[group.key] ? (
+                                                                        <ChevronDown className="h-5 w-5" />
+                                                                    ) : (
+                                                                        <ChevronRight className="h-5 w-5" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-xs">
+                                                                    <User className="h-4 w-4" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <span className="font-bold text-white text-sm block">{group.customerName}</span>
+                                                                    <span className="text-xs text-slate-500 block flex items-center gap-1">
+                                                                        <MapPin className="h-3 w-3" /> {group.customerAddress || "Retira en local"}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <Badge variant="outline" className="text-xs border-slate-700 text-slate-400">
+                                                                    {group.orders.length} pedidos
+                                                                </Badge>
+                                                                <span className="font-mono text-emerald-400 font-bold">
+                                                                    ${group.totalAmount.toLocaleString()}
+                                                                </span>
+                                                                {/* Quick Action Buttons */}
+                                                                <div className="flex gap-2">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-8 px-3 text-xs border-emerald-700/50 text-emerald-400 hover:bg-emerald-500/10"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleMarkGroupReady(group.orders);
+                                                                        }}
+                                                                    >
+                                                                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                                                        Marcar Listos
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-500"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeliverGroup(group.orders);
+                                                                        }}
+                                                                    >
+                                                                        <Truck className="h-3.5 w-3.5 mr-1" />
+                                                                        Entregar Todo
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
 
-                                                            {order.invoices && order.invoices.length > 0 ? (
-                                                                <ViewInvoiceButton invoice={order.invoices[0]} order={order} className="w-8" compact={true} />
-                                                            ) : (
+                                                {/* Orders - ONLY show if expanded */}
+                                                {expandedGroups[group.key] && group.orders.map((order: any, index: number) => (
+                                                    <tr key={order.id} className="border-b border-slate-800/30 hover:bg-slate-800/30 bg-slate-950/20">
+                                                        <td className="p-4 pl-6 border-l-4 border-transparent hover:border-emerald-500/30 transition-colors">
+                                                            <div className="flex items-center gap-3">
+                                                                <Checkbox
+                                                                    checked={selectedOrders.has(order.id)}
+                                                                    onCheckedChange={() => toggleOrderSelection(order.id)}
+                                                                    className="border-slate-600"
+                                                                />
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded border border-slate-700">
+                                                                            #{group.orders.length - index}
+                                                                        </span>
+                                                                        <span className="text-xs text-slate-500 font-mono">ID: {order.id.slice(0, 4)}</span>
+                                                                    </div>
+                                                                    <span className="text-xs text-slate-300 italic">
+                                                                        {getOrderSummary(order.order_items)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="flex flex-col gap-1.5">
+                                                                {getStatusBadge(order.delivery_status || 'pending')}
+                                                                {getUrgencyIndicator(order.created_at, order.delivery_status || 'pending')}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 font-mono text-emerald-400 text-sm">
+                                                            ${order.total.toLocaleString()}
+                                                        </td>
+                                                        <td className="p-4 hidden md:table-cell">
+                                                            {getPaymentMethodBadge(order.payment_method)}
+                                                        </td>
+                                                        <td className="p-4 hidden md:table-cell">
+                                                            {getPaymentStatusBadge(order.payment_status, order.payment_amount, order.total)}
+                                                        </td>
+                                                        <td className="p-4 text-slate-400 text-xs hidden md:table-cell">
+                                                            {format(new Date(order.created_at), "dd/MM HH:mm", { locale: es })}
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="flex justify-end gap-2 items-center">
+                                                                <DownloadRemitoButton order={order} className="w-8 h-8" compact={true} />
+
+                                                                <Link href={`/dashboard/orders/edit/${order.id}`}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-8 w-8 p-0 text-blue-400 hover:bg-blue-500/10"
+                                                                    >
+                                                                        <Edit className="h-4 w-4" />
+                                                                    </Button>
+                                                                </Link>
+
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
-                                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10"
-                                                                    title="Generar Factura"
-                                                                    onClick={() => handleCreateInvoice(order)}
+                                                                    className="text-slate-300 hover:bg-slate-800 h-8 px-2 text-xs"
+                                                                    onClick={() => handleViewDetails(order.id)}
                                                                 >
-                                                                    <DollarSign className="h-4 w-4" />
+                                                                    Ver
                                                                 </Button>
-                                                            )}
-                                                        </div>
-
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 p-0 text-blue-400 hover:bg-blue-500/10"
-                                                            onClick={() => handleEditOrder(order)}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            className="text-slate-300 hover:bg-slate-800"
-                                                            onClick={() => handleViewDetails(order.id)}
-                                                        >
-                                                            Ver
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-
-                    {viewMode === "expanded" && (
-                        <div className="space-y-4">
-                            {filteredOrders.map((order) => (
-                                <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-colors">
-                                    {/* Header */}
-                                    <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-slate-900/50">
-                                        <div className="flex gap-4 items-center">
-                                            <div className="h-12 w-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
-                                                <User className="h-6 w-6" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-white text-lg">{order.customer?.name || "Cliente Ocasional"}</h3>
-                                                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                                    <Clock className="h-3.5 w-3.5" />
-                                                    <span>{formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}</span>
-                                                    <span>•</span>
-                                                    <span>#{order.id.slice(0, 8)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="flex gap-2">
-                                                {getStatusBadge(order.delivery_status || 'pending')}
-                                                {getPaymentStatusBadge(order.payment_status, order.payment_amount, order.total)}
-                                            </div>
-                                            {order.delivery_status !== 'delivered' && (
-                                                <span className="text-amber-400 text-sm font-medium">
-                                                    Entrega est: {order.estimated_mins} min
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* Order Items */}
-                                        <div className="lg:col-span-2 space-y-3">
-                                            <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Productos</h4>
-                                            <div className="bg-slate-950/50 rounded-lg p-3 space-y-2">
-                                                {order.order_items?.map((item: any) => (
-                                                    <div key={item.id} className="flex justify-between items-center text-sm border-b border-slate-800/50 last:border-0 pb-2 last:pb-0">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="bg-slate-800 text-white w-6 h-6 rounded flex items-center justify-center text-xs font-bold">
-                                                                {item.quantity}
-                                                            </span>
-                                                            <span className="text-slate-200">{item.product_name}</span>
-                                                        </div>
-                                                        <span className="text-slate-400 font-mono">${(item.total).toLocaleString()}</span>
-                                                    </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
                                                 ))}
-                                                {!order.order_items?.length && (
-                                                    <p className="text-slate-500 text-sm italic">Sin productos registrados</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Details & Actions */}
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h4 className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Detalles de Entrega</h4>
-                                                <div className="bg-slate-950/50 rounded-lg p-3 space-y-2 text-sm">
-                                                    {order.customer?.address && (
-                                                        <div className="flex gap-2 text-slate-300">
-                                                            <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
-                                                            <span>{order.customer.address}</span>
-                                                        </div>
-                                                    )}
-                                                    {order.delivery_notes && (
-                                                        <div className="flex gap-2 text-amber-300/80 bg-amber-900/20 p-2 rounded">
-                                                            <AlertCircle className="h-4 w-4 shrink-0" />
-                                                            <span className="italic">"{order.delivery_notes}"</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-slate-400">Total</span>
-                                                    <span className="text-emerald-400 font-bold text-xl">${order.total.toLocaleString()}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-sm text-slate-500">
-                                                    <span>MétodoPago</span>
-                                                    <span className="text-slate-300 capitalize">{order.payment_method === 'credit' ? 'Cuenta Cte.' : order.payment_method}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    className="border-blue-700 text-blue-400 hover:bg-blue-500/10"
-                                                    onClick={() => handleEditOrder(order)}
-                                                >
-                                                    <Edit className="h-4 w-4 mr-2" />
-                                                    Editar
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    className="border-slate-700 text-slate-300"
-                                                    onClick={() => handleViewDetails(order.id)}
-                                                >
-                                                    Detalles
-                                                </Button>
-
-                                                {/* Documentación */}
-                                                <DownloadRemitoButton order={order} className="col-span-1" />
-
-                                                {order.invoices && order.invoices.length > 0 ? (
-                                                    <ViewInvoiceButton invoice={order.invoices[0]} order={order} className="col-span-1" />
-                                                ) : (
-                                                    <Button
-                                                        variant="outline"
-                                                        className="col-span-1 border-slate-700 text-slate-300 hover:bg-slate-800"
-                                                        onClick={() => handleCreateInvoice(order)}
-                                                    >
-                                                        <DollarSign className="h-4 w-4 mr-2 text-slate-400" />
-                                                        Facturar
-                                                    </Button>
-                                                )}
-
-                                                {/* Status Actions */}
-                                                <div className="col-span-2 pt-2 border-t border-slate-800/50 mt-2">
-                                                    {order.delivery_status === 'pending' && (
-                                                        <Button
-                                                            className="w-full bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20"
-                                                            onClick={() => handleUpdateStatus(order.id, 'preparing')}
-                                                        >
-                                                            <ChefHat className="h-4 w-4 mr-2" />
-                                                            Enviar a Cocina
-                                                        </Button>
-                                                    )}
-                                                    {order.delivery_status === 'preparing' && (
-                                                        <Button
-                                                            className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20"
-                                                            onClick={() => handleUpdateStatus(order.id, 'ready')}
-                                                        >
-                                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                                            Marcar Listo
-                                                        </Button>
-                                                    )}
-                                                    {order.delivery_status === 'ready' && (
-                                                        <Button
-                                                            className="w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20"
-                                                            onClick={() => handleUpdateStatus(order.id, 'out_for_delivery')}
-                                                        >
-                                                            <Truck className="h-4 w-4 mr-2" />
-                                                            Enviar Reparto
-                                                        </Button>
-                                                    )}
-                                                    {order.delivery_status === 'out_for_delivery' && (
-                                                        <Button
-                                                            className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                                                            onClick={() => handleUpdateStatus(order.id, 'delivered')}
-                                                        >
-                                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                                            Confirmar Entrega
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                            </tbody>
+                                        ))}
+                                    </table>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        )
+                    }
                 </>
             )}
 
@@ -909,12 +1009,12 @@ export default function DashboardOrdersPage() {
                 orderId={selectedOrderId}
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
+                onSuccess={fetchOrders}
             />
 
             <DeliveryConfirmationModal
-                orderId={orderToDeliver?.id || null}
-                orderTotal={orderToDeliver?.total || 0}
-                currentPaymentMethod={orderToDeliver?.payment_method || "cash"}
+                // Adapted for multiple orders
+                orders={Array.isArray(orderToDeliver) ? orderToDeliver : (orderToDeliver ? [orderToDeliver] : [])}
                 open={deliveryConfirmOpen}
                 onOpenChange={setDeliveryConfirmOpen}
                 onSuccess={fetchOrders}
@@ -928,18 +1028,68 @@ export default function DashboardOrdersPage() {
                 onSuccess={fetchOrders}
             />
 
-            {createInvoiceOpen && (
-                <CreateInvoiceModal
-                    open={createInvoiceOpen}
-                    onOpenChange={setCreateInvoiceOpen}
-                    organizationId={organizationId || ""}
-                    onSuccess={() => {
-                        fetchOrders();
-                        setCreateInvoiceOpen(false);
-                    }}
-                    preselectedOrder={orderForInvoice}
-                />
+            {
+                createInvoiceOpen && (
+                    <CreateInvoiceModal
+                        open={createInvoiceOpen}
+                        onOpenChange={setCreateInvoiceOpen}
+                        organizationId={organizationId || ""}
+                        onSuccess={() => {
+                            fetchOrders();
+                            setCreateInvoiceOpen(false);
+                        }}
+                        preselectedOrder={orderForInvoice}
+                    />
+                )
+            }
+
+            {/* Floating Bulk Action Bar */}
+            {selectedOrders.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-4 min-w-[500px]">
+                        <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                                </div>
+                                <div>
+                                    <p className="text-white font-semibold text-sm">
+                                        {selectedOrders.size} {selectedOrders.size === 1 ? 'pedido seleccionado' : 'pedidos seleccionados'}
+                                    </p>
+                                    <p className="text-slate-400 text-xs">Selecciona una acción para aplicar</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                                    onClick={() => handleBulkStatusChange(Array.from(selectedOrders), 'ready')}
+                                >
+                                    <CheckCircle className="h-4 w-4 mr-1.5" />
+                                    Marcar Listos
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                                    onClick={() => handleBulkDeliver(Array.from(selectedOrders))}
+                                >
+                                    <Truck className="h-4 w-4 mr-1.5" />
+                                    Entregar
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-slate-400 hover:text-white hover:bg-slate-800"
+                                    onClick={() => setSelectedOrders(new Set())}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
-        </div>
+        </div >
     );
 }

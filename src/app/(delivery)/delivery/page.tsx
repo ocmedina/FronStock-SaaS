@@ -54,7 +54,8 @@ export default function DeliveryHomePage() {
                     payment_status,
                     payment_method,
                     created_at,
-                    customer:customers(name, address, phone)
+                    customer:customers(name, address, phone),
+                    order_items(quantity, product_name)
                 `)
                 .order('created_at', { ascending: false })
                 .limit(20);
@@ -67,6 +68,12 @@ export default function DeliveryHomePage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Helper to format item summary
+    const getOrderSummary = (items: any[]) => {
+        if (!items || items.length === 0) return "Sin items";
+        return items.map(i => `${i.quantity}x ${i.product_name}`).join(", ");
     };
 
     useEffect(() => {
@@ -122,18 +129,37 @@ export default function DeliveryHomePage() {
         );
     };
 
-    const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-        // If marking as delivered, open confirmation modal
-        if (newStatus === 'delivered') {
-            const order = orders.find(o => o.id === orderId);
-            if (order) {
-                setOrderToDeliver(order);
-                setDeliveryConfirmOpen(true);
-            }
-            return;
+    // Grouping Logic
+    const groupedOrders = orders.reduce((acc, order) => {
+        const customerId = (order as any).customer_id || 'guest';
+        const customerName = order.customer?.name || 'Cliente Mostrador';
+
+        if (!acc[customerId]) {
+            acc[customerId] = {
+                customerId,
+                customerName,
+                customerAddress: order.customer?.address || 'Retira en local',
+                customerPhone: order.customer?.phone || '',
+                orders: [],
+                totalAmount: 0,
+                lastCreatedAt: order.created_at
+            };
         }
 
-        // For other status updates, proceed normally
+        acc[customerId].orders.push(order);
+        acc[customerId].totalAmount += order.total;
+        if (new Date(order.created_at) > new Date(acc[customerId].lastCreatedAt)) {
+            acc[customerId].lastCreatedAt = order.created_at;
+        }
+
+        return acc;
+    }, {} as Record<string, any>);
+
+    const sortedGroups = Object.values(groupedOrders).sort((a: any, b: any) =>
+        new Date(b.lastCreatedAt).getTime() - new Date(a.lastCreatedAt).getTime()
+    );
+
+    const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         try {
             const { error } = await supabase
                 .from('orders')
@@ -141,14 +167,17 @@ export default function DeliveryHomePage() {
                 .eq('id', orderId);
 
             if (error) throw error;
-
-            toast.success("Estado actualizado correctamente");
+            toast.success("Estado actualizado");
             fetchOrders();
         } catch (e: any) {
-            console.error("Error updating status:", e);
-            toast.error("Error al actualizar: " + (e.message || "Desconocido"));
+            toast.error("Error: " + e.message);
         }
     };
+
+    const handleDeliverGroup = (groupOrders: DeliveryOrder[]) => {
+        setOrderToDeliver(groupOrders);
+        setDeliveryConfirmOpen(true);
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 pb-20">
@@ -180,7 +209,7 @@ export default function DeliveryHomePage() {
                 </div>
             </div>
 
-            {/* Stats / Quick filters */}
+            {/* Stats */}
             <div className="flex gap-2 px-4 mt-4 overflow-x-auto no-scrollbar pb-1">
                 <div className="flex-1 min-w-[100px] bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center gap-3">
                     <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
@@ -217,11 +246,11 @@ export default function DeliveryHomePage() {
                 </div>
             </div>
 
-            {/* Orders List */}
-            <div className="p-4 space-y-3">
-                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Pedidos Recientes</h2>
+            {/* Orders List (Grouped) */}
+            <div className="p-4 space-y-4">
+                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Pedidos Activos</h2>
 
-                {orders.length === 0 && !loading && (
+                {sortedGroups.length === 0 && !loading && (
                     <div className="text-center py-10">
                         <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 mb-4">
                             <Package className="h-8 w-8 text-slate-600" />
@@ -231,82 +260,103 @@ export default function DeliveryHomePage() {
                     </div>
                 )}
 
-                {orders.map((order) => (
-                    <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 active:scale-[0.99] transition-transform">
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="flex items-center gap-2">
-                                <StatusBadge status={order.delivery_status || 'pending'} />
-                                <span className="text-xs text-slate-500">
-                                    {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}
+                {sortedGroups.map((group: any) => (
+                    <div key={group.customerId} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                        {/* Group Header */}
+                        <div className="p-4 bg-slate-900/50 border-b border-slate-800 flex justify-between items-start">
+                            <div className="flex items-start gap-3">
+                                <div className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                                    <User className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-base text-white leading-tight">
+                                        {group.customerName}
+                                    </h3>
+                                    <div className="flex items-center gap-1.5 mt-1 text-slate-400 text-xs">
+                                        <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
+                                        <span>{group.customerAddress}</span>
+                                    </div>
+                                    <div className="mt-1">
+                                        <Badge variant="outline" className="text-[10px] h-5 border-slate-700 text-slate-400">
+                                            {group.orders.length} pedidos
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <span className="block text-2xl font-mono font-bold text-emerald-400">
+                                    ${group.totalAmount.toLocaleString()}
                                 </span>
-                            </div>
-                            <span className="font-mono font-bold text-emerald-400 text-lg">
-                                ${order.total.toLocaleString()}
-                            </span>
-                        </div>
-
-                        <div className="mb-3">
-                            <h3 className="font-bold text-white text-base">
-                                {order.customer?.name || "Cliente Mostrador"}
-                            </h3>
-                            <div className="flex items-start gap-1.5 mt-1 text-slate-400 text-sm">
-                                <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-slate-500" />
-                                <p className="leading-snug">
-                                    {order.customer?.address || "Retira en local"}
-                                </p>
+                                <span className="text-[10px] text-slate-500 uppercase">Total Acumulado</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 pt-3 border-t border-slate-800">
+                        {/* Orders in Group */}
+                        <div className="flex flex-col gap-2 p-2 bg-slate-950/20">
+                            {group.orders.map((order: any, index: number) => (
+                                <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors relative overflow-hidden group/item">
+                                    {/* Numbering Badge */}
+                                    <div className="absolute top-0 right-0 bg-slate-800 text-[10px] text-slate-400 px-2 py-0.5 rounded-bl-lg font-mono border-b border-l border-slate-700">
+                                        #{group.orders.length - index}
+                                    </div>
+
+                                    <div className="flex justify-between items-start mb-2 pr-8">
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs font-bold ${order.delivery_status === 'delivered' ? 'text-slate-500' : 'text-emerald-400'}`}>
+                                                    Pedido #{order.id.slice(0, 4)}
+                                                </span>
+                                                <StatusBadge status={order.delivery_status || 'pending'} />
+                                            </div>
+                                            <span className="text-[10px] text-slate-500">
+                                                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}
+                                            </span>
+                                        </div>
+                                        <span className="font-mono font-medium text-white">
+                                            ${order.total.toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    {/* Item Summary */}
+                                    <div className="mb-3 text-xs text-slate-300 bg-slate-950/50 p-2 rounded border border-slate-800/50">
+                                        {getOrderSummary(order.order_items)}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 justify-end">
+                                        {/* Individual Quick Actions */}
+                                        {(order.delivery_status === 'pending' || !order.delivery_status) && (
+                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-orange-500 hover:bg-orange-500/10 hover:text-orange-400" onClick={() => handleUpdateStatus(order.id, 'preparing')}>
+                                                <ChefHat className="h-3 w-3 mr-1" /> Cocina
+                                            </Button>
+                                        )}
+                                        {order.delivery_status === 'preparing' && (
+                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400" onClick={() => handleUpdateStatus(order.id, 'ready')}>
+                                                <CheckCircle2 className="h-3 w-3 mr-1" /> Listo
+                                            </Button>
+                                        )}
+                                        {order.delivery_status === 'ready' && (
+                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-purple-500 hover:bg-purple-500/10 hover:text-purple-400" onClick={() => handleUpdateStatus(order.id, 'out_for_delivery')}>
+                                                <Truck className="h-3 w-3 mr-1" /> Enviar
+                                            </Button>
+                                        )}
+
+                                        <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-500 hover:text-white" onClick={() => handleViewDetails(order.id)}>
+                                            <Package className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Group Actions Footer */}
+                        <div className="p-3 bg-slate-950/30 border-t border-slate-800 flex gap-2">
                             <Button
-                                size="sm"
-                                variant="ghost"
-                                className="flex-1 h-9 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"
-                                onClick={() => handleViewDetails(order.id)}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white h-10"
+                                onClick={() => handleDeliverGroup(group.orders)}
                             >
-                                Ver Detalles
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Entregar / Cobrar ({group.orders.length})
                             </Button>
-                            {/* Acciones Rápidas según estado */}
-                            {(order.delivery_status === 'pending' || !order.delivery_status) && (
-                                <Button
-                                    size="sm"
-                                    className="flex-1 h-9 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 text-xs"
-                                    onClick={() => handleUpdateStatus(order.id, 'preparing')}
-                                >
-                                    <ChefHat className="h-3 w-3 mr-1.5" />
-                                    A Cocina
-                                </Button>
-                            )}
-                            {order.delivery_status === 'preparing' && (
-                                <Button
-                                    size="sm"
-                                    className="flex-1 h-9 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs"
-                                    onClick={() => handleUpdateStatus(order.id, 'ready')}
-                                >
-                                    <CheckCircle2 className="h-3 w-3 mr-1.5" />
-                                    Listo
-                                </Button>
-                            )}
-                            {order.delivery_status === 'ready' && (
-                                <Button
-                                    size="sm"
-                                    className="flex-1 h-9 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 border border-purple-500/20 text-xs"
-                                    onClick={() => handleUpdateStatus(order.id, 'out_for_delivery')}
-                                >
-                                    <Truck className="h-3 w-3 mr-1.5" />
-                                    Enviar
-                                </Button>
-                            )}
-                            {order.delivery_status === 'out_for_delivery' && (
-                                <Button
-                                    size="sm"
-                                    className="flex-1 h-9 bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
-                                    onClick={() => handleUpdateStatus(order.id, 'delivered')}
-                                >
-                                    <CheckCircle2 className="h-3 w-3 mr-1.5" />
-                                    Entregado
-                                </Button>
-                            )}
                         </div>
                     </div>
                 ))}
@@ -332,6 +382,7 @@ export default function DeliveryHomePage() {
                 </Button>
             </div>
 
+
             <OrderDetailsModal
                 orderId={selectedOrderId}
                 open={detailsOpen}
@@ -339,13 +390,11 @@ export default function DeliveryHomePage() {
             />
 
             <DeliveryConfirmationModal
-                orderId={orderToDeliver?.id || null}
-                orderTotal={orderToDeliver?.total || 0}
-                currentPaymentMethod={orderToDeliver?.payment_method || "cash"}
+                orders={Array.isArray(orderToDeliver) ? orderToDeliver : (orderToDeliver ? [orderToDeliver] : [])}
                 open={deliveryConfirmOpen}
                 onOpenChange={setDeliveryConfirmOpen}
                 onSuccess={fetchOrders}
             />
-        </div >
+        </div>
     );
 }

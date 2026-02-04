@@ -42,6 +42,7 @@ export function QuickCustomerSearch({ onSelect }: QuickCustomerSearchProps) {
                 .from('customers')
                 .select('*, sales(total, payment_status)')
                 .eq('organization_id', organizationId)
+                .in('sales_channel', ['delivery', 'general']) // Filter channels
                 .or(`name.ilike.%${query}%,phone.ilike.%${query}%,address.ilike.%${query}%`)
                 .limit(5);
 
@@ -75,7 +76,8 @@ export function QuickCustomerSearch({ onSelect }: QuickCustomerSearchProps) {
                     name: newName,
                     phone: newPhone,
                     address: newAddress,
-                    city: 'Local' // Default city
+                    city: 'Local', // Default city
+                    sales_channel: 'delivery', // Default to Delivery
                 }])
                 .select()
                 .single();

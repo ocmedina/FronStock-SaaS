@@ -32,6 +32,9 @@ export async function middleware(request: NextRequest) {
         // Obtener rol del usuario
         // Nota: Idealmente el rol debería estar en user_metadata para evitar llamada a DB.
 
+        // const { createServerClient } = require('@supabase/ssr');
+        // Usamos import dinámico o workaround
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { createServerClient } = require('@supabase/ssr');
         const supabaseClient = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

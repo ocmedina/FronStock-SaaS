@@ -32,6 +32,7 @@ export function CustomerFormModal({
         address: "",
         reference: "",
         customer_type: "retail" as "retail" | "wholesale",
+        sales_channel: "general" as "general" | "delivery" | "counter",
     });
 
     useEffect(() => {
@@ -43,6 +44,7 @@ export function CustomerFormModal({
                 address: editingCustomer.address || "",
                 reference: editingCustomer.reference || "",
                 customer_type: editingCustomer.customer_type,
+                sales_channel: editingCustomer.sales_channel || "general",
             });
         } else {
             setFormData({
@@ -52,6 +54,7 @@ export function CustomerFormModal({
                 address: "",
                 reference: "",
                 customer_type: "retail",
+                sales_channel: "general",
             });
         }
     }, [editingCustomer, open]);
@@ -63,34 +66,34 @@ export function CustomerFormModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
                         {editingCustomer ? "Editar Cliente" : "Nuevo Cliente"}
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-2">
-                        <label
-                            htmlFor="name"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            Nombre
-                        </label>
-                        <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) =>
-                                setFormData({ ...formData, name: e.target.value })
-                            }
-                            required
-                        />
-                    </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <label
+                                htmlFor="name"
+                                className="text-sm font-medium leading-none"
+                            >
+                                Nombre
+                            </label>
+                            <Input
+                                id="name"
+                                value={formData.name}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, name: e.target.value })
+                                }
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <label
                                 htmlFor="email"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                className="text-sm font-medium leading-none"
                             >
                                 Email
                             </label>
@@ -103,10 +106,13 @@ export function CustomerFormModal({
                                 }
                             />
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <label
                                 htmlFor="phone"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                className="text-sm font-medium leading-none"
                             >
                                 Teléfono
                             </label>
@@ -118,11 +124,32 @@ export function CustomerFormModal({
                                 }
                             />
                         </div>
+                        <div className="grid gap-2">
+                            <label
+                                htmlFor="channel"
+                                className="text-sm font-medium leading-none"
+                            >
+                                Canal de Venta
+                            </label>
+                            <select
+                                id="channel"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={formData.sales_channel}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, sales_channel: e.target.value as any })
+                                }
+                            >
+                                <option value="general">Mixto (General)</option>
+                                <option value="delivery">Solo Reparto</option>
+                                <option value="counter">Solo Mostrador</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div className="grid gap-2">
                         <label
                             htmlFor="address"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm font-medium leading-none"
                         >
                             Dirección
                         </label>
@@ -137,7 +164,7 @@ export function CustomerFormModal({
                     <div className="grid gap-2">
                         <label
                             htmlFor="reference"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm font-medium leading-none"
                         >
                             Referencia (para rutas)
                         </label>
@@ -151,7 +178,7 @@ export function CustomerFormModal({
                         />
                     </div>
                     <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <label className="text-sm font-medium leading-none">
                             Tipo de Cliente
                         </label>
                         <div className="flex items-center gap-4">
