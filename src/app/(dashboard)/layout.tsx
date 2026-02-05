@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { OrganizationProvider } from '@/contexts/OrganizationContext';
+import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { DashboardShell } from '@/components/DashboardShell';
 
 export default async function DashboardLayout({
@@ -19,12 +20,15 @@ export default async function DashboardLayout({
 
     return (
         <OrganizationProvider>
-            <DashboardShell>
-                {/* Page content */}
-                <main className="flex-1 p-3 md:p-6 overflow-auto">
-                    {children}
-                </main>
-            </DashboardShell>
+            <NotificationsProvider>
+                <DashboardShell>
+                    {/* Page content */}
+                    <main className="flex-1 p-3 md:p-6 overflow-auto">
+                        {children}
+                    </main>
+                </DashboardShell>
+            </NotificationsProvider>
         </OrganizationProvider>
     );
 }
+

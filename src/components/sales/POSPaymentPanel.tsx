@@ -12,6 +12,7 @@ import {
     Trash2,
     Wallet,
 } from "lucide-react";
+import { PromotionsSelector } from "./PromotionsSelector";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -43,6 +44,9 @@ interface POSPaymentPanelProps {
     // Supplier Payment Props
     suppliers?: any[]; // We'll need to pass this
     onSupplierPaymentChange?: (payment: { supplierId: string, amount: number } | null) => void;
+    // Promotions
+    appliedPromotionId?: string | null;
+    onAppliedPromotionChange?: (promotionId: string | null) => void;
 }
 
 const methodIcons: Record<string, any> = {
@@ -69,7 +73,9 @@ export function POSPaymentPanel({
     onUpdateDiscount,
     onUpdateSurcharge,
     suppliers = [],
-    onSupplierPaymentChange
+    onSupplierPaymentChange,
+    appliedPromotionId = null,
+    onAppliedPromotionChange
 }: POSPaymentPanelProps) {
     // Local state
     const [mode, setMode] = useState<"simple" | "mixed">("simple");
@@ -479,10 +485,33 @@ export function POSPaymentPanel({
 
             {/* AREA DE CONFIRMACION */}
             <div className="p-4 md:p-6 bg-card/50 backdrop-blur-sm border-t border-border">
-                {/* Descuentos y Recargos */}
+                {/* Promotions Selector */}
+                {activeTab.cart.length > 0 && (
+                    <div className="mb-4 pb-4 border-b border-dashed">
+                        <PromotionsSelector
+                            customerId={activeTab.customerId || null}
+                            items={activeTab.cart.map(item => ({
+                                product_id: item.product.id,
+                                product_name: item.product.name,
+                                quantity: item.quantity,
+                                unit_price: item.product.price,
+                            }))}
+                            subtotal={subtotal}
+                            currentDiscount={discount}
+                            onApplyPromotion={(discountAmount, promotionId) => {
+                                onUpdateDiscount(discountAmount);
+                                if (onAppliedPromotionChange) {
+                                    onAppliedPromotionChange(promotionId || null);
+                                }
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Descuentos y Recargos Manuales */}
                 <div className="flex gap-2 mb-4">
                     <div className="flex-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Descuento ($)</label>
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Descuento Manual ($)</label>
                         <div className="relative">
                             <input
                                 type="number"

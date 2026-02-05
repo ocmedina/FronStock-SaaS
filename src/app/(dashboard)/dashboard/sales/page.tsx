@@ -1,90 +1,75 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Loader2 } from "lucide-react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { toast } from "sonner";
 import {
-  POSHeader,
-  POSProductSearch,
-  POSCart,
-  POSPaymentPanel,
-  POSProductModal,
-  POSShortcutsModal,
-  Product,
-  Customer,
-  SaleTab,
-  CartItem,
-  PaymentMethod,
-} from "@/components/sales";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { TicketView } from "@/components/sales/TicketView";
-import { Button } from "@/components/ui/button";
-import { Check, X, Printer } from "lucide-react";
-import React from "react";
+  SearchBar,
+  Cart,
+  PaymentPanel,
+  QuickActions,
+  StatusBar,
+  SuspendedSalesModal,
+  SalesTabs,
+} from "@/components/sales/v2";
+import { POSProductModal } from "@/components/sales/POSProductModal";
+import { useSuspendedSales } from "@/hooks/useSuspendedSales";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
   const { organizationId, isLoading: orgLoading } = useOrganization();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]); // New state for suppliers
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Mobile Responsiveness
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const [showMobilePayment, setShowMobilePayment] = useState(false);
-
   // Tabs State
-  const [tabs, setTabs] = useState<SaleTab[]>([
-    {
-      id: "1",
-      name: "Venta 1",
-      cart: [],
-      customerId: null,
-      payments: [],
-      // @ts-ignore - dynamic extension
-      supplierPayment: null, // NEW: Store supplier payment choice
-    },
-  ]);
-  const [activeTabId, setActiveTabId] = useState("1");
-  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
-  const cart = activeTab?.cart || [];
+  const [tabs, setTabs] = useState([{ id: '1', name: 'Venta 1' }]);
+  const [activeTabId, setActiveTabId] = useState('1');
 
-  // Modals & UI State
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  // Tab-specific state (stored per tab)
+  const [tabsData, setTabsData] = useState<Record<string, {
+    cart: CartItem[];
+    customerId: string | null;
+    discount: number;
+    surcharge: number;
+  }>>({
+    '1': { cart: [], customerId: null, discount: 0, surcharge: 0 }
+  });
 
-  // Ticket State
-  const [showTicketModal, setShowTicketModal] = useState(false);
-  const [lastSaleData, setLastSaleData] = useState<any>(null);
+  // Current tab data
+  const currentTabData = tabsData[activeTabId] || { cart: [], customerId: null, discount: 0, surcharge: 0 };
+  const cart = currentTabData.cart;
+  const selectedCustomerId = currentTabData.customerId;
+  const discount = currentTabData.discount;
+  const surcharge = currentTabData.surcharge;
 
-  // Search State for POSProductSearch
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  // Update current tab data
+  const updateTabData = (updates: Partial<typeof currentTabData>) => {
+    setTabsData(prev => ({
+      ...prev,
+      [activeTabId]: { ...prev[activeTabId], ...updates }
+    }));
+  };
 
-  // Last sale info
-  const [lastSaleTotal, setLastSaleTotal] = useState(0);
+  // UI State
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [showSuspended, setShowSuspended] = useState(false);
+
+  // Suspended Sales
+  const { suspendedSales, suspendSale, resumeSale, deleteSuspendedSale } = useSuspendedSales();
 
   const supabase = createClient();
 
-  // Data Fetching
+  // Fetch Data (only once on mount)
   const fetchData = useCallback(async () => {
     if (!organizationId) return;
     setIsLoading(true);
 
-    const [productsRes, customersRes, suppliersRes] = await Promise.all([
+    const [productsRes, customersRes] = await Promise.all([
       supabase
         .from("products")
         .select("id, name, sku, barcode, plu, price, wholesale_price, stock")
@@ -95,44 +80,13 @@ export default function POSPage() {
         .from("customers")
         .select("id, name, customer_type, sales_channel")
         .eq("organization_id", organizationId)
-        .order("name"),
-      supabase
-        .from("suppliers")
-        .select("id, name")
-        .eq("organization_id", organizationId)
+        .in("sales_channel", ["counter", "general"])
         .order("name"),
     ]);
 
     if (productsRes.data) setProducts(productsRes.data as Product[]);
-
     if (customersRes.data) {
       setCustomers(customersRes.data);
-      // AUTO-SELECT "Consumidor Final" for existing empty tabs
-      const finalConsumer = customersRes.data.find(c => c.name === "Consumidor Final");
-      if (finalConsumer) {
-        setTabs(prev => prev.map(t => ({
-          ...t,
-          customerId: t.customerId || finalConsumer.id
-        })));
-      }
-    }
-
-    // DEBUG: Log supplier fetch results
-    console.log("🔍 Suppliers fetch result:", {
-      data: suppliersRes.data,
-      error: suppliersRes.error,
-      count: suppliersRes.data?.length || 0
-    });
-
-    if (suppliersRes.error) {
-      console.error("❌ Error fetching suppliers:", suppliersRes.error);
-    }
-
-    if (suppliersRes.data) {
-      console.log("✅ Setting suppliers:", suppliersRes.data);
-      setSuppliers(suppliersRes.data);
-    } else {
-      console.warn("⚠️ No supplier data received");
     }
 
     setIsLoading(false);
@@ -143,29 +97,38 @@ export default function POSPage() {
   }, [organizationId, fetchData]);
 
   // Tab Management
-  const updateActiveTab = (updates: Partial<SaleTab>) => {
-    setTabs(tabs.map((t) => (t.id === activeTabId ? { ...t, ...updates } : t)));
-  };
+  const handleAddTab = () => {
+    const newTabNumber = tabs.length + 1;
+    const newTabId = Date.now().toString();
+    const newTab = { id: newTabId, name: `Venta ${newTabNumber}` };
 
-  const addNewTab = () => {
-    const finalConsumer = customers.find(c => c.name === "Consumidor Final");
-
-    const newId = String(Date.now());
-    const newTab: SaleTab = {
-      id: newId,
-      name: `Venta ${tabs.length + 1}`,
-      cart: [],
-      customerId: finalConsumer ? finalConsumer.id : null,
-      payments: [],
-    };
     setTabs([...tabs, newTab]);
-    setActiveTabId(newId);
+    setTabsData(prev => ({
+      ...prev,
+      [newTabId]: { cart: [], customerId: null, discount: 0, surcharge: 0 }
+    }));
+    setActiveTabId(newTabId);
   };
 
-  const closeTab = (tabId: string) => {
-    if (tabs.length === 1) return;
-    const newTabs = tabs.filter((t) => t.id !== tabId);
+  const handleCloseTab = (tabId: string) => {
+    if (tabs.length === 1) {
+      toast.error("No puedes cerrar la última venta");
+      return;
+    }
+
+    const tabToClose = tabsData[tabId];
+    if (tabToClose.cart.length > 0) {
+      toast.error("No puedes cerrar una venta con productos");
+      return;
+    }
+
+    const newTabs = tabs.filter(t => t.id !== tabId);
     setTabs(newTabs);
+
+    const newTabsData = { ...tabsData };
+    delete newTabsData[tabId];
+    setTabsData(newTabsData);
+
     if (activeTabId === tabId) {
       setActiveTabId(newTabs[0].id);
     }
@@ -173,14 +136,9 @@ export default function POSPage() {
 
   // Cart Management
   const addToCart = (product: Product) => {
-    const currentCustomer = customers.find(c => c.id === activeTab.customerId);
+    const currentCustomer = customers.find((c) => c.id === selectedCustomerId);
     const isWholesale = currentCustomer?.customer_type === "wholesale";
-    const productPrice = isWholesale ? (product.wholesale_price || product.price) : product.price;
-
-    const productWithAdjustedPrice = {
-      ...product,
-      price: productPrice
-    };
+    const productPrice = isWholesale ? product.wholesale_price || product.price : product.price;
 
     const existing = cart.find((item) => item.product.id === product.id);
     let newCart: CartItem[];
@@ -188,47 +146,52 @@ export default function POSPage() {
     if (existing) {
       if (existing.quantity < product.stock) {
         newCart = cart.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
+          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       } else {
-        return; // Stock limit reached
+        toast.error("Stock insuficiente");
+        return;
       }
     } else {
-      newCart = [...cart, { product: productWithAdjustedPrice, quantity: 1, discount: 0 }];
+      newCart = [
+        ...cart,
+        {
+          product: { ...product, price: productPrice },
+          quantity: 1,
+          discount: 0,
+        },
+      ];
     }
 
-    updateActiveTab({ cart: newCart });
-    setShowProductModal(false);
-    setSearchQuery("");
+    updateTabData({ cart: newCart });
+    toast.success(`${product.name} agregado`);
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    let newCart: CartItem[];
     if (quantity <= 0) {
-      newCart = cart.filter((item) => item.product.id !== productId);
+      updateTabData({ cart: cart.filter((item) => item.product.id !== productId) });
     } else {
-      newCart = cart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item,
-      );
+      const item = cart.find((i) => i.product.id === productId);
+      if (item && quantity > item.product.stock) {
+        toast.error("Stock insuficiente");
+        return;
+      }
+      updateTabData({
+        cart: cart.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
+      });
     }
-    updateActiveTab({ cart: newCart });
   };
 
   const removeFromCart = (productId: string) => {
-    updateActiveTab({
-      cart: cart.filter((item) => item.product.id !== productId),
-    });
+    updateTabData({ cart: cart.filter((item) => item.product.id !== productId) });
   };
 
   const clearCart = () => {
-    updateActiveTab({ cart: [], customerId: null });
+    updateTabData({ cart: [], discount: 0, surcharge: 0 });
   };
 
-  // Customer Selection & Price Update logic
+  // Customer Change
   const handleCustomerChange = (customerId: string | null) => {
-    // If "default" is passed from select component
     if (customerId === "default") customerId = null;
 
     const customer = customers.find((c) => c.id === customerId);
@@ -236,81 +199,31 @@ export default function POSPage() {
 
     const updatedCart = cart.map((item) => {
       const basePrice = isWholesale
-        ? (item.product.wholesale_price || item.product.price)
+        ? item.product.wholesale_price || item.product.price
         : item.product.price;
 
       return {
         ...item,
         product: {
           ...item.product,
-          price: basePrice
-        }
+          price: basePrice,
+        },
       };
     });
 
-    updateActiveTab({
-      customerId,
-      cart: updatedCart
-    });
+    updateTabData({ customerId, cart: updatedCart });
   };
 
-  const handleAddPayment = (payment: { method: any, amount: number }) => {
-    const currentPayments = activeTab.payments || [];
-    updateActiveTab({ payments: [...currentPayments, payment] });
-  };
-
-  const handleRemovePayment = (index: number) => {
-    const currentPayments = activeTab.payments || [];
-    updateActiveTab({ payments: currentPayments.filter((_, i) => i !== index) });
-  };
-
-  const handleSetPayments = (payments: { method: any, amount: number }[]) => {
-    updateActiveTab({ payments });
-  };
-
-  const handleSupplierPaymentChange = (payment: { supplierId: string, amount: number } | null) => {
-    // @ts-ignore
-    updateActiveTab({ supplierPayment: payment });
-  };
-
-  // Sales Processing
-  const processSale = async () => {
-    if (cart.length === 0 || !organizationId) return;
-
-    // If no payments explicitly added, assume FULL CASH (Basic fallback if logic fails, though UI should prevent)
-    // Actually, UI now forces payments for Mixed. For Simple, we must ensure state IS updated.
-    // I will rely on POSPaymentPanel updating the state via handleSetPayments.
-
-    // Safety check: specific for mixed/partial logic
-    const totalPaid = (activeTab.payments || []).reduce((sum, p) => sum + p.amount, 0);
-
-    // If payments array is empty, this logic blocks. 
-    // Is that what we want? 
-    // If I'm in "Simple - Cash", I want `processSale` to just work.
-    // If `POSPaymentPanel` updates state immediately on click, then `activeTab.payments` will have the data.
-    // If `POSPaymentPanel` updates state ONLY on "Confirm", then here it's empty.
-    // My previous thought in `POSPaymentPanel` was to update it immediately.
-    // So if I add `handleSetPayments` and use it in `POSPaymentPanel`, I can ensure state is always sync.
-
-    // Permitir un pequeño margen de error por decimales
-    if (Math.abs(totalPaid - total) > 0.01) {
-      // If totalPaid is 0, allow ONLY if we assume default cash? 
-      // No, safer to enforce explicit payments in state.
-      alert(`El total de los pagos ($${totalPaid}) debe ser igual al total de la venta ($${total}). Diferencia: $${Math.abs(totalPaid - total)}`);
+  // Process Sale
+  const processSale = async (payments?: Array<{ method: string; amount: number }>) => {
+    if (cart.length === 0 || !organizationId) {
+      toast.error("El carrito está vacío");
       return;
     }
 
     setIsProcessing(true);
-    setShowConfirmModal(false);
 
     try {
-      const isCredit = activeTab.payments.some(p => p.method === "credit");
-      if (isCredit && !activeTab.customerId) {
-        alert("Para ventas a crédito (fiado) debe seleccionar un cliente");
-        setIsProcessing(false);
-        return;
-      }
-
       const items = cart.map((item) => ({
         product_id: item.product.id,
         product_name: item.product.name || "Sin nombre",
@@ -318,112 +231,124 @@ export default function POSPage() {
         unit_price: item.product.price ?? 0,
       }));
 
-      // Simplificar pagos para enviar
-      const paymentsPayload = activeTab.payments.map(p => ({
-        method: p.method,
-        amount: p.amount
-      }));
-
-      console.log("Calling process_sale with:", {
-        p_org_id: organizationId,
-        p_customer_id: activeTab.customerId || null,
-        p_payments: paymentsPayload,
-        p_items: items,
-        p_discount: activeTab.discount || 0,
-        p_surcharge: activeTab.surcharge || 0
-      });
+      const finalPayments = payments || [{ method: "cash", amount: total }];
 
       const { data, error } = await supabase.rpc("process_sale", {
         p_org_id: organizationId,
-        p_customer_id: activeTab.customerId || null,
-        p_payments: paymentsPayload,
+        p_customer_id: selectedCustomerId || null,
+        p_payments: finalPayments,
         p_items: items,
-        p_discount: activeTab.discount || 0,
-        p_surcharge: activeTab.surcharge || 0,
-        // @ts-ignore
-        p_supplier_payment: activeTab.supplierPayment || null // NEW PARAM
+        p_discount: discount || 0,
+        p_surcharge: surcharge || 0,
       });
 
-      if (error) {
-        console.error("Supabase RPC Error raw:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      const result = data as { success: boolean; sale_id?: string; sale_number?: number; error?: string; total?: number };
-      console.log("RPC Result:", result);
+      const result = data as {
+        success: boolean;
+        sale_id?: string;
+        sale_number?: number;
+        error?: string;
+        total?: number;
+      };
 
       if (!result.success) {
         throw new Error(result.error || "Error al procesar la venta");
       }
 
-      setLastSaleTotal(result.total || total);
-
-      // Prepare Ticket Data
-      setLastSaleData({
-        date: new Date(),
-        id: result.sale_id || "N/A",
-        saleNumber: result.sale_number,
-        items: cart.map(item => ({
-          quantity: item.quantity,
-          product_name: item.product.name,
-          total: item.quantity * (item.product.price || 0) // Approximation if not returned
-        })),
-        subtotal: subtotal,
-        total: total,
-        discount: activeTab.discount || 0,
-        surcharge: activeTab.surcharge || 0,
-        payments: activeTab.payments,
-        customer: activeTab.customerId ? customers.find(c => c.id === activeTab.customerId) : undefined,
-        // TODO: Get real org data
-        organization: { name: "Mi Negocio" }
+      toast.success(`¡Venta #${result.sale_number} procesada exitosamente!`, {
+        description: `Total: $${total.toLocaleString("es-AR")}`,
       });
 
+      // Clear current tab for next sale
       clearCart();
-      setShowSuccessModal(true);
       fetchData();
-      // Close mobile payment if open
-      setShowMobilePayment(false);
     } catch (error: any) {
-      console.error("Error processing sale (full):", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-      alert(`Error al procesar la venta: ${error.message || JSON.stringify(error) || "Error desconocido"}`);
+      console.error("Error processing sale:", error);
+      toast.error(`Error: ${error.message || "Error desconocido"}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // Suspend Sale
+  const handleSuspendSale = () => {
+    if (cart.length === 0) {
+      toast.error("El carrito está vacío");
+      return;
+    }
+
+    suspendSale({
+      id: Date.now().toString(),
+      name: `Venta ${Date.now()}`,
+      cart,
+      customerId: selectedCustomerId,
+      payments: [],
+      discount,
+      surcharge,
+    });
+
+    clearCart();
+    toast.success("Venta suspendida");
+  };
+
+  // Resume Sale
+  const handleResumeSale = (id: string) => {
+    const sale = resumeSale(id);
+    if (sale) {
+      updateTabData({
+        cart: sale.cart,
+        customerId: sale.customerId,
+        discount: sale.discount || 0,
+        surcharge: sale.surcharge || 0,
+      });
+      toast.success("Venta recuperada");
+    }
+  };
+
   // Keyboard Shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F1") { e.preventDefault(); setShowShortcutsModal(true); }
-      if (e.key === "F2") { e.preventDefault(); searchInputRef.current?.focus(); } // Process Sale is separate button, F2 on button
-      if (e.key === "F3") { e.preventDefault(); setShowProductModal(true); }
-      if (e.key === "F4") { e.preventDefault(); addNewTab(); }
-      if (e.key === "F8" && cart.length > 0) { e.preventDefault(); setShowConfirmModal(true); }
-      if (e.key === "Escape") {
-        setShowProductModal(false);
-        setShowConfirmModal(false);
-        setShowSuccessModal(false);
-        setShowShortcutsModal(false);
-        setShowMobilePayment(false);
-      }
-      // Ctrl+1-9 Tabs
-      if (e.ctrlKey && e.key >= "1" && e.key <= "9") {
-        e.preventDefault();
-        const tabIndex = parseInt(e.key) - 1;
-        if (tabs[tabIndex]) setActiveTabId(tabs[tabIndex].id);
-      }
-    };
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: "F1",
+        description: "Buscar",
+        action: () => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus(),
+      },
+      { key: "F3", description: "Catálogo", action: () => setShowCatalog(true) },
+      { key: "F8", description: "Suspender", action: handleSuspendSale, enabled: cart.length > 0 },
+      {
+        key: "F9",
+        description: "Recuperar",
+        action: () => setShowSuspended(true),
+        enabled: suspendedSales.length > 0,
+      },
+      { key: "F12", description: "Cobrar", action: processSale, enabled: cart.length > 0 },
+      {
+        key: "Escape",
+        description: "Cancelar",
+        action: () => {
+          setShowCatalog(false);
+          setShowSuspended(false);
+        },
+      },
+    ],
+  });
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [cart.length, tabs]);
+  // Calculations (memoized for performance)
+  const subtotal = useMemo(
+    () => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    [cart]
+  );
 
+  const totalItems = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart]
+  );
 
-  // Calculations
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const total = Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0));
+  const total = useMemo(
+    () => Math.max(0, subtotal - discount + surcharge),
+    [subtotal, discount, surcharge]
+  );
 
   if (orgLoading || isLoading) {
     return (
@@ -433,163 +358,86 @@ export default function POSPage() {
     );
   }
 
-  // Define Payment Panel here to reuse or just use component directly
-  const PaymentPanelComponent = (
-    <POSPaymentPanel
-      activeTab={activeTab}
-      customers={customers}
-      subtotal={subtotal}
-      total={Math.max(0, subtotal - (activeTab.discount || 0) + (activeTab.surcharge || 0))}
-      onCustomerChange={handleCustomerChange}
-      onAddPayment={handleAddPayment}
-      onRemovePayment={handleRemovePayment}
-      onSetPayments={handleSetPayments}
-      onProcessSale={processSale}
-      processing={isProcessing}
-      discount={activeTab.discount}
-      surcharge={activeTab.surcharge}
-      onUpdateDiscount={(val) => updateActiveTab({ discount: val })}
-      onUpdateSurcharge={(val) => updateActiveTab({ surcharge: val })}
-      suppliers={suppliers}
-      onSupplierPaymentChange={handleSupplierPaymentChange}
-    />
-  );
-
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[100vh] -m-3 md:-m-6 bg-background shadow-2xl relative">
-      <POSHeader
+    <div className="flex flex-col h-[100dvh] md:h-[100vh] -m-3 md:-m-6 bg-background">
+      {/* Header */}
+      <div className="h-16 border-b border-border bg-background px-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">🏪 FrontStock POS</h1>
+          <span className="text-sm text-muted-foreground">v2.0</span>
+        </div>
+      </div>
+
+      {/* Sales Tabs */}
+      <SalesTabs
         tabs={tabs}
         activeTabId={activeTabId}
         onTabChange={setActiveTabId}
-        onAddTab={addNewTab}
-        onCloseTab={closeTab}
-        onShowShortcuts={() => setShowShortcutsModal(true)}
+        onTabClose={handleCloseTab}
+        onTabAdd={handleAddTab}
       />
 
-      <div className="flex flex-col lg:flex-row flex-1 min-h-0 bg-background pb-32 lg:pb-0">
-        <div className="flex-1 flex flex-col min-h-0 lg:border-r border-border">
-          <POSProductSearch
-            products={products}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onProductSelect={addToCart}
-            onOpenCatalog={() => setShowProductModal(true)}
-            searchInputRef={searchInputRef}
-          />
-          <POSCart
-            items={cart}
-            onUpdateQuantity={updateQuantity}
-            onRemove={removeFromCart}
-            onClear={clearCart}
-            subtotal={subtotal}
-            totalItems={totalItems}
-          />
+      {/* Main Content */}
+      <div className="flex flex-1 min-h-0">
+        {/* Left Column - Search & Cart */}
+        <div className="flex-1 flex flex-col min-h-0 border-r border-border">
+          {/* Search Bar */}
+          <div className="p-6 pb-4">
+            <SearchBar products={products} onProductSelect={addToCart} />
+          </div>
+
+          {/* Cart */}
+          <div className="flex-1 min-h-0 border-t border-border">
+            <Cart
+              items={cart}
+              onUpdateQuantity={updateQuantity}
+              onRemove={removeFromCart}
+              onClear={clearCart}
+              subtotal={subtotal}
+              totalItems={totalItems}
+            />
+          </div>
         </div>
 
-        {isDesktop && PaymentPanelComponent}
+        {/* Right Column - Payment Panel Only */}
+        <div className="w-[480px] flex flex-col min-h-0">
+          <PaymentPanel
+            customers={customers}
+            selectedCustomerId={selectedCustomerId}
+            subtotal={subtotal}
+            discount={discount}
+            surcharge={surcharge}
+            total={total}
+            onCustomerChange={handleCustomerChange}
+            onProcessSale={processSale}
+            processing={isProcessing}
+          />
+        </div>
       </div>
 
-      {!isDesktop && (
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 bg-background border-t border-border p-3 flex items-center justify-between z-30 px-4 pb-4 md:pb-6 shadow-top">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total a Cobrar</span>
-            <span className="text-xl font-extrabold text-emerald-500">${total.toLocaleString("es-AR")}</span>
-          </div>
-          <Button
-            size="lg"
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 px-8 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-            onClick={() => setShowMobilePayment(true)}
-            disabled={activeTab.cart.length === 0}
-          >
-            <Check className="mr-2 h-5 w-5" />
-            Cobrar
-          </Button>
-        </div>
-      )}
+      {/* Status Bar */}
+      <StatusBar />
 
-      {/* Mobile Payment Drawer */}
-      <Drawer open={showMobilePayment} onOpenChange={setShowMobilePayment}>
-        <DrawerContent className="h-[90vh] flex flex-col bg-background">
-          <div className="p-4 border-b border-border bg-muted/10">
-            <DrawerTitle className="text-lg font-bold text-center">Procesar Venta</DrawerTitle>
-            <DrawerDescription className="sr-only">Panel de cobro y selección de método de pago</DrawerDescription>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {PaymentPanelComponent}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Quick Actions */}
+      <QuickActions
+        suspendedCount={suspendedSales.length}
+        onSuspendedClick={() => setShowSuspended(true)}
+      />
 
+      {/* Modals */}
       <POSProductModal
-        open={showProductModal}
-        onClose={() => setShowProductModal(false)}
+        open={showCatalog}
+        onClose={() => setShowCatalog(false)}
         products={products}
         onSelect={addToCart}
       />
 
-      <POSShortcutsModal
-        open={showShortcutsModal}
-        onClose={() => setShowShortcutsModal(false)}
-      />
-
-      {/* Confirmation Modal */}
-      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Venta</DialogTitle>
-            <DialogDescription>
-              ¿Está seguro de procesar esta venta por <b>${total.toLocaleString("es-AR")}</b>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={processSale} className="bg-emerald-600 hover:bg-emerald-500 text-white">
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Success Modal */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
-          <div className="flex flex-col items-center justify-center p-6 space-y-4">
-            <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <Check className="h-8 w-8 text-emerald-500" />
-            </div>
-            <DialogTitle className="text-2xl font-bold text-foreground">¡Venta Exitosa!</DialogTitle>
-            <div className="text-center space-y-1">
-              <p className="text-muted-foreground">Total cobrado</p>
-              <p className="text-3xl font-bold text-emerald-500">${lastSaleTotal.toLocaleString("es-AR")}</p>
-            </div>
-          </div>
-          <DialogFooter className="sm:justify-center gap-2 flex-col sm:flex-row">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowSuccessModal(false);
-                setShowTicketModal(true);
-              }}
-              className="gap-2"
-            >
-              <Printer className="h-4 w-4" /> Imprimir Ticket
-            </Button>
-            <Button
-              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500"
-              onClick={() => setShowSuccessModal(false)}
-            >
-              Cerrar y Nueva Venta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <TicketView
-        open={showTicketModal}
-        onClose={() => setShowTicketModal(false)}
-        saleData={lastSaleData}
+      <SuspendedSalesModal
+        open={showSuspended}
+        onOpenChange={setShowSuspended}
+        suspendedSales={suspendedSales}
+        onResume={handleResumeSale}
+        onDelete={deleteSuspendedSale}
       />
     </div>
   );

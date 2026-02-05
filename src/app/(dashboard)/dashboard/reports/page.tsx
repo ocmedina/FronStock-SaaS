@@ -7,6 +7,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/Protected";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReportsFilters } from "@/components/reports/ReportsFilters";
+import type { ReportFilters } from "@/components/reports/types";
 import {
   Table,
   TableBody,
@@ -59,13 +61,25 @@ interface DailySales {
   count: number;
 }
 
-type Period = "today" | "week" | "month" | "year";
+type Period = "today" | "week" | "month" | "year" | "custom";
 
 export default function ReportsPage() {
   const { organizationId, isLoading: orgLoading } = useOrganization();
   const { canView } = usePermissions();
   const [period, setPeriod] = useState<Period>("month");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Advanced Filters State
+  const [filters, setFilters] = useState<ReportFilters>({
+    startDate: null,
+    endDate: null,
+    paymentMethods: [],
+    salesChannels: [],
+    customerTypes: [],
+    minAmount: null,
+    maxAmount: null,
+    quickPeriod: "month",
+  });
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalSales: 0,
@@ -104,15 +118,51 @@ export default function ReportsPage() {
     if (!organizationId) return;
     setIsLoading(true);
 
-    const startDate = getDateRange(period);
+    // Determine date range
+    let startDate: string;
+    let endDate: string | undefined;
 
-    const { data: sales } = await supabase
+    if (filters.startDate || filters.endDate) {
+      // Custom date range
+      startDate = filters.startDate
+        ? filters.startDate.toISOString()
+        : new Date(0).toISOString();
+      endDate = filters.endDate
+        ? new Date(filters.endDate.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        : undefined;
+    } else {
+      // Quick period
+      startDate = getDateRange(period);
+    }
+
+    // Build query with filters
+    let query = supabase
       .from("sales")
-      .select("id, total, created_at, payment_method")
+      .select("id, total, created_at, payment_method, customer_id")
       .eq("organization_id", organizationId)
       .eq("status", "completed")
-      .gte("created_at", startDate)
-      .order("created_at", { ascending: false });
+      .gte("created_at", startDate);
+
+    if (endDate) {
+      query = query.lte("created_at", endDate);
+    }
+
+    // Apply payment method filter
+    if (filters.paymentMethods.length > 0) {
+      query = query.in("payment_method", filters.paymentMethods);
+    }
+
+    // Apply amount range filters
+    if (filters.minAmount !== null) {
+      query = query.gte("total", filters.minAmount);
+    }
+    if (filters.maxAmount !== null) {
+      query = query.lte("total", filters.maxAmount);
+    }
+
+    query = query.order("created_at", { ascending: false });
+
+    const { data: sales } = await query;
 
     if (!sales || sales.length === 0) {
       setStats({
@@ -128,18 +178,56 @@ export default function ReportsPage() {
       return;
     }
 
-    const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
-    const totalSales = sales.length;
+    // Apply client-side filters for sales channels and customer types
+    let filteredSales = sales;
+
+    // Filter by customer type if needed
+    if (filters.customerTypes.length > 0 || filters.salesChannels.length > 0) {
+      const customerIds = sales
+        .map((s) => s.customer_id)
+        .filter((id): id is string => id !== null && id !== undefined);
+
+      if (customerIds.length > 0) {
+        const { data: customers } = await supabase
+          .from("customers")
+          .select("id, customer_type, sales_channel")
+          .in("id", customerIds);
+
+        if (customers) {
+          const customerMap = new Map(
+            customers.map((c) => [c.id, c])
+          );
+
+          filteredSales = sales.filter((sale) => {
+            if (!sale.customer_id) return filters.customerTypes.length === 0 && filters.salesChannels.length === 0;
+            const customer = customerMap.get(sale.customer_id);
+            if (!customer) return false;
+
+            const matchesType =
+              filters.customerTypes.length === 0 ||
+              filters.customerTypes.includes(customer.customer_type);
+            const matchesChannel =
+              filters.salesChannels.length === 0 ||
+              filters.salesChannels.includes(customer.sales_channel);
+
+            return matchesType && matchesChannel;
+          });
+        }
+      }
+    }
+
+    const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.total), 0);
+    const totalSales = filteredSales.length;
     const averageTicket = totalRevenue / totalSales;
 
     const paymentMethods: Record<string, number> = {};
-    sales.forEach((s) => {
+    filteredSales.forEach((s) => {
       paymentMethods[s.payment_method] =
         (paymentMethods[s.payment_method] || 0) + Number(s.total);
     });
 
     const dailyMap: Record<string, { total: number; count: number }> = {};
-    sales.forEach((s) => {
+    filteredSales.forEach((s) => {
       const date = s.created_at.split("T")[0];
       if (!dailyMap[date]) dailyMap[date] = { total: 0, count: 0 };
       dailyMap[date].total += Number(s.total);
@@ -149,7 +237,7 @@ export default function ReportsPage() {
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    const saleIds = sales.map((s) => s.id);
+    const saleIds = filteredSales.map((s) => s.id);
     const { data: saleItems } = await supabase
       .from("sale_items")
       .select("product_name, quantity, total")
@@ -185,7 +273,7 @@ export default function ReportsPage() {
     });
 
     setIsLoading(false);
-  }, [organizationId, period, supabase]);
+  }, [organizationId, period, filters, supabase]);
 
   useEffect(() => {
     if (organizationId) fetchReports();
@@ -277,13 +365,16 @@ export default function ReportsPage() {
 
         {/* Period Selector */}
         <div className="flex gap-1 bg-muted p-1.5 rounded-xl">
-          {(Object.keys(periodLabels) as Period[]).map((p) => (
+          {(Object.keys(periodLabels) as Period[]).filter(p => p !== "custom").map((p) => (
             <Button
               key={p}
-              variant={period === p ? "default" : "ghost"}
+              variant={period === p && !filters.startDate && !filters.endDate ? "default" : "ghost"}
               size="sm"
-              onClick={() => setPeriod(p)}
-              className={period === p ? "shadow-sm" : ""}
+              onClick={() => {
+                setPeriod(p);
+                setFilters(prev => ({ ...prev, startDate: null, endDate: null, quickPeriod: p }));
+              }}
+              className={period === p && !filters.startDate && !filters.endDate ? "shadow-sm" : ""}
             >
               <Calendar className="h-4 w-4 mr-1.5" />
               {periodLabels[p]}
@@ -291,6 +382,13 @@ export default function ReportsPage() {
           ))}
         </div>
       </div>
+
+      {/* Advanced Filters */}
+      <ReportsFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        onApplyFilters={fetchReports}
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center h-64">

@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -226,16 +224,6 @@ export function Navbar() {
                             className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-9 w-9"
                         >
                             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                        </Button>
-
-                        {/* Notifications */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent relative h-9 w-9"
-                        >
-                            <Bell className="h-4 w-4" />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
                         </Button>
 
                         {/* User Menu */}

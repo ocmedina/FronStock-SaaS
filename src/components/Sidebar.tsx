@@ -32,6 +32,7 @@ import {
     CreditCard,
     Truck,
 } from 'lucide-react';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
 import {
     Tooltip,
@@ -65,6 +66,7 @@ const menuSections: MenuSection[] = [
             { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
             { href: '/dashboard/sales/history', label: 'Historial Ventas', icon: ClipboardList },
             { href: '/dashboard/invoices', label: 'Facturación', icon: FileText },
+            { href: '/dashboard/promotions', label: 'Promociones', icon: Tags },
         ],
     },
     {
@@ -315,6 +317,11 @@ export function Sidebar() {
                     )}
 
                     <div className={`flex items-center gap-2 ${isCollapsed && !isMobileOpen ? 'flex-col' : ''}`}>
+                        {/* Notifications */}
+                        <div className={isCollapsed && !isMobileOpen ? 'w-full flex justify-center' : 'flex-1'}>
+                            <NotificationCenter />
+                        </div>
+
                         {/* Theme Toggle */}
                         {isCollapsed && !isMobileOpen ? (
                             <Tooltip>
