@@ -109,6 +109,10 @@ export default function ReportsPage() {
       case "year":
         start = new Date(now.getFullYear(), 0, 1);
         break;
+      default:
+        // For custom or any other case, default to month
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
     }
 
     return start.toISOString();
@@ -284,6 +288,7 @@ export default function ReportsPage() {
     week: "Semana",
     month: "Mes",
     year: "Año",
+    custom: "Personalizado",
   };
 
   const paymentLabels: Record<string, string> = {
