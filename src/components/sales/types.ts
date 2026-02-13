@@ -15,7 +15,13 @@ export interface Customer {
     id: string;
     name: string;
     customer_type: "retail" | "wholesale";
-    sales_channel?: "general" | "delivery" | "counter";
+    service_type?: "counter" | "delivery" | "both"; // Tipo de servicio preferido
+    // B2B fields
+    business_type?: string | null;
+    balance?: number;
+    credit_limit?: number;
+    phone?: string | null;
+    address?: string | null;
 }
 
 export interface CartItem {

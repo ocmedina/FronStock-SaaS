@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, createContext, useContext, useEffect } from 'react';
+import { useState, createContext, useContext, useEffect, useMemo } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { createClient } from '@/lib/supabase/client';
@@ -28,9 +28,11 @@ import {
     LucideIcon,
     Menu,
     X,
+    Building2,
     FileText,
     CreditCard,
     Truck,
+    MapPin,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
@@ -63,7 +65,6 @@ const menuSections: MenuSection[] = [
         title: 'Ventas',
         items: [
             { href: '/dashboard/sales', label: 'Punto de Venta', icon: ShoppingCart },
-            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
             { href: '/dashboard/sales/history', label: 'Historial Ventas', icon: ClipboardList },
             { href: '/dashboard/invoices', label: 'Facturación', icon: FileText },
             { href: '/dashboard/promotions', label: 'Promociones', icon: Tags },
@@ -108,6 +109,9 @@ const menuSections: MenuSection[] = [
     {
         title: 'Logística',
         items: [
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
+            { href: '/dashboard/delivery/customers', label: 'Clientes', icon: Building2 },
+            { href: '/dashboard/delivery/routes', label: 'Rutas', icon: MapPin },
             { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList },
         ],
     },
@@ -160,18 +164,23 @@ export function Sidebar() {
     const { organization } = useOrganization();
     const { theme, toggleTheme } = useTheme();
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const [userEmail, setUserEmail] = useState<string | null>(null);
 
     useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserEmail(user.email || 'Usuario');
+        const loadUserEmail = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const user = session?.user;
+                if (user) {
+                    setUserEmail(user.email || 'Usuario');
+                }
+            } catch {
+                setUserEmail('Usuario');
             }
         };
-        getUser();
-    }, []);
+        loadUserEmail();
+    }, [supabase]);
 
     // Close mobile sidebar on route change
     useEffect(() => {

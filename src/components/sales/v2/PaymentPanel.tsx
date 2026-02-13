@@ -50,6 +50,12 @@ export function PaymentPanel({
     const [paymentMode, setPaymentMode] = useState<'simple' | 'mixed'>('simple');
     const [simpleMethod, setSimpleMethod] = useState<PaymentMethod>('cash');
     const [cashReceived, setCashReceived] = useState<string>('');
+    
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+    const hasCredit = (selectedCustomer?.credit_limit || 0) > 0;
+    const currentBalance = selectedCustomer?.balance || 0;
+    const availableCredit = (selectedCustomer?.credit_limit || 0) + currentBalance;
+    const canUseCredit = hasCredit && availableCredit >= total;
 
     // Mixed payments
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -188,12 +194,62 @@ export function PaymentPanel({
                                     variant={simpleMethod === 'credit' ? 'default' : 'outline'}
                                     className="h-12"
                                     onClick={() => setSimpleMethod('credit')}
+                                    disabled={!selectedCustomerId || !canUseCredit}
+                                    title={!selectedCustomerId ? 'Selecciona un cliente' : !hasCredit ? 'Cliente sin límite de crédito' : !canUseCredit ? 'Excede límite de crédito disponible' : ''}
                                 >
                                     <Wallet className="h-4 w-4 mr-2" />
                                     Fiado
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Credit Info Alert */}
+                        {simpleMethod === 'credit' && selectedCustomer && (
+                            <div className="bg-blue-500/10 border-2 border-blue-500/20 rounded-lg p-4 space-y-2">
+                                <div className="flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300">
+                                    <Wallet className="h-4 w-4" />
+                                    Información de Crédito
+                                </div>
+                                <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Cliente:</span>
+                                        <span className="font-medium">{selectedCustomer.name}</span>
+                                    </div>
+                                    {selectedCustomer.business_type && (
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Tipo:</span>
+                                            <span className="font-medium">{selectedCustomer.business_type}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Límite de Crédito:</span>
+                                        <span className="font-medium">${(selectedCustomer.credit_limit || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Balance Actual:</span>
+                                        <span className={cn(
+                                            "font-medium",
+                                            currentBalance < 0 ? "text-red-500" : "text-green-500"
+                                        )}>
+                                            ${Math.abs(currentBalance).toLocaleString()} {currentBalance < 0 ? '(Debe)' : currentBalance > 0 ? '(A favor)' : ''}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between pt-2 border-t border-blue-500/20">
+                                        <span className="font-medium">Crédito Disponible:</span>
+                                        <span className="font-bold text-lg">${availableCredit.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                        <span>Después de esta venta:</span>
+                                        <span className={cn(
+                                            "font-medium",
+                                            (availableCredit - total) >= 0 ? "text-green-600" : "text-red-600"
+                                        )}>
+                                            ${(availableCredit - total).toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Cash Payment */}
                         {simpleMethod === 'cash' && (

@@ -12,6 +12,8 @@ export interface Organization {
   tax_condition?: string | null;
   activity_start_date?: string | null;
   gross_income_number?: string | null;
+  phone?: string | null;
+  email?: string | null;
 }
 
 export interface Profile {
@@ -20,6 +22,37 @@ export interface Profile {
   full_name: string | null;
   role: string;
   updated_at: string;
+}
+
+export interface Customer {
+  id: string;
+  organization_id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  lat: number | null;
+  lng: number | null;
+  service_type: "counter" | "delivery" | "both"; // Tipo de servicio
+  visit_day: number | null; // 0=Domingo, 1=Lunes...
+  route_order: number | null;
+  // Campos B2B
+  business_type: string | null; // 'kiosco', 'restaurant', etc
+  tax_id: string | null; // CUIT
+  balance: number; // Cuenta corriente (negativo = debe)
+  credit_limit: number;
+  payment_terms: string; // 'contado', '7_dias', '15_dias', '30_dias'
+  price_list: string; // 'default', 'mayorista', 'minorista'
+  zone: string | null; // 'norte', 'sur', etc
+  is_active: boolean;
+  contact_person: string | null;
+  business_hours: string | null;
+  notes: string | null;
+  last_visit_date: string | null;
+  preferred_visit_time: string | null; // Format: "09:00"
+  created_at: string;
+  cuit?: string | null; // Alias de tax_id para compatibilidad
 }
 
 export type UserRole = 'owner' | 'admin' | 'manager' | 'employee';

@@ -19,7 +19,7 @@ export interface ReportFilters {
 }
 
 export type PaymentMethodFilter = "cash" | "card" | "transfer" | "credit";
-export type SalesChannelFilter = "delivery" | "counter" | "general";
+export type SalesChannelFilter = "delivery" | "counter" | "both";
 export type CustomerTypeFilter = "retail" | "wholesale";
 
 export interface FilterOption {
@@ -38,7 +38,7 @@ export const paymentMethodOptions: FilterOption[] = [
 export const salesChannelOptions: FilterOption[] = [
     { value: "delivery", label: "Reparto", icon: "Truck" },
     { value: "counter", label: "Mostrador", icon: "Store" },
-    { value: "general", label: "General", icon: "ShoppingBag" },
+    { value: "both", label: "Ambos", icon: "ShoppingBag" },
 ];
 
 export const customerTypeOptions: FilterOption[] = [

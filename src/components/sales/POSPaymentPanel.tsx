@@ -204,7 +204,7 @@ export function POSPaymentPanel({
     // Sort customers: "Consumidor Final" first, then alphabetical
     // Also FILTER: only show "counter" or "general" customers in POS
     const sortedCustomers = [...customers]
-        .filter(c => !c.sales_channel || c.sales_channel === 'counter' || c.sales_channel === 'general')
+        .filter(c => !c.service_type || c.service_type === 'counter' || c.service_type === 'both')
         .sort((a, b) => {
             if (a.name === "Consumidor Final") return -1;
             if (b.name === "Consumidor Final") return 1;

@@ -17,6 +17,9 @@ import {
 import { POSProductModal } from "@/components/sales/POSProductModal";
 import { useSuspendedSales } from "@/hooks/useSuspendedSales";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useOfflineSales } from "@/hooks/useOfflineSales";
+import { offlineDB } from "@/lib/offline/db";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
@@ -64,37 +67,119 @@ export default function POSPage() {
 
   const supabase = createClient();
 
+  // Offline Support
+  const { isOnline, wasOffline } = useOnlineStatus();
+  const { saveSaleOffline } = useOfflineSales(organizationId);
+
+  // Debug: Log online status changes
+  useEffect(() => {
+    console.log(`🌐 Sales Page: isOnline = ${isOnline}, wasOffline = ${wasOffline}`);
+  }, [isOnline, wasOffline]);
+
   // Fetch Data (only once on mount)
   const fetchData = useCallback(async () => {
-    if (!organizationId) return;
-    setIsLoading(true);
-
-    const [productsRes, customersRes] = await Promise.all([
-      supabase
-        .from("products")
-        .select("id, name, sku, barcode, plu, price, wholesale_price, stock")
-        .eq("organization_id", organizationId)
-        .gt("stock", 0)
-        .order("name"),
-      supabase
-        .from("customers")
-        .select("id, name, customer_type, sales_channel")
-        .eq("organization_id", organizationId)
-        .in("sales_channel", ["counter", "general"])
-        .order("name"),
-    ]);
-
-    if (productsRes.data) setProducts(productsRes.data as Product[]);
-    if (customersRes.data) {
-      setCustomers(customersRes.data);
+    if (!organizationId) {
+      console.log('⏸️ fetchData: No organizationId');
+      return;
     }
+    
+    setIsLoading(true);
+    console.log(`🔄 fetchData: Starting (isOnline: ${isOnline})`);
 
-    setIsLoading(false);
-  }, [organizationId, supabase]);
+    try {
+      // Always try cache first for immediate UI
+      const [cachedProducts, cachedCustomers] = await Promise.all([
+        offlineDB.products
+          .where('organization_id')
+          .equals(organizationId)
+          .toArray(),
+        offlineDB.customers
+          .where('organization_id')
+          .equals(organizationId)
+          .toArray()
+      ]);
 
+      if (cachedProducts.length > 0) {
+        const availableCachedProducts = cachedProducts.filter((product) => Number(product.stock) > 0);
+        setProducts(availableCachedProducts as any);
+        console.log(`📦 Initial: Loaded ${availableCachedProducts.length} available products from cache`);
+      }
+      
+      if (cachedCustomers.length > 0) {
+        setCustomers(cachedCustomers as any);
+        console.log(`📦 Initial: Loaded ${cachedCustomers.length} customers from cache`);
+      }
+
+      if (isOnline) {
+        // Then try Supabase for fresh data
+        console.log('📡 Fetching from Supabase...');
+        
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+        
+        const fetchPromise = Promise.all([
+          supabase
+            .from("products")
+            .select("id, name, sku, barcode, plu, price, wholesale_price, stock")
+            .eq("organization_id", organizationId)
+            .gt("stock", 0)
+            .order("name"),
+          supabase
+            .from("customers")
+            .select("id, name, customer_type, service_type, business_type, balance, credit_limit, phone, address")
+            .eq("organization_id", organizationId)
+            .or("service_type.in.(counter,both),service_type.is.null")
+            .eq("is_active", true)
+            .order("name"),
+        ]);
+
+        const [productsRes, customersRes] = await Promise.race([
+          fetchPromise,
+          timeoutPromise
+        ]) as any;
+
+        if (productsRes.error) throw productsRes.error;
+        if (customersRes.error) throw customersRes.error;
+
+        console.log(`✅ Loaded fresh data: ${productsRes.data?.length || 0} products`);
+        
+        if (productsRes.data) setProducts(productsRes.data as Product[]);
+        if (customersRes.data) setCustomers(customersRes.data);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching data:', error);
+      // Cache was already loaded at start, so just show warning if no data
+      if (products.length === 0) {
+         toast.error('Error al cargar datos');
+      }
+    } finally {
+      setIsLoading(false);
+      console.log('✅ fetchData: Complete');
+    }
+  }, [organizationId, isOnline, supabase]);
+
+  // Load data on mount and when online status changes
   useEffect(() => {
-    if (organizationId) fetchData();
+    if (organizationId) {
+      console.log('⚡ Triggering fetchData from useEffect');
+      fetchData();
+    }
   }, [organizationId, fetchData]);
+
+  // Reload data when connection is restored (with delay)
+  useEffect(() => {
+    if (organizationId && isOnline && wasOffline) {
+      console.log('🔄 Connection restored detected! Reloading data in 6 seconds...');
+      const timer = setTimeout(() => {
+        console.log('📡 Executing deferred data reload...');
+        fetchData();
+      }, 6000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [organizationId, isOnline, wasOffline, fetchData]);
 
   // Tab Management
   const handleAddTab = () => {
@@ -229,40 +314,67 @@ export default function POSPage() {
         product_name: item.product.name || "Sin nombre",
         quantity: item.quantity,
         unit_price: item.product.price ?? 0,
+        discount: 0,
+        subtotal: (item.product.price ?? 0) * item.quantity
       }));
 
       const finalPayments = payments || [{ method: "cash", amount: total }];
+      const paymentMethod = finalPayments[0]?.method || "cash";
 
-      const { data, error } = await supabase.rpc("process_sale", {
-        p_org_id: organizationId,
-        p_customer_id: selectedCustomerId || null,
-        p_payments: finalPayments,
-        p_items: items,
-        p_discount: discount || 0,
-        p_surcharge: surcharge || 0,
-      });
+      // Get customer name if exists
+      const customer = customers.find(c => c.id === selectedCustomerId);
 
-      if (error) throw error;
+      if (isOnline) {
+        // ONLINE: Process sale via Supabase
+        const { data, error } = await supabase.rpc("process_sale", {
+          p_org_id: organizationId,
+          p_customer_id: selectedCustomerId || null,
+          p_payments: finalPayments,
+          p_items: items,
+          p_discount: discount || 0,
+          p_surcharge: surcharge || 0,
+        });
 
-      const result = data as {
-        success: boolean;
-        sale_id?: string;
-        sale_number?: number;
-        error?: string;
-        total?: number;
-      };
+        if (error) throw error;
 
-      if (!result.success) {
-        throw new Error(result.error || "Error al procesar la venta");
+        const result = data as {
+          success: boolean;
+          sale_id?: string;
+          sale_number?: number;
+          error?: string;
+          total?: number;
+        };
+
+        if (!result.success) {
+          throw new Error(result.error || "Error al procesar la venta");
+        }
+
+        toast.success(`¡Venta #${result.sale_number} procesada exitosamente!`, {
+          description: `Total: $${total.toLocaleString("es-AR")}`,
+        });
+
+        clearCart();
+        fetchData();
+      } else {
+        // OFFLINE: Save sale locally
+        await saveSaleOffline({
+          customer_id: selectedCustomerId || undefined,
+          customer_name: customer?.name,
+          service_type: 'counter',
+          payment_method: paymentMethod,
+          items: items,
+          subtotal: subtotal,
+          discount: discount || 0,
+          total: total
+        });
+
+        toast.success("Venta guardada offline", {
+          description: `Se sincronizará cuando vuelva la conexión. Total: $${total.toLocaleString("es-AR")}`,
+          duration: 5000
+        });
+
+        clearCart();
       }
-
-      toast.success(`¡Venta #${result.sale_number} procesada exitosamente!`, {
-        description: `Total: $${total.toLocaleString("es-AR")}`,
-      });
-
-      // Clear current tab for next sale
-      clearCart();
-      fetchData();
     } catch (error: any) {
       console.error("Error processing sale:", error);
       toast.error(`Error: ${error.message || "Error desconocido"}`);

@@ -194,7 +194,7 @@ export default function ReportsPage() {
       if (customerIds.length > 0) {
         const { data: customers } = await supabase
           .from("customers")
-          .select("id, customer_type, sales_channel")
+          .select("id, customer_type, service_type")
           .in("id", customerIds);
 
         if (customers) {
@@ -212,7 +212,7 @@ export default function ReportsPage() {
               filters.customerTypes.includes(customer.customer_type);
             const matchesChannel =
               filters.salesChannels.length === 0 ||
-              filters.salesChannels.includes(customer.sales_channel);
+              filters.salesChannels.includes(customer.service_type);
 
             return matchesType && matchesChannel;
           });

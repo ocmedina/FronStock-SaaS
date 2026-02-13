@@ -22,9 +22,11 @@ import {
     Shield,
     Settings,
     CreditCard,
+    Database,
 } from 'lucide-react';
 import { PlansClientWrapper } from './plans/PlansClientWrapper';
 import { OrganizationSettingsForm } from '@/components/settings/OrganizationSettingsForm';
+import { OfflineDebugPanel } from '@/components/OfflineDebugPanel';
 
 export default function SettingsPage() {
     const { organization, profile, refetch } = useOrganization();
@@ -141,6 +143,10 @@ export default function SettingsPage() {
                     <TabsTrigger value="plans" className="gap-2">
                         <CreditCard className="h-4 w-4" />
                         Planes
+                    </TabsTrigger>
+                    <TabsTrigger value="offline" className="gap-2">
+                        <Database className="h-4 w-4" />
+                        Sistema Offline
                     </TabsTrigger>
                 </TabsList>
 
@@ -316,6 +322,11 @@ export default function SettingsPage() {
                     <PlansClientWrapper
                         currentPlanId={organization?.plan_type as any || 'free'}
                     />
+                </TabsContent>
+
+                {/* Offline System */}
+                <TabsContent value="offline" className="space-y-4">
+                    <OfflineDebugPanel />
                 </TabsContent>
             </Tabs>
         </div>

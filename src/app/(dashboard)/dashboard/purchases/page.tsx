@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ReceivePurchaseOrderModal, DownloadPurchaseOrderButton } from "@/components/purchases";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,6 +110,7 @@ export default function PurchaseOrdersPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(
     null,
   );
@@ -127,7 +129,11 @@ export default function PurchaseOrdersPage() {
     const [ordersRes, suppliersRes, productsRes] = await Promise.all([
       supabase
         .from("purchase_orders")
-        .select("*, supplier:suppliers(name)")
+        .select(`
+          *,
+          supplier:suppliers(id, name, contact_name, phone, email, address),
+          purchase_order_items(*)
+        `)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false }),
       supabase
@@ -252,54 +258,21 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleViewOrder = async (order: PurchaseOrder) => {
+    // Los items ya vienen cargados con el order desde fetchData
+    const itemsToShow = (order as any).purchase_order_items || [];
+    setOrderItems(itemsToShow);
     setSelectedOrder(order);
-    const { data } = await supabase
-      .from("purchase_order_items")
-      .select("*")
-      .eq("purchase_order_id", order.id);
-    if (data) setOrderItems(data);
     setShowModal(true);
   };
 
-  const handleReceiveOrder = async (orderId: string) => {
-    if (
-      !confirm(
-        "¿Marcar como recibido? Se actualizará el stock de los productos.",
-      )
-    )
-      return;
-
-    // Get order items
-    const { data: items } = await supabase
-      .from("purchase_order_items")
-      .select("product_id, quantity")
-      .eq("purchase_order_id", orderId);
-
-    if (!items) return;
-
-    // Update stock for each product
-    for (const item of items) {
-      const { data: product } = await supabase
-        .from("products")
-        .select("stock")
-        .eq("id", item.product_id)
-        .single();
-
-      if (product) {
-        await supabase
-          .from("products")
-          .update({ stock: product.stock + item.quantity })
-          .eq("id", item.product_id);
-      }
-    }
-
-    // Mark order as received
-    await supabase
-      .from("purchase_orders")
-      .update({ status: "received", received_at: new Date().toISOString() })
-      .eq("id", orderId);
-
+  const handleOpenReceiveModal = (order: PurchaseOrder) => {
+    setSelectedOrder(order);
     setShowModal(false);
+    setShowReceiveModal(true);
+  };
+
+  const handleReceiveSuccess = () => {
+    setShowReceiveModal(false);
     setSelectedOrder(null);
     fetchData();
   };
@@ -516,14 +489,21 @@ export default function PurchaseOrdersPage() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewOrder(order)}
-                        >
-                          <Eye className="h-4 w-4" />
-                          Ver
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <DownloadPurchaseOrderButton 
+                            order={order} 
+                            variant="ghost" 
+                            size="icon" 
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewOrder(order)}
+                          >
+                            <Eye className="h-4 w-4" />
+                            Ver
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -755,6 +735,14 @@ export default function PurchaseOrdersPage() {
             </div>
 
             <div className="flex gap-3 pt-4">
+              {selectedOrder && (
+                <DownloadPurchaseOrderButton 
+                  order={selectedOrder} 
+                  variant="outline" 
+                  size="default" 
+                  className="flex-1"
+                />
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
@@ -765,21 +753,29 @@ export default function PurchaseOrdersPage() {
               >
                 Cerrar
               </Button>
-              {selectedOrder?.status === "pending" && canEdit("products") && (
+              {(selectedOrder?.status === "pending" || selectedOrder?.status === "ordered") && canEdit("products") && (
                 <Button
                   onClick={() =>
-                    selectedOrder && handleReceiveOrder(selectedOrder.id)
+                    selectedOrder && handleOpenReceiveModal(selectedOrder)
                   }
                   className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                 >
                   <CheckCircle className="h-4 w-4" />
-                  Marcar Recibido
+                  Recibir Orden
                 </Button>
               )}
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal: Receive Order */}
+      <ReceivePurchaseOrderModal
+        order={selectedOrder}
+        open={showReceiveModal}
+        onOpenChange={setShowReceiveModal}
+        onSuccess={handleReceiveSuccess}
+      />
     </div>
   );
 }

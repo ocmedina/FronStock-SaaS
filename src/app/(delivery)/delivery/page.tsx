@@ -246,6 +246,28 @@ export default function DeliveryHomePage() {
                 </div>
             </div>
 
+            {/* Quick Access - My Route */}
+            <div className="px-4 mt-4">
+                <Link href="/delivery/routes">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl p-4 flex items-center justify-between shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50 transition-all hover:scale-[1.02]">
+                        <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+                                <MapPin className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-lg">Mi Ruta de Hoy</h3>
+                                <p className="text-xs text-blue-100">Ver clientes y realizar ventas</p>
+                            </div>
+                        </div>
+                        <div className="text-white">
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </div>
+                </Link>
+            </div>
+
             {/* Orders List (Grouped) */}
             <div className="p-4 space-y-4">
                 <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Pedidos Activos</h2>

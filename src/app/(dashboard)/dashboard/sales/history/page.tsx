@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import {
@@ -54,6 +54,7 @@ interface Sale {
     total: number;
     payment_method: string;
     status: string;
+    channel?: string | null;
     created_at: string;
     customer?: { name: string; cuit?: string } | null;
     invoices?: { id: string; invoice_number: string; type: string }[];
@@ -68,7 +69,7 @@ interface SaleItem {
 }
 
 export default function SalesHistoryPage() {
-    const { organizationId, isLoading: orgLoading } = useOrganization();
+    const { organizationId, isLoading: orgLoading, organization } = useOrganization();
     const [sales, setSales] = useState<Sale[]>([]);
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
@@ -83,7 +84,7 @@ export default function SalesHistoryPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     // Reset page when filters change
     useEffect(() => {
@@ -323,6 +324,7 @@ export default function SalesHistoryPage() {
                         <TableRow>
                             <TableHead>Fecha</TableHead>
                             <TableHead>Cliente</TableHead>
+                            <TableHead>Origen</TableHead>
                             <TableHead>Pago</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -336,6 +338,7 @@ export default function SalesHistoryPage() {
                                     <TableCell><div className="h-4 w-24 bg-muted animate-pulse rounded" /></TableCell>
                                     <TableCell><div className="h-4 w-32 bg-muted animate-pulse rounded" /></TableCell>
                                     <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                                    <TableCell><div className="h-4 w-20 bg-muted animate-pulse rounded" /></TableCell>
                                     <TableCell><div className="h-4 w-16 bg-muted animate-pulse rounded" /></TableCell>
                                     <TableCell className="text-right"><div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" /></TableCell>
                                     <TableCell className="text-right"><div className="h-8 w-8 bg-muted animate-pulse rounded ml-auto" /></TableCell>
@@ -343,7 +346,7 @@ export default function SalesHistoryPage() {
                             ))
                         ) : paginatedSales.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                                     No se encontraron ventas para este período
                                 </TableCell>
                             </TableRow>
@@ -367,6 +370,11 @@ export default function SalesHistoryPage() {
                                             ) : (
                                                 <span className="text-muted-foreground italic">Consumidor Final</span>
                                             )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={sale.channel === 'offline' ? 'border-amber-500/30 text-amber-600' : 'border-emerald-500/30 text-emerald-600'}>
+                                                {sale.channel === 'offline' ? 'Offline' : 'Online'}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className={`flex items-center gap-2 text-sm ${color}`}>
@@ -481,7 +489,7 @@ export default function SalesHistoryPage() {
                                 {saleItems.length > 0 ? (
                                     <div className="flex gap-2">
                                         <PDFDownloadLink
-                                            document={<TicketPDF sale={selectedSale} items={saleItems} organization={useOrganization().organization} />}
+                                            document={<TicketPDF sale={selectedSale} items={saleItems} organization={organization} />}
                                             fileName={`ticket-${selectedSale.id.slice(0, 8)}.pdf`}
                                         >
                                             {({ loading, error }) => (
@@ -499,7 +507,7 @@ export default function SalesHistoryPage() {
                                         </PDFDownloadLink>
 
                                         <PDFDownloadLink
-                                            document={<DeliveryNotePDF sale={selectedSale} items={saleItems} organization={useOrganization().organization} />}
+                                            document={<DeliveryNotePDF sale={selectedSale} items={saleItems} organization={organization} />}
                                             fileName={`remito-${selectedSale.id.slice(0, 8)}.pdf`}
                                         >
                                             {({ loading }) => (
@@ -519,7 +527,7 @@ export default function SalesHistoryPage() {
                                 {/* Invoice Button */}
                                 {selectedSale.invoices && selectedSale.invoices.length > 0 ? (
                                     <PDFDownloadLink
-                                        document={<InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={useOrganization().organization} />}
+                                        document={<InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={organization} />}
                                         fileName={`factura-${selectedSale.invoices[0].type}-${selectedSale.invoices[0].invoice_number}.pdf`}
                                     >
                                         {({ loading }) => (

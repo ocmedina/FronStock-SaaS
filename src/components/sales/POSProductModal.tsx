@@ -27,9 +27,11 @@ export function POSProductModal({
     const [search, setSearch] = useState("");
 
     const filteredProducts = useMemo(() => {
-        if (!search) return products;
+        const availableProducts = products.filter((p) => p.stock > 0);
+
+        if (!search) return availableProducts;
         const query = search.toLowerCase();
-        return products.filter(
+        return availableProducts.filter(
             (p) =>
                 p.name.toLowerCase().includes(query) ||
                 p.sku?.toLowerCase().includes(query) ||

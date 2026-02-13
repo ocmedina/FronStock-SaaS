@@ -33,12 +33,13 @@ export function SearchBar({ products, onProductSelect, autoFocus = true }: Searc
         }
 
         const searchTerm = query.toLowerCase();
-        const filtered = products.filter(
-            (p) =>
+        const filtered = products.filter((p) =>
+            p.stock > 0 && (
                 p.name.toLowerCase().includes(searchTerm) ||
                 p.sku?.toLowerCase().includes(searchTerm) ||
                 p.barcode?.toLowerCase().includes(searchTerm) ||
                 p.plu?.toLowerCase().includes(searchTerm)
+            )
         );
 
         setResults(filtered.slice(0, 8));

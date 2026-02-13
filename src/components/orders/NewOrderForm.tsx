@@ -4,10 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useOfflineOrders } from "@/hooks/useOfflineOrders";
+import { offlineDB } from "@/lib/offline/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard } from "lucide-react";
 import { toast } from "sonner";
+import { nanoid } from "nanoid";
 
 interface OrderItem {
     product_id: string;
@@ -26,6 +30,8 @@ interface NewOrderFormProps {
 export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className = "" }: NewOrderFormProps) {
     const router = useRouter();
     const { organizationId } = useOrganization();
+    const { isOnline } = useOnlineStatus();
+    const { saveOrderOffline } = useOfflineOrders(organizationId);
     const supabase = createClient();
 
     // Form State
@@ -74,15 +80,61 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
     }, [searchTerm]);
 
     const searchProducts = async () => {
-        const { data } = await supabase
-            .from('products')
-            .select('id, name, price, stock')
-            .eq('organization_id', organizationId)
-            .ilike('name', `%${searchTerm}%`)
-            .gt('stock', 0)
-            .limit(10);
+        if (!organizationId) {
+            setProducts([]);
+            return;
+        }
 
-        if (data) setProducts(data);
+        const queryText = searchTerm.trim().toLowerCase();
+        if (!queryText) {
+            setProducts([]);
+            return;
+        }
+
+        const loadProductsFromOfflineCache = async () => {
+            const cached = await offlineDB.products
+                .where('organization_id')
+                .equals(organizationId)
+                .toArray();
+
+            const filtered = cached
+                .filter((p: any) => p.stock > 0)
+                .filter((p: any) => (p.name || '').toLowerCase().includes(queryText))
+                .slice(0, 10)
+                .map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    price: p.price,
+                    stock: p.stock,
+                }));
+
+            setProducts(filtered);
+        };
+
+        if (!isOnline) {
+            await loadProductsFromOfflineCache();
+            return;
+        }
+
+        try {
+            const { data } = await supabase
+                .from('products')
+                .select('id, name, price, stock')
+                .eq('organization_id', organizationId)
+                .ilike('name', `%${searchTerm}%`)
+                .gt('stock', 0)
+                .limit(10);
+
+            if (data) {
+                setProducts(data);
+                return;
+            }
+        } catch {
+            await loadProductsFromOfflineCache();
+            return;
+        }
+
+        await loadProductsFromOfflineCache();
     };
 
     // Search Customers
@@ -95,14 +147,57 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
     }, [customerSearch]);
 
     const searchCustomers = async () => {
-        const { data } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('organization_id', organizationId)
-            .or(`name.ilike.%${customerSearch}%,phone.ilike.%${customerSearch}%`)
-            .limit(10);
+        if (!organizationId) {
+            setCustomers([]);
+            return;
+        }
 
-        if (data) setCustomers(data);
+        const queryText = customerSearch.trim().toLowerCase();
+        if (!queryText) {
+            setCustomers([]);
+            return;
+        }
+
+        const loadCustomersFromOfflineCache = async () => {
+            const cached = await offlineDB.customers
+                .where('organization_id')
+                .equals(organizationId)
+                .toArray();
+
+            const filtered = cached
+                .filter((c: any) => {
+                    const name = (c.name || '').toLowerCase();
+                    const phone = (c.phone || '').toLowerCase();
+                    return name.includes(queryText) || phone.includes(queryText);
+                })
+                .slice(0, 10);
+
+            setCustomers(filtered);
+        };
+
+        if (!isOnline) {
+            await loadCustomersFromOfflineCache();
+            return;
+        }
+
+        try {
+            const { data } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('organization_id', organizationId)
+                .or(`name.ilike.%${customerSearch}%,phone.ilike.%${customerSearch}%`)
+                .limit(10);
+
+            if (data) {
+                setCustomers(data);
+                return;
+            }
+        } catch {
+            await loadCustomersFromOfflineCache();
+            return;
+        }
+
+        await loadCustomersFromOfflineCache();
     };
 
     const addProduct = (product: any) => {
@@ -256,7 +351,8 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
         setLoading(true);
 
         try {
-            const { data, error } = await supabase.rpc('create_order', {
+            const clientReference = `online_order_${Date.now()}_${nanoid(8)}`;
+            const payload = {
                 p_org_id: organizationId,
                 p_customer_id: customer.id,
                 p_payment_method: paymentMethod,
@@ -271,8 +367,42 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 p_estimated_mins: estimatedMins,
                 p_delivery_fee: deliveryFee,
                 p_discount: discountAmount,
-                p_payment_amount: null
-            });
+                p_payment_amount: null,
+                p_client_reference: clientReference
+            };
+
+            if (!isOnline) {
+                const localOrderId = await saveOrderOffline(payload as any);
+                toast.success("Pedido guardado offline. Se sincronizará al reconectar.");
+
+                if (onSuccess) {
+                    onSuccess(localOrderId);
+                }
+
+                handleReset();
+
+                if (redirectAfterCreate) {
+                    router.push('/dashboard/orders');
+                }
+
+                return;
+            }
+
+            let { data, error } = await supabase.rpc('create_order', payload);
+
+            const shouldTryLegacy = !!error && (
+                error.code === 'PGRST202' ||
+                error.code === '42883' ||
+                error.message?.toLowerCase().includes('function') ||
+                error.message?.includes('p_client_reference')
+            );
+
+            if (shouldTryLegacy) {
+                const { p_client_reference, ...legacyPayload } = payload;
+                const legacyResult = await supabase.rpc('create_order', legacyPayload);
+                data = legacyResult.data;
+                error = legacyResult.error;
+            }
 
             if (error) throw error;
 

@@ -9,7 +9,7 @@ export interface Customer {
     cuit: string | null;
     balance: number;
     customer_type: "retail" | "wholesale";
-    sales_channel: "general" | "delivery" | "counter";
+    service_type: "counter" | "delivery" | "both";
     created_at: string;
 }
 

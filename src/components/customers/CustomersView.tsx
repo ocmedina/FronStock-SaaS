@@ -73,7 +73,7 @@ export function CustomersView({
         }
     }, [organizationId, fetchCustomers]);
 
-    const [selectedChannel, setSelectedChannel] = useState<"all" | "delivery" | "counter" | "general">("all");
+    const [selectedChannel, setSelectedChannel] = useState<"all" | "delivery" | "counter" | "both">("all");
 
     // Reset pagination on filter change
     useEffect(() => {
@@ -92,7 +92,7 @@ export function CustomersView({
         const matchesDebt = effectiveShowDebtors ? c.balance > 0 : true;
 
         // Channel filter
-        const matchesChannel = selectedChannel === "all" || c.sales_channel === selectedChannel;
+        const matchesChannel = selectedChannel === "all" || c.service_type === selectedChannel;
 
         return matchesSearch && matchesDebt && matchesChannel;
     });
@@ -280,11 +280,11 @@ export function CustomersView({
                         Mostrador
                     </button>
                     <button
-                        onClick={() => setSelectedChannel("general")}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'general' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                        onClick={() => setSelectedChannel("both")}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${selectedChannel === 'both' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             }`}
                     >
-                        Mixtos
+                        Ambos
                     </button>
                 </div>
             </div>

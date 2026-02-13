@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useImageToBase64 } from "@/hooks/useImageToBase64";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useOfflineSales } from "@/hooks/useOfflineSales";
+import { offlineDB } from "@/lib/offline/db";
 import { AccessDenied } from "@/components/Protected";
+import { OfflineStatusBanner } from "@/components/OfflineStatusBanner";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2, WifiOff } from "lucide-react";
 import {
     Invoice,
     InvoiceStats,
@@ -24,6 +29,9 @@ export default function InvoicesPage() {
         isLoading: orgLoading,
     } = useOrganization();
     const { canView, canCreate } = usePermissions();
+    const { base64: logoBase64 } = useImageToBase64(organization?.logo_url);
+    const { isOnline } = useOnlineStatus();
+    const { cacheInvoices } = useOfflineSales(organizationId ?? undefined);
 
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
@@ -34,28 +42,67 @@ export default function InvoicesPage() {
 
     const supabase = createClient();
 
+    // Crear una versión de organization con el logo en base64
+    const orgWithBase64Logo = useMemo(() => {
+        if (!organization) return null;
+        return {
+            ...organization,
+            logo_url: logoBase64 || organization.logo_url
+        };
+    }, [organization, logoBase64]);
+
     const fetchInvoices = useCallback(async () => {
         if (!organizationId) return;
         setLoading(true);
 
-        const { data, error } = await supabase
-            .from("invoices")
-            .select("id, organization_id, sale_id, customer_id, invoice_number, type, total, status, cae, cae_expiration, afip_status, afip_error, created_at, customer:customers(id, name, cuit), sale:sales(total, created_at, sale_items(quantity, unit_price, total, product:products(name)))")
-            .eq("organization_id", organizationId)
-            .order("created_at", { ascending: false });
+        try {
+            const { data, error } = await supabase
+                .from("invoices")
+                .select("id, organization_id, sale_id, customer_id, invoice_number, type, total, status, cae, cae_expiration, afip_status, afip_error, created_at, customer:customers(id, name, cuit), sale:sales(total, created_at, sale_items(quantity, unit_price, total, product:products(name)))")
+                .eq("organization_id", organizationId)
+                .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error("❌ Error fetching invoices:", error);
+            if (error) {
+                console.error("❌ Error fetching invoices from Supabase:", error);
+                throw error;
+            }
+
+            if (data) {
+                const invoicesData = data as unknown as Invoice[];
+                setInvoices(invoicesData);
+                setFilteredInvoices(invoicesData);
+                
+                // Cache invoices when online
+                if (isOnline) {
+                    cacheInvoices();
+                }
+            }
+        } catch (error) {
+            console.error("❌ Fetch failed, loading from cache:", error);
+            
+            // Fallback to cached invoices
+            try {
+                const cachedInvoices = await offlineDB.invoices
+                    .where('organization_id')
+                    .equals(organizationId)
+                    .reverse()
+                    .sortBy('created_at');
+                
+                if (cachedInvoices && cachedInvoices.length > 0) {
+                    console.log(`📦 Loaded ${cachedInvoices.length} invoices from cache`);
+                    const invoicesData = cachedInvoices as unknown as Invoice[];
+                    setInvoices(invoicesData);
+                    setFilteredInvoices(invoicesData);
+                } else {
+                    console.warn('⚠️ No cached invoices available');
+                }
+            } catch (cacheError) {
+                console.error('❌ Error loading from cache:', cacheError);
+            }
+        } finally {
+            setLoading(false);
         }
-
-        if (data) {
-            const invoicesData = data as unknown as Invoice[];
-            setInvoices(invoicesData);
-            setFilteredInvoices(invoicesData);
-        }
-
-        setLoading(false);
-    }, [organizationId, supabase]);
+    }, [organizationId, supabase, isOnline, cacheInvoices]);
 
     const handleFilterChange = useCallback((newFilters: InvoiceFilterValues) => {
         setFilters(newFilters);
@@ -116,6 +163,9 @@ export default function InvoicesPage() {
 
     return (
         <div className="space-y-6">
+            {/* Offline Banner */}
+            <OfflineStatusBanner />
+
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
@@ -157,7 +207,9 @@ export default function InvoicesPage() {
                         <Button
                             onClick={() => setShowCreateModal(true)}
                             className="shadow-lg shadow-blue-500/20"
+                            disabled={!isOnline}
                         >
+                            {!isOnline && <WifiOff className="h-4 w-4 mr-2" />}
                             <Plus className="h-4 w-4 mr-2" />
                             Nueva Factura
                         </Button>
@@ -177,7 +229,7 @@ export default function InvoicesPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
             ) : (
-                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} />
+                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} organization={orgWithBase64Logo} />
             )}
 
             {/* Create Modal */}
@@ -194,7 +246,7 @@ export default function InvoicesPage() {
             <InvoiceDetailModal
                 invoice={selectedInvoice}
                 onClose={() => setSelectedInvoice(null)}
-                organization={organization}
+                organization={orgWithBase64Logo}
             />
         </div>
     );

@@ -55,7 +55,7 @@ export default function POSPageV2() {
                 .order("name"),
             supabase
                 .from("customers")
-                .select("id, name, customer_type, sales_channel")
+                .select("id, name, customer_type, service_type")
                 .eq("organization_id", organizationId)
                 .order("name"),
         ]);

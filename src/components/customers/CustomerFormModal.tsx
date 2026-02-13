@@ -32,7 +32,7 @@ export function CustomerFormModal({
         address: "",
         reference: "",
         customer_type: "retail" as "retail" | "wholesale",
-        sales_channel: "general" as "general" | "delivery" | "counter",
+        service_type: "both" as "counter" | "delivery" | "both",
     });
 
     useEffect(() => {
@@ -44,7 +44,7 @@ export function CustomerFormModal({
                 address: editingCustomer.address || "",
                 reference: editingCustomer.reference || "",
                 customer_type: editingCustomer.customer_type,
-                sales_channel: editingCustomer.sales_channel || "general",
+                service_type: editingCustomer.service_type || "both",
             });
         } else {
             setFormData({
@@ -54,7 +54,7 @@ export function CustomerFormModal({
                 address: "",
                 reference: "",
                 customer_type: "retail",
-                sales_channel: "general",
+                service_type: "both",
             });
         }
     }, [editingCustomer, open]);
@@ -126,23 +126,46 @@ export function CustomerFormModal({
                         </div>
                         <div className="grid gap-2">
                             <label
-                                htmlFor="channel"
+                                htmlFor="service"
                                 className="text-sm font-medium leading-none"
                             >
-                                Canal de Venta
+                                Tipo de Servicio
                             </label>
-                            <select
-                                id="channel"
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                value={formData.sales_channel}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, sales_channel: e.target.value as any })
-                                }
-                            >
-                                <option value="general">Mixto (General)</option>
-                                <option value="delivery">Solo Reparto</option>
-                                <option value="counter">Solo Mostrador</option>
-                            </select>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, service_type: "counter" })}
+                                    className={`flex-1 px-3 py-2 text-xs font-medium rounded-md border transition-all ${
+                                        formData.service_type === "counter"
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background border-input hover:bg-muted"
+                                    }`}
+                                >
+                                    🏪 Mostrador
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, service_type: "delivery" })}
+                                    className={`flex-1 px-3 py-2 text-xs font-medium rounded-md border transition-all ${
+                                        formData.service_type === "delivery"
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background border-input hover:bg-muted"
+                                    }`}
+                                >
+                                    🚚 Reparto
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, service_type: "both" })}
+                                    className={`flex-1 px-3 py-2 text-xs font-medium rounded-md border transition-all ${
+                                        formData.service_type === "both"
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background border-input hover:bg-muted"
+                                    }`}
+                                >
+                                    🏪🚚 Ambos
+                                </button>
+                            </div>
                         </div>
                     </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrganization } from './OrganizationContext';
 import { defaultRolePermissions, type Role, MODULES } from '@/lib/permissions';
@@ -44,7 +44,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     const fetchPermissions = useCallback(async () => {
         if (!organizationId) return;

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
+import { nanoid } from "nanoid";
 
 interface OrderSummaryProps {
     items: { product: any, quantity: number }[];
@@ -43,6 +44,7 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
 
         setLoading(true);
         try {
+            const clientReference = `online_order_${Date.now()}_${nanoid(8)}`;
             const saleItems = items.map(item => ({
                 product_id: item.product.id,
                 product_name: item.product.name,
@@ -50,7 +52,7 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
                 unit_price: item.product.price
             }));
 
-            const { data, error } = await supabase.rpc('create_order', {
+            const payload = {
                 p_org_id: organizationId,
                 p_customer_id: customer.id,
                 p_payment_method: paymentMethod,
@@ -60,8 +62,25 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
                 p_estimated_mins: estimatedMins,
                 p_delivery_fee: deliveryFee,
                 p_discount: 0,
-                p_payment_amount: paymentAmount ? Number(paymentAmount) : null
-            });
+                p_payment_amount: paymentAmount ? Number(paymentAmount) : null,
+                p_client_reference: clientReference,
+            };
+
+            let { data, error } = await supabase.rpc('create_order', payload);
+
+            const shouldTryLegacy = !!error && (
+                error.code === 'PGRST202' ||
+                error.code === '42883' ||
+                error.message?.toLowerCase().includes('function') ||
+                error.message?.includes('p_client_reference')
+            );
+
+            if (shouldTryLegacy) {
+                const { p_client_reference, ...legacyPayload } = payload;
+                const legacyResult = await supabase.rpc('create_order', legacyPayload);
+                data = legacyResult.data;
+                error = legacyResult.error;
+            }
 
             if (error) {
                 console.error("Order Creation Error Details:", error);

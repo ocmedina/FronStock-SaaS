@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface QuickActionsProps {
     suspendedCount?: number;
     onSuspendedClick?: () => void;
+    onCatalogClick?: () => void;
     onHistoryClick?: () => void;
     onShortcutsClick?: () => void;
 }
@@ -14,6 +15,7 @@ interface QuickActionsProps {
 export function QuickActions({
     suspendedCount = 0,
     onSuspendedClick,
+    onCatalogClick,
     onHistoryClick,
     onShortcutsClick,
 }: QuickActionsProps) {

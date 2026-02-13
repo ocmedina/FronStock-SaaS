@@ -5,11 +5,14 @@ import { updateSession } from '@/lib/supabase/middleware';
 const publicRoutes = ['/login', '/register', '/visor', '/'];
 const authRoutes = ['/login', '/register'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Actualizar sesión y obtener usuario
-    const { user, supabaseResponse } = await updateSession(request);
+    const { user, supabaseResponse, authErrorType } = await updateSession(request);
+    const hasSupabaseAuthCookie = request.cookies
+        .getAll()
+        .some((cookie) => cookie.name.startsWith('sb-') && cookie.value);
 
     // Rutas públicas: permitir acceso sin autenticación
     if (publicRoutes.some((route) => pathname === route || pathname.startsWith('/visor'))) {
@@ -23,6 +26,10 @@ export async function middleware(request: NextRequest) {
     // Rutas protegidas: requieren autenticación
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding') || pathname.startsWith('/delivery')) {
         if (!user) {
+            if (authErrorType === 'network' && hasSupabaseAuthCookie) {
+                return supabaseResponse;
+            }
+
             // Guardar la URL original para redirigir después del login
             const redirectUrl = new URL('/login', request.url);
             redirectUrl.searchParams.set('redirect', pathname);
@@ -47,11 +54,15 @@ export async function middleware(request: NextRequest) {
             }
         );
 
-        const { data: profile } = await supabaseClient
+        const { data: profile, error: roleError } = await supabaseClient
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single();
+
+        if (roleError) {
+            return supabaseResponse;
+        }
 
         const role = profile?.role;
 

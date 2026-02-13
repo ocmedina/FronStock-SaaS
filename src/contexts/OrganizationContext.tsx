@@ -7,6 +7,8 @@ import {
     useState,
     ReactNode,
     useCallback,
+    useMemo,
+    useRef,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -45,22 +47,79 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
+    const profileRef = useRef<Profile | null>(null);
+    const organizationRef = useRef<Organization | null>(null);
+    const isFetchingRef = useRef(false);
+
+    useEffect(() => {
+        profileRef.current = profile;
+    }, [profile]);
+
+    useEffect(() => {
+        organizationRef.current = organization;
+    }, [organization]);
 
     const fetchOrganizationData = useCallback(async () => {
+        if (isFetchingRef.current) {
+            return;
+        }
+
+        isFetchingRef.current = true;
+
+        let hasCachedProfile = false;
+        let hasCachedOrg = false;
+        let cachedProfile: Profile | null = null;
+
         try {
-            setIsLoading(true);
+            // Keep loading true only if we don't have cached data
+            // setIsLoading(true); // Don't reset loading aggressive to avoid flicker
+
             setError(null);
 
-            // 1. Obtener usuario autenticado
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
+            // 1. Obtener usuario autenticado (USAR getSession)
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-            if (authError || !user) {
-                router.push('/login');
+            if (sessionError || !session?.user) {
+                console.log('No active session found');
+                setIsLoading(false);
                 return;
             }
 
-            // 2. Obtener o crear perfil del usuario
+            const user = session.user;
+            
+            // Local variables to track cache availability in this execution
+
+            // --- CACHE LAYER START ---
+            // Intenta cargar del cache local primero para UI inmediata
+            try {
+                const cachedProfileStr = localStorage.getItem(`profile_${user.id}`);
+                if (cachedProfileStr) {
+                    cachedProfile = JSON.parse(cachedProfileStr);
+                    setProfile(cachedProfile);
+                    hasCachedProfile = true;
+                    
+                    if (cachedProfile?.organization_id) {
+                        const cachedOrgStr = localStorage.getItem(`org_${cachedProfile.organization_id}`);
+                        if (cachedOrgStr) {
+                            setOrganization(JSON.parse(cachedOrgStr));
+                            hasCachedOrg = true;
+                        }
+                        
+                        const cachedPermsStr = localStorage.getItem(`perms_${cachedProfile.organization_id}`);
+                        if (cachedPermsStr) {
+                            setPermissions(JSON.parse(cachedPermsStr));
+                        }
+                    }
+                    // Si tenemos datos en caché, quitamos loading para mostrar la UI
+                    setIsLoading(false);
+                }
+            } catch (e) {
+                console.warn('Error reading local cache:', e);
+            }
+            // --- CACHE LAYER END ---
+
+            // 2. Fetch de red (Network)
             let { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -70,7 +129,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             // Si no existe el perfil, intentar crearlo
             if (profileError && profileError.code === 'PGRST116') {
                 console.log('Profile not found, creating one...');
-
                 const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
                     .insert({
@@ -82,22 +140,28 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
                     .single();
 
                 if (insertError) {
-                    console.error('Error creating profile:', insertError);
-                    setError('Error al crear el perfil: ' + insertError.message);
-                    return;
+                    throw insertError;
                 }
-
                 profileData = newProfile;
             } else if (profileError) {
-                console.error('Error fetching profile:', profileError);
-                setError('Error al cargar el perfil: ' + profileError.message);
-                return;
+                const fallbackProfile = profileRef.current || cachedProfile;
+
+                if (fallbackProfile) {
+                    console.warn('Using cached profile due to network error');
+                    profileData = fallbackProfile;
+                    hasCachedProfile = true;
+                } else {
+                    throw profileError;
+                }
             }
 
+            // Actualizar estado y caché
             setProfile(profileData);
+            localStorage.setItem(`profile_${user.id}`, JSON.stringify(profileData));
 
             // 3. Si no tiene organization_id, redirigir a onboarding
             if (!profileData?.organization_id) {
+                setIsLoading(false);
                 router.push('/onboarding');
                 return;
             }
@@ -110,27 +174,53 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
                 .single();
 
             if (orgError) {
-                console.error('Error fetching organization:', orgError);
-                setError('Error al cargar la organización: ' + orgError.message);
-                return;
+                  if (!hasCachedOrg && !organizationRef.current) throw orgError;
+                 console.log('Using cached organization due to network error');
+                 // Si tenemos caché de org, ignoramos error de red
+            } else {
+                setOrganization(orgData);
+                localStorage.setItem(`org_${profileData.organization_id}`, JSON.stringify(orgData));
             }
 
-            setOrganization(orgData);
-
-            // 5. Cargar permisos personalizados de la organización
+            // 5. Cargar permisos personalizados
             const { data: permsData } = await supabase
                 .from('organization_permissions')
                 .select('role, module, can_view, can_create, can_edit, can_delete')
                 .eq('organization_id', profileData.organization_id);
 
-            if (permsData && permsData.length > 0) {
+            if (permsData) {
                 setPermissions(permsData);
+                localStorage.setItem(`perms_${profileData.organization_id}`, JSON.stringify(permsData));
             }
 
-        } catch (err) {
-            console.error('Unexpected error:', err);
-            setError('Error inesperado');
+        } catch (err: any) {
+            // Solo mostramos error si no pudimos cargar nada (ni de caché)
+            // Usamos las variables locales 'hasCached...' además del estado 'profile'/'organization'
+            const hasProfile = !!profileRef.current || hasCachedProfile;
+            const hasOrg = !!organizationRef.current || hasCachedOrg;
+            const errorMessage =
+                (typeof err?.message === 'string' && err.message.trim().length > 0)
+                    ? err.message
+                    : 'Error de conexión';
+            const isFetchBlockedOrOffline =
+                errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError');
+            
+            if (!hasProfile || !hasOrg) {
+                console.warn('fetchOrganizationData failed without cache fallback', {
+                    hasProfile,
+                    hasOrg,
+                    error: errorMessage,
+                });
+                if (isFetchBlockedOrOffline) {
+                    setError('No se pudo conectar con Supabase. Verifica conexión y desactiva Request Blocking en DevTools o extensiones de bloqueo.');
+                } else {
+                    setError(errorMessage);
+                }
+            } else {
+                console.warn('Network failed in fetchOrganizationData, using cached data');
+            }
         } finally {
+            isFetchingRef.current = false;
             setIsLoading(false);
         }
     }, [router, supabase]);
@@ -155,7 +245,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         return () => {
             subscription.unsubscribe();
         };
-    }, [fetchOrganizationData, router, supabase.auth]);
+    }, [fetchOrganizationData, router, supabase]);
 
     const updatePermission = async (
         role: string,

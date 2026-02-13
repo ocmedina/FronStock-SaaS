@@ -36,11 +36,34 @@ export async function updateSession(request: NextRequest) {
     // A simple mistake could make it very hard to debug session issues.
 
     let user = null;
+    let authErrorType: 'none' | 'network' | 'invalid_token' | 'unknown' = 'none';
+
+    const isInvalidRefreshTokenError = (error: any) => {
+        const message = (error?.message || '').toString();
+        const code = (error?.code || '').toString();
+        return (
+            code === 'refresh_token_not_found' ||
+            message.includes('Invalid Refresh Token') ||
+            message.includes('Refresh Token')
+        );
+    };
+
+    const isNetworkAuthError = (error: any) => {
+        const message = (error?.message || '').toString().toLowerCase();
+        return (
+            message.includes('failed to fetch') ||
+            message.includes('fetch failed') ||
+            message.includes('networkerror') ||
+            message.includes('network request failed') ||
+            message.includes('timeout')
+        );
+    };
+
     try {
         const { data, error } = await supabase.auth.getUser();
         if (error) {
-            // Handle invalid refresh token by clearing auth cookies
-            if (error.code === 'refresh_token_not_found' || error.message.includes('Refresh Token')) {
+            if (isInvalidRefreshTokenError(error)) {
+                authErrorType = 'invalid_token';
                 console.warn('Invalid refresh token, clearing session');
                 // Clear Supabase auth cookies
                 request.cookies.getAll().forEach(cookie => {
@@ -48,19 +71,24 @@ export async function updateSession(request: NextRequest) {
                         supabaseResponse.cookies.delete(cookie.name);
                     }
                 });
+            } else if (isNetworkAuthError(error)) {
+                authErrorType = 'network';
+                console.warn('Network auth error in middleware, preserving session cookies');
+            } else {
+                authErrorType = 'unknown';
+                console.warn('Non-fatal auth error in middleware, preserving session cookies', error);
             }
         } else {
             user = data.user;
         }
     } catch (error) {
         console.error('Auth error in middleware:', error);
-        // Clear cookies on any auth error
-        request.cookies.getAll().forEach(cookie => {
-            if (cookie.name.startsWith('sb-')) {
-                supabaseResponse.cookies.delete(cookie.name);
-            }
-        });
+        if (isNetworkAuthError(error)) {
+            authErrorType = 'network';
+        } else {
+            authErrorType = 'unknown';
+        }
     }
 
-    return { user, supabaseResponse };
+    return { user, supabaseResponse, authErrorType };
 }

@@ -10,13 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, FileText, Download } from "lucide-react";
 import { Invoice } from "./types";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { InvoicePDF } from "./InvoicePDF";
 
 interface InvoiceListProps {
     invoices: Invoice[];
     onView: (invoice: Invoice) => void;
+    organization?: any;
 }
 
-export function InvoiceList({ invoices, onView }: InvoiceListProps) {
+export function InvoiceList({ invoices, onView, organization }: InvoiceListProps) {
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
             <Table>
@@ -73,12 +76,19 @@ export function InvoiceList({ invoices, onView }: InvoiceListProps) {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => onView(invoice)}>
+                                        <Button variant="ghost" size="icon" onClick={() => onView(invoice)} title="Ver detalle">
                                             <Eye className="h-4 w-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon">
-                                            <Download className="h-4 w-4" />
-                                        </Button>
+                                        <PDFDownloadLink
+                                            document={<InvoicePDF invoice={invoice} organization={organization} />}
+                                            fileName={`factura-${invoice.type}-${invoice.invoice_number}.pdf`}
+                                        >
+                                            {({ loading }) => (
+                                                <Button variant="ghost" size="icon" disabled={loading} title="Descargar PDF">
+                                                    <Download className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </PDFDownloadLink>
                                     </div>
                                 </TableCell>
                             </TableRow>

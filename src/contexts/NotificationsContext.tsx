@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useOrganization } from './OrganizationContext';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { organization } = useOrganization();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     const loadNotifications = async () => {
         if (!organization?.id) {
@@ -61,7 +61,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         loadNotifications();
-    }, [organization?.id]);
+    }, [organization?.id, supabase]);
 
     useEffect(() => {
         if (!organization?.id) return;
