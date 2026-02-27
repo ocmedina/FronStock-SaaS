@@ -18,7 +18,6 @@ import { OrdersListView } from "@/components/orders/views/OrdersListView";
 import { OrdersGroupedView } from "@/components/orders/views/OrdersGroupedView";
 import { OrdersCompactView } from "@/components/orders/views/OrdersCompactView";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
-import { DeliveryConfirmationModal } from "@/components/delivery/DeliveryConfirmationModal";
 import { CreateInvoiceModal } from "@/components/invoices/CreateInvoiceModal";
 import { AssignToRouteModal } from "@/components/orders/AssignToRouteModal";
 
@@ -28,7 +27,12 @@ export default function OrdersPage() {
     // Filters
     const [searchTerm, setSearchTerm] = useState("");
     const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
-    const [dateFilter, setDateFilter] = useState<string>("today");
+    const [dateFilter, setDateFilter] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('orders-date-filter') || "all";
+        }
+        return "all";
+    });
     const [viewMode, setViewMode] = useState<ViewMode>(() => {
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('orders-view-mode');
@@ -53,8 +57,6 @@ export default function OrdersPage() {
     // Modals
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
-    const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
-    const [orderToDeliver, setOrderToDeliver] = useState<any>(null);
     const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
     const [orderForInvoice, setOrderForInvoice] = useState<any>(null);
     const [assignToRouteOpen, setAssignToRouteOpen] = useState(false);
@@ -67,19 +69,29 @@ export default function OrdersPage() {
         }
     }, [viewMode]);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('orders-date-filter', dateFilter);
+        }
+    }, [dateFilter]);
+
     const handleViewDetails = (orderId: string) => {
         setSelectedOrderId(orderId);
         setDetailsOpen(true);
     };
 
     const handleDeliverOrder = (order: any) => {
-        setOrderToDeliver(order);
-        setDeliveryConfirmOpen(true);
+        window.location.href = `/delivery/orders?orderId=${order.id}`;
     };
 
     const handleCreateInvoice = (order: any) => {
         setOrderForInvoice(order);
         setCreateInvoiceOpen(true);
+    };
+
+    const handleAssignOrderToRoute = (order: any) => {
+        setSelectedOrders([order.id]);
+        setAssignToRouteOpen(true);
     };
 
     const filteredOrders = filterOrders(orders, searchTerm, serviceTypeFilter);
@@ -133,6 +145,7 @@ export default function OrdersPage() {
                 <OrdersListView
                     orders={filteredOrders}
                     onViewDetails={handleViewDetails}
+                    onAssignToRoute={handleAssignOrderToRoute}
                     getStatusBadge={getStatusBadge}
                     getServiceTypeBadge={getServiceTypeBadge}
                 />
@@ -148,6 +161,7 @@ export default function OrdersPage() {
                     onViewDetails={handleViewDetails}
                     onCreateInvoice={handleCreateInvoice}
                     onDeliverOrder={handleDeliverOrder}
+                    onAssignToRoute={handleAssignOrderToRoute}
                     getServiceTypeBadge={getServiceTypeBadge}
                     getUrgencyBadge={getUrgencyBadge}
                 />
@@ -173,13 +187,6 @@ export default function OrdersPage() {
                 orderId={selectedOrderId}
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
-                onSuccess={refetch}
-            />
-
-            <DeliveryConfirmationModal
-                orders={orderToDeliver ? [orderToDeliver] : []}
-                open={deliveryConfirmOpen}
-                onOpenChange={setDeliveryConfirmOpen}
                 onSuccess={refetch}
             />
 

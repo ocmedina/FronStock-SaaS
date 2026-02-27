@@ -129,26 +129,14 @@ export default function UsersPage() {
 
     setSaving(true);
 
-    // Generar token único
-    const token = crypto.randomUUID();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Expira en 7 días
-
-    const { error } = await supabase.from("invitations").insert({
-      organization_id: organizationId,
-      email: inviteData.email.toLowerCase(),
-      role: inviteData.role,
-      invited_by: profile?.id,
-      token,
-      expires_at: expiresAt.toISOString(),
+    const { createInvitation } = await import("@/actions/invitations");
+    const result = await createInvitation({
+      email: inviteData.email,
+      role: inviteData.role as Role,
     });
 
-    if (error) {
-      if (error.code === "23505") {
-        toast.error("Este email ya tiene una invitación pendiente");
-      } else {
-        toast.error("Error al invitar: " + error.message);
-      }
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success(`Invitación enviada a ${inviteData.email}`);
       setInviteData({ email: "", role: "employee" });

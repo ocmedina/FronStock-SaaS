@@ -1,0 +1,9 @@
+source_table,source_field,target_table,target_field,transform,required,notes,example
+customers,id,clients,legacy_customer_id,direct,yes,Guardar ID original para trazabilidad,f47ac10b-58cc-4372-a567-0e02b2c3d479
+customers,name,clients,full_name,trim,yes,Nombre del cliente,Juan Pérez
+customers,debt,clients,current_balance,"decimal(12,2)",no,Deuda actual,12500.50
+products,id,items,legacy_product_id,direct,yes,ID legado del producto,4f43d5f5-9876-4fe5-9239-c2b7d7cb519f
+products,name,items,name,trim,yes,Descripción del producto,Harina 000 x 1kg
+products,stock,items,on_hand_qty,integer,yes,Stock actual,84
+sales,created_at,invoices,issued_at,datetime_timezone,yes,Mantener zona horaria,2026-02-20T18:45:10.123Z
+payments,amount,receipts,amount,"decimal(12,2)",yes,Monto de pago,3500.00

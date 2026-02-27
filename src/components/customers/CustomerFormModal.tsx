@@ -7,6 +7,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { Customer } from "./types";
 import { useEffect, useState } from "react";
 
@@ -25,6 +26,7 @@ export function CustomerFormModal({
     editingCustomer,
     saving,
 }: CustomerFormModalProps) {
+    const [creditEnabled, setCreditEnabled] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -33,10 +35,32 @@ export function CustomerFormModal({
         reference: "",
         customer_type: "retail" as "retail" | "wholesale",
         service_type: "both" as "counter" | "delivery" | "both",
+        credit_limit: "",
+        payment_terms: "contado",
     });
+
+    const handleCreditEnabledChange = (enabled: boolean) => {
+        setCreditEnabled(enabled);
+        if (enabled) {
+            setFormData((prev) => ({
+                ...prev,
+                payment_terms: prev.payment_terms === "contado" ? "30_dias" : prev.payment_terms,
+            }));
+            return;
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            payment_terms: "contado",
+        }));
+    };
 
     useEffect(() => {
         if (editingCustomer) {
+            const limit = Number(editingCustomer.credit_limit || 0);
+            const paymentTerms = editingCustomer.payment_terms || "contado";
+            const hasCreditConfigured = limit > 0 || paymentTerms !== "contado";
+            setCreditEnabled(hasCreditConfigured);
             setFormData({
                 name: editingCustomer.name || "",
                 email: editingCustomer.email || "",
@@ -45,8 +69,11 @@ export function CustomerFormModal({
                 reference: editingCustomer.reference || "",
                 customer_type: editingCustomer.customer_type,
                 service_type: editingCustomer.service_type || "both",
+                credit_limit: limit > 0 ? String(limit) : "",
+                payment_terms: hasCreditConfigured ? (paymentTerms === "contado" ? "30_dias" : paymentTerms) : "contado",
             });
         } else {
+            setCreditEnabled(false);
             setFormData({
                 name: "",
                 email: "",
@@ -55,15 +82,23 @@ export function CustomerFormModal({
                 reference: "",
                 customer_type: "retail",
                 service_type: "both",
+                credit_limit: "",
+                payment_terms: "contado",
             });
         }
     }, [editingCustomer, open]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        const parsedLimit = Number(formData.credit_limit || 0);
+        onSubmit({
+            ...formData,
+            credit_limit: creditEnabled ? (Number.isFinite(parsedLimit) ? parsedLimit : 0) : 0,
+            payment_terms: creditEnabled
+                ? (formData.payment_terms === "contado" ? "30_dias" : formData.payment_terms)
+                : "contado",
+        });
     };
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl">
@@ -229,6 +264,76 @@ export function CustomerFormModal({
                             </label>
                         </div>
                     </div>
+
+                    <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium">Habilitar crédito (fiado)</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Activa cuenta corriente para este cliente.
+                                </p>
+                            </div>
+                            <Switch
+                                checked={creditEnabled}
+                                onCheckedChange={handleCreditEnabledChange}
+                            />
+                        </div>
+
+                        {creditEnabled && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <label
+                                        htmlFor="credit_limit"
+                                        className="text-sm font-medium leading-none"
+                                    >
+                                        Límite de Crédito
+                                    </label>
+                                    <Input
+                                        id="credit_limit"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.credit_limit}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, credit_limit: e.target.value })
+                                        }
+                                        placeholder="Ej: 50000 (vacío o 0 = sin límite)"
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <label
+                                        htmlFor="payment_terms"
+                                        className="text-sm font-medium leading-none"
+                                    >
+                                        Condición de Pago
+                                    </label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {[
+                                            { value: "7_dias", label: "7 días" },
+                                            { value: "15_dias", label: "15 días" },
+                                            { value: "30_dias", label: "30 días" },
+                                        ].map((term) => (
+                                            <button
+                                                key={term.value}
+                                                id="payment_terms"
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, payment_terms: term.value })}
+                                                className={`px-3 py-2 text-xs font-medium rounded-md border transition-all ${
+                                                    formData.payment_terms === term.value
+                                                        ? "bg-primary text-primary-foreground border-primary"
+                                                        : "bg-background border-input hover:bg-muted"
+                                                }`}
+                                            >
+                                                {term.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <DialogFooter>
                         <Button type="submit" disabled={saving}>
                             {saving ? "Guardando..." : "Guardar"}

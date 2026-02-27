@@ -71,6 +71,7 @@ export function OrderFilters({
                     </Button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
+                    <span className="w-full text-xs text-muted-foreground mb-1">Rango de fechas</span>
                     <Button
                         variant={dateFilter === "today" ? "default" : "outline"}
                         size="sm"
@@ -93,7 +94,7 @@ export function OrderFilters({
                                 : ""
                         }
                     >
-                        Semana
+                        7 días
                     </Button>
                     <Button
                         variant={dateFilter === "all" ? "default" : "outline"}
@@ -105,7 +106,7 @@ export function OrderFilters({
                                 : ""
                         }
                     >
-                        Todos
+                        Todo el historial
                     </Button>
                 </div>
             </div>

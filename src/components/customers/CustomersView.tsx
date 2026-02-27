@@ -3,8 +3,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Customer, AccountMovement, CustomerSale } from "./types";
 import { CustomerKPIs } from "./CustomerKPIs";
 import { CustomerFilters } from "./CustomerFilters";
@@ -23,6 +25,7 @@ export function CustomersView({
     hideDebtorsToggle = false
 }: CustomersViewProps) {
     const { organizationId, isLoading: orgLoading } = useOrganization();
+    const { canCreate, canEdit, canDelete } = usePermissions();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -114,6 +117,16 @@ export function CustomersView({
 
     // Actions
     const handleSave = async (formData: any) => {
+        if (editingCustomer && !canEdit("customers")) {
+            toast.error("No tienes permisos para editar clientes");
+            return;
+        }
+
+        if (!editingCustomer && !canCreate("customers")) {
+            toast.error("No tienes permisos para crear clientes");
+            return;
+        }
+
         setSaving(true);
         try {
             if (editingCustomer) {
@@ -139,6 +152,11 @@ export function CustomersView({
     };
 
     const handleDelete = async (id: string) => {
+        if (!canDelete("customers")) {
+            toast.error("No tienes permisos para eliminar clientes");
+            return;
+        }
+
         if (!confirm("¿Estás seguro? Esta acción no se puede deshacer.")) return;
         try {
             await supabase.from("customers").delete().eq("id", id);
@@ -174,6 +192,11 @@ export function CustomersView({
     };
 
     const handlePayment = async (amountStr: string, description: string) => {
+        if (!canEdit("customers")) {
+            toast.error("No tienes permisos para registrar pagos");
+            return;
+        }
+
         if (!selectedCustomerForHistory || !amountStr) return;
 
         setSaving(true);
@@ -235,15 +258,17 @@ export function CustomersView({
                             : "Gestión de clientes y cuentas corrientes."}
                     </p>
                 </div>
-                <Button
-                    onClick={() => {
-                        setEditingCustomer(null);
-                        setShowModal(true);
-                    }}
-                    className="shadow-lg shadow-primary/20"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Nuevo Cliente
-                </Button>
+                {canCreate("customers") && (
+                    <Button
+                        onClick={() => {
+                            setEditingCustomer(null);
+                            setShowModal(true);
+                        }}
+                        className="shadow-lg shadow-primary/20"
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Nuevo Cliente
+                    </Button>
+                )}
             </div>
 
             <CustomerKPIs stats={stats} />
@@ -303,6 +328,8 @@ export function CustomersView({
                 onViewHistory={handleViewHistory}
                 startIndex={startIndex}
                 endIndex={endIndex}
+                canEdit={canEdit("customers")}
+                canDelete={canDelete("customers")}
             />
 
             <CustomerFormModal

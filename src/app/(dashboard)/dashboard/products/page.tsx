@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Product } from "@/types/database.types";
 import { Button } from "@/components/ui/button";
 import { Plus, FileSpreadsheet, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import {
   ImportExcelModal,
   type ImportedProduct,
@@ -97,6 +98,16 @@ export default function ProductsPage() {
     productData: Omit<Product, "id" | "organization_id" | "created_at">,
     comboItems?: { child_product_id: string; quantity: number }[],
   ) => {
+    if (editingProduct && !canEdit("products")) {
+      toast.error("No tienes permisos para editar productos");
+      return;
+    }
+
+    if (!editingProduct && !canCreate("products")) {
+      toast.error("No tienes permisos para crear productos");
+      return;
+    }
+
     try {
       let productId = editingProduct?.id;
 
@@ -145,6 +156,11 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canDelete("products")) {
+      toast.error("No tienes permisos para eliminar productos");
+      return;
+    }
+
     if (!confirm("¿Eliminar este producto? Esta acción no se puede deshacer.")) return;
     await remove(id);
   };
@@ -168,6 +184,11 @@ export default function ProductsPage() {
   };
 
   const handleImport = async (importedProducts: ImportedProduct[]) => {
+    if (!canCreate("products")) {
+      toast.error("No tienes permisos para importar productos");
+      return;
+    }
+
     if (!organizationId) return;
     for (const product of importedProducts) {
       await supabase.from("products").insert({
@@ -179,6 +200,11 @@ export default function ProductsPage() {
   };
 
   const handleBulkUpdate = async (updates: BulkUpdateData) => {
+    if (!canEdit("products")) {
+      toast.error("No tienes permisos para editar productos");
+      return;
+    }
+
     const selectedProductsList = products.filter((p) => selectedIds.has(p.id));
 
     for (const product of selectedProductsList) {

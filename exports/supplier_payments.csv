@@ -1,0 +1,367 @@
+id,supplier_id,amount,notes,created_at
+80dbaf04-78b5-4df3-8deb-fb53d5a77a46,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,121360,Pago a cuenta,2025-11-17T15:41:04+00:00
+c8866c18-f243-4a6b-9c03-2c33e0ed5d76,0b38765b-ba84-4a08-b50d-07f9b69acc2b,98096,Pago a cuenta,2025-11-18T00:10:45+00:00
+54a4d6ab-1a6d-4532-9f59-5972ebf8abc6,477e699c-4eb3-4d4b-9397-3fa6bd943879,35800,Pago directo de venta d6a26f43 - Cliente: Consumidor Final,2025-11-18T14:15:26+00:00
+63b90260-d0c4-4cc6-8f87-e4f60ebfd126,477e699c-4eb3-4d4b-9397-3fa6bd943879,50000,Pago directo de venta c552ad79 - Cliente: Consumidor Final,2025-11-18T14:47:14+00:00
+223b7859-e668-4209-b0c3-ff7b1a236701,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,1990440.14,Pago a cuenta,2025-11-18T15:21:16+00:00
+e18d2d34-7669-47fe-87a1-5baa16d02218,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta cedd59bf - Cliente: Consumidor Final,2025-11-18T21:48:30+00:00
+68694c34-c480-4d7f-aeca-b66b0a1b88c9,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta f1f60851 - Cliente: Consumidor Final,2025-11-18T22:13:59+00:00
+c773985f-2bdd-415f-b26a-81c9f7b08eb2,477e699c-4eb3-4d4b-9397-3fa6bd943879,29000,Pago directo de venta 54c8cea5 - Cliente: karen Miranda,2025-11-19T13:13:07+00:00
+6e3ffb3e-335d-404e-9b57-a8872f5220b5,477e699c-4eb3-4d4b-9397-3fa6bd943879,65000,Pago a cuenta,2025-11-19T14:47:50+00:00
+d72290ed-eae9-412b-9dfe-afe2fe0edfba,477e699c-4eb3-4d4b-9397-3fa6bd943879,1278900,Pago a cuenta,2025-11-19T16:07:22+00:00
+d4f6fe96-d948-4b58-b762-08959d8fb009,477e699c-4eb3-4d4b-9397-3fa6bd943879,78000,Pago directo de venta fa194355 - Cliente: Consumidor Final,2025-11-19T22:19:16+00:00
+d61455d0-445f-4ae5-ac5b-2cfef861486c,477e699c-4eb3-4d4b-9397-3fa6bd943879,60600,Transferencia Carlos Martinez,2025-11-19T23:18:13+00:00
+b7ed2f4d-5a8c-4342-8099-56289752989b,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta c052b6d8 - Cliente: Consumidor Final,2025-11-19T23:50:09+00:00
+1788da61-2784-40fd-a525-12c9b8c66e1d,477e699c-4eb3-4d4b-9397-3fa6bd943879,20700,Pago directo de venta 33dd0642 - Cliente: Consumidor Final,2025-11-20T15:22:25+00:00
+f7c6b189-ab43-42cd-a851-aa7e644c3098,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,458640,Pago a cuenta,2025-11-20T15:24:58+00:00
+7dadfe99-6d19-4e3f-92ee-eca5c724817f,477e699c-4eb3-4d4b-9397-3fa6bd943879,65000,Transferencia de Miriam Tejada,2025-11-20T22:44:26+00:00
+eecc98dc-e075-47fe-a3cf-faef9a5fe6d1,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta ddedfdaa - Cliente: Consumidor Final,2025-11-20T23:23:45+00:00
+06793c10-ae65-4f45-82ea-cd3672ed4ece,477e699c-4eb3-4d4b-9397-3fa6bd943879,98500,Pago a cuenta,2025-11-21T15:04:31+00:00
+78ce9196-6ee9-43ed-927d-514a1a5c58e7,477e699c-4eb3-4d4b-9397-3fa6bd943879,34000,Pago directo de venta 71fc873a - Cliente: Consumidor Final,2025-11-22T15:15:59+00:00
+929c1197-c620-499d-b677-f4debb27b2d0,477e699c-4eb3-4d4b-9397-3fa6bd943879,3000,Pago directo de venta 21bff4bc - Cliente: Consumidor Final,2025-11-22T15:21:16+00:00
+79bd7fef-fe11-49c1-bd21-3cbbcec30a3b,477e699c-4eb3-4d4b-9397-3fa6bd943879,7000,Pago directo de venta e719b5f3 - Cliente: Consumidor Final,2025-11-22T15:29:34+00:00
+e4c9786a-100f-4f05-b7f5-8c5526af1bbe,477e699c-4eb3-4d4b-9397-3fa6bd943879,37300,Pago directo de venta 6977a452 - Cliente: Consumidor Final,2025-11-22T20:54:49+00:00
+2ce467d1-6754-48e6-b1b3-e8b62819883b,477e699c-4eb3-4d4b-9397-3fa6bd943879,290000,Transferencia Miguel Nieve,2025-11-22T21:02:36+00:00
+284f5cd6-fcc7-4c4e-a5df-9ecf3b89a534,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Transferencia Emilce Gomez,2025-11-22T21:06:15+00:00
+8fd60409-acf9-4c18-a20a-ddbee59a47e3,477e699c-4eb3-4d4b-9397-3fa6bd943879,26900,Pago directo de venta 7a06b519 - Cliente: Consumidor Final,2025-11-22T21:49:56+00:00
+6b90323a-078d-4473-b66b-84e317269b5e,477e699c-4eb3-4d4b-9397-3fa6bd943879,36000,Pago directo de venta b4c8ddc1 - Cliente: Consumidor Final,2025-11-25T14:13:29+00:00
+a31e29ca-d743-4a97-80d1-9592732aa809,477e699c-4eb3-4d4b-9397-3fa6bd943879,19900,Pago directo de venta 0c0cc57c - Cliente: Consumidor Final,2025-11-25T14:21:09+00:00
+478591ec-bdc4-46e3-a5e8-88472f8c7212,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta 4a9a79e0 - Cliente: Consumidor Final,2025-11-25T15:35:28+00:00
+0b2e3dcd-5788-4d97-be08-6297ac003a6c,477e699c-4eb3-4d4b-9397-3fa6bd943879,13200,Pago directo de venta 4da1eb5d - Cliente: Consumidor Final,2025-11-25T15:43:18+00:00
+a92f7ba6-47b1-4d5c-b3d1-e64e31746c6c,477e699c-4eb3-4d4b-9397-3fa6bd943879,18000,Pago directo de venta a0237aa6 - Cliente: Consumidor Final,2025-11-25T15:45:27+00:00
+d0097a01-dd2c-4bd3-a30d-8607a0b2f900,477e699c-4eb3-4d4b-9397-3fa6bd943879,40000,Pago directo de venta 3ed02399 - Cliente: Consumidor Final,2025-11-25T15:48:29+00:00
+e927d709-772f-4c66-8426-b63f7ff2ca5c,477e699c-4eb3-4d4b-9397-3fa6bd943879,43300,Pago directo de venta 625cbbd4 - Cliente: Consumidor Final,2025-11-25T20:28:38+00:00
+a5fd3159-0c68-436f-bd34-97c1c2ed5c15,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,38000,Pago directo de venta 953ef4b5 - Cliente: Consumidor Final,2025-11-25T23:02:35+00:00
+7d43ef87-4ab7-4451-9032-9132c6a41fec,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,146500,Transferencia Ivana carrera,2025-11-25T23:29:08+00:00
+53444f63-77b3-4360-b2fa-e20f8b43ef63,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,129000,Pago a cuenta,2025-11-26T15:33:23+00:00
+63fae296-0195-4ec2-9ffb-7eae613a17a7,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,43500,Pago directo de venta aa1f6d0a - Cliente: Consumidor Final,2025-11-26T23:07:59+00:00
+657b0d59-48d1-4834-b75e-c62777d4a891,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,20700,Transferencia Karina Rivero,2025-11-26T23:37:08+00:00
+d0e891c0-e205-4738-ba62-b6f14901149b,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,723202,Efectivo (resto de deuda en el cuaderno),2025-11-26T23:42:18+00:00
+fed62bcd-8ec7-44cc-8209-c862e6dcee6e,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,31500,Pago directo de venta 2bb07813 - Cliente: Consumidor Final,2025-11-27T00:05:44+00:00
+96f95463-f27b-44b2-954c-35dd95ccb8e0,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,27000,Pago a cuenta,2025-11-27T15:25:54+00:00
+8dd482a4-1839-492c-9f48-fba14b01ab3b,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,27000,Pago a cuenta,2025-11-27T15:26:36+00:00
+a8132a3a-ee54-4c62-bccc-6668aed0d1cd,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,416700,Transferencia de Valeri Baez,2025-11-28T20:41:24+00:00
+36baaac6-1b8b-4273-9059-d19a0ced832d,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,1000000,Efectivo,2025-11-28T21:01:52+00:00
+a241e3b6-f634-40b5-ba76-9393a7ea7f78,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,20000,efectivo,2025-11-28T21:07:46+00:00
+fb157798-159b-4416-9abf-823dade52685,477e699c-4eb3-4d4b-9397-3fa6bd943879,37300,Transferencia de Roberto Carchano,2025-11-28T21:31:43+00:00
+d4bf5663-341b-45c7-830b-6166699bf554,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,32500,Pago directo de venta 977fca21 - Cliente: Consumidor Final,2025-11-28T22:11:25+00:00
+3f9b797d-ca70-49a1-9869-5390d6177874,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,35800,Pago directo de venta 69f8530f - Cliente: Consumidor Final,2025-11-28T22:27:06+00:00
+eba29a85-c39e-443e-bb26-7d9eb674400a,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,27400,Pago directo de venta 60e3a3fb - Cliente: Consumidor Final,2025-11-28T22:32:13+00:00
+eee9f2de-213d-4c39-89c3-d5bd5545c70a,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,26700,Pago directo de venta abfae934 - Cliente: Consumidor Final,2025-11-28T22:42:33+00:00
+c8e0c43b-88fe-4718-b43d-1dab0ef72894,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,30500,Pago directo de venta 83ae3c38 - Cliente: Consumidor Final,2025-11-28T22:55:03+00:00
+b91676db-11bc-4e7e-ad9a-dc29f3259a72,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,61900,Pago directo de venta 81a8d4cf - Cliente: Consumidor Final,2025-11-28T23:13:11+00:00
+72fb6314-c5b7-4f0f-ab38-5f8a1e119af1,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,25000,Pago directo de venta 3740be07 - Cliente: Consumidor Final,2025-11-28T23:52:40+00:00
+2d568d88-24ac-4a71-afe5-e1e062431f8a,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,26400,Pago directo de venta a223847e - Cliente: Consumidor Final,2025-11-29T21:26:46+00:00
+e54414a6-ab4b-4c1f-b774-fe20d3328b28,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,19900,Pago directo de venta 8e0e8349 - Cliente: Azul munivez,2025-11-29T22:06:41+00:00
+74e4af45-4ecb-449f-85ae-a0ea3eac81df,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,21500,Pago directo de venta 7cc18448 - Cliente: Consumidor Final,2025-11-29T22:25:35+00:00
+c8851b2f-8c36-4be0-a5f0-b1649bd10318,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,32500,Pago directo de venta c3cb023d - Cliente: Consumidor Final,2025-11-29T22:42:35+00:00
+0da7c203-2cc7-4592-bc82-299581b06412,ec1dfb6c-8a5a-460d-a306-268d64476a68,19500,Pago directo de venta 6a12693b - Cliente: Consumidor Final,2025-12-01T12:29:29+00:00
+bad44544-02bc-4c1c-88e2-c096719baa5c,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,388308,efectivo 1/12 a las 11:35hs,2025-12-01T14:41:05+00:00
+e8c73b1d-b6d7-46c3-9167-10dd36c918d4,ec1dfb6c-8a5a-460d-a306-268d64476a68,42400,Pago directo de venta dffffd04 - Cliente: Consumidor Final,2025-12-01T15:13:58+00:00
+1354fcae-8c03-45be-9c8a-800671c775ac,ec1dfb6c-8a5a-460d-a306-268d64476a68,3000,Pago directo de venta 7cc23351 - Cliente: Consumidor Final,2025-12-01T15:24:08+00:00
+14b23d15-a59d-4c53-919a-4c3a6debc6c3,ec1dfb6c-8a5a-460d-a306-268d64476a68,30500,Pago directo de venta fb797aec - Cliente: Consumidor Final,2025-12-01T22:47:19+00:00
+2eb16357-f969-4acd-a3e5-8f73a804486a,ec1dfb6c-8a5a-460d-a306-268d64476a68,28400,Pago directo de venta 8362eba7 - Cliente: Consumidor Final,2025-12-01T22:49:26+00:00
+fe91e9cd-a260-46e0-b088-5b51df3ab01e,ec1dfb6c-8a5a-460d-a306-268d64476a68,27000,Pago directo de venta 77ba58c4 - Cliente: Consumidor Final,2025-12-01T22:49:51+00:00
+13bb7c39-8722-40f3-9c9d-ff1d2c4a8dc2,ec1dfb6c-8a5a-460d-a306-268d64476a68,28900,Pago directo de venta 398e5ddf - Cliente: Consumidor Final,2025-12-01T23:24:40+00:00
+3789579e-0fcf-4246-9ca2-b4d5636eefca,ec1dfb6c-8a5a-460d-a306-268d64476a68,16900,Pago directo de venta 0475dbbd - Cliente: Consumidor Final,2025-12-01T23:44:16+00:00
+64dac3b4-9239-4757-b0b9-4afa3ca0b97a,ec1dfb6c-8a5a-460d-a306-268d64476a68,63700,Transferencia Iva Carrera,2025-12-01T23:45:57+00:00
+79921e71-0bcb-4a8e-b599-ed607ae14c87,ec1dfb6c-8a5a-460d-a306-268d64476a68,20700,Pago directo de venta dac5ebf6 - Cliente: Consumidor Final,2025-12-02T13:07:19+00:00
+d81e51b4-0b26-4dab-a93a-73f10f6949a2,ec1dfb6c-8a5a-460d-a306-268d64476a68,136000,Pago directo de venta 82851763 - Cliente: Consumidor Final,2025-12-02T23:04:39+00:00
+b652e0f0-d43b-487f-ab7c-67378b3b5a7b,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,800000,Efectivo,2025-12-03T21:02:20+00:00
+c7522eba-14a7-4f88-948b-2b3048b8243a,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,476798,Efectivo,2025-12-03T21:17:24+00:00
+24868111-0e94-4b5c-b453-534c31006114,ec1dfb6c-8a5a-460d-a306-268d64476a68,67600,Pago directo de venta 2e4317a6 - Cliente: Consumidor Final,2025-12-03T21:33:42+00:00
+0adec665-702f-43c6-b11f-ac5732219a56,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,3228999.2,Pago a cuenta,2025-12-03T22:44:28+00:00
+899b70e6-54ba-4dd3-b96d-a045eb1841b0,477e699c-4eb3-4d4b-9397-3fa6bd943879,1119044,Efectivo,2025-12-03T23:19:02+00:00
+16e06b24-7fa5-4e48-8194-f012ef8973a6,ec1dfb6c-8a5a-460d-a306-268d64476a68,36000,Pago directo de venta daf093f4 - Cliente: Consumidor Final,2025-12-03T23:24:58+00:00
+dded2db5-59a1-4976-84f3-67e3e6ca871b,477e699c-4eb3-4d4b-9397-3fa6bd943879,135800,Transferencia Iva Carrera,2025-12-03T23:25:58+00:00
+b808b236-b24c-4e7f-b8a1-7ba829d749bd,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,400000,Efectivo,2025-12-03T23:42:43+00:00
+31f9b5f8-3de4-41a4-b611-7c57056e05b4,ec1dfb6c-8a5a-460d-a306-268d64476a68,26400,Pago directo de venta 20fbad1a - Cliente: Consumidor Final,2025-12-04T15:37:05+00:00
+0e8b199e-bcba-41ac-afbb-f98de9c014bd,ec1dfb6c-8a5a-460d-a306-268d64476a68,30500,Pago directo de venta 808d1947 - Cliente: Consumidor Final,2025-12-04T21:07:31+00:00
+5ec66c39-b032-4263-88cd-49718d05ed92,ec1dfb6c-8a5a-460d-a306-268d64476a68,26700,Pago directo de venta 62578688 - Cliente: Consumidor Final,2025-12-04T21:08:59+00:00
+2afef942-bdcb-4d6e-a49e-ae9c85c8797e,ec1dfb6c-8a5a-460d-a306-268d64476a68,27000,Pago directo de venta fd0d4ae3 - Cliente: Consumidor Final,2025-12-04T21:50:52+00:00
+3895672f-1d8b-425e-a62f-e2a1a1854ac6,ec1dfb6c-8a5a-460d-a306-268d64476a68,59000,Pago directo de venta f56a6143 - Cliente: Consumidor Final,2025-12-04T22:59:34+00:00
+b0ca5cd0-91eb-4630-8aaa-3af1e6498ba3,ec1dfb6c-8a5a-460d-a306-268d64476a68,16500,Pago directo de venta b1f8b31f - Cliente: Consumidor Final,2025-12-04T23:25:25+00:00
+378152da-4965-4030-88a7-2ff655cf0c98,9288d1e3-18cc-40e7-8921-3ffed71a816b,56000,Pago directo de venta bbfa67da - Cliente: Consumidor Final,2025-12-04T23:44:02+00:00
+4c26213a-11f2-44d0-946b-41d27881fb07,0b38765b-ba84-4a08-b50d-07f9b69acc2b,43500,Pago directo de venta 0d68cf53 - Cliente: Consumidor Final,2025-12-05T13:22:24+00:00
+cac9719b-f4bf-4713-8eb2-917d25469248,0b38765b-ba84-4a08-b50d-07f9b69acc2b,5000,Pago directo de venta 42ddb316 - Cliente: Consumidor Final,2025-12-05T13:33:44+00:00
+3c9c6f48-271e-4733-b026-334417cc1242,ec1dfb6c-8a5a-460d-a306-268d64476a68,2339.92,Pago a cuenta,2025-12-05T13:58:00+00:00
+71094f2f-da29-4224-a587-95cac803e2bc,0b38765b-ba84-4a08-b50d-07f9b69acc2b,34176,Pago a cuenta,2025-12-05T14:20:09+00:00
+77ea8542-ee38-4efa-957d-fbf5964525f4,9288d1e3-18cc-40e7-8921-3ffed71a816b,45900,Pago directo de venta 5e6fb62d - Cliente: Consumidor Final,2025-12-05T15:28:50+00:00
+ab724aaa-6a76-434c-bc28-000e820a7339,477e699c-4eb3-4d4b-9397-3fa6bd943879,20000,Transferencia Miguel Nieves,2025-12-05T20:24:39+00:00
+cbe03443-d551-42c1-9c03-1356af35ff6c,477e699c-4eb3-4d4b-9397-3fa6bd943879,200000,Transferencia Miguel Nieves,2025-12-05T20:25:08+00:00
+44c3ad66-28b3-410d-ac4d-69e68c886df5,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta 2fbbbb8f - Cliente: Consumidor Final,2025-12-05T21:11:35+00:00
+ce6fff22-7fc3-4015-801a-fe074d9e4723,477e699c-4eb3-4d4b-9397-3fa6bd943879,28500,Pago directo de venta 4b427741 - Cliente: Consumidor Final,2025-12-05T21:14:36+00:00
+df48cb01-156c-410d-b461-0daf749d0867,477e699c-4eb3-4d4b-9397-3fa6bd943879,56000,Pago directo de venta 4080e13e - Cliente: Consumidor Final,2025-12-05T21:58:33+00:00
+739b0a7f-9ffb-4db3-9875-c04abc2e2c96,477e699c-4eb3-4d4b-9397-3fa6bd943879,39000,Pago directo de venta fce0663c - Cliente: Consumidor Final,2025-12-05T22:13:39+00:00
+73252bd0-5651-4296-9f8d-24f1c833ead8,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta 0338bb02 - Cliente: Consumidor Final,2025-12-05T22:18:43+00:00
+074c6094-5543-4ca9-bec1-d0e7945cfbb2,477e699c-4eb3-4d4b-9397-3fa6bd943879,74900,Pago directo de venta 0690d08a - Cliente: Consumidor Final,2025-12-05T23:03:07+00:00
+9c945114-6c92-4c75-838e-3f87b31ee3be,477e699c-4eb3-4d4b-9397-3fa6bd943879,53000,Pago directo de venta 2ae6012e - Cliente: Consumidor Final,2025-12-05T23:07:50+00:00
+0777d3fa-72d1-4ccf-9afc-1c602a7ed439,477e699c-4eb3-4d4b-9397-3fa6bd943879,155000,Pago a cuenta,2025-12-06T01:56:59+00:00
+9d554b39-4f4b-457c-8c16-b00611c2e73a,477e699c-4eb3-4d4b-9397-3fa6bd943879,200000,Pago a cuenta,2025-12-06T13:52:39+00:00
+2bf3617a-b0d7-4fd8-a6a2-5e0b09f327d1,9288d1e3-18cc-40e7-8921-3ffed71a816b,36900,Pago directo de venta d6113d85 - Cliente: Consumidor Final,2025-12-06T14:40:23+00:00
+74d45c20-af95-48ae-80a3-81006c1e97c8,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,3036912.36,Pago a cuenta,2025-12-06T14:49:27+00:00
+bed530ae-6a46-4840-be02-b99f405de895,9288d1e3-18cc-40e7-8921-3ffed71a816b,57800,Pago directo de venta d1d44caa - Cliente: Consumidor Final,2025-12-06T15:19:53+00:00
+0dfd7e87-3c09-48d0-ba34-5cddbf0081ee,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta f9d8baef - Cliente: Consumidor Final,2025-12-06T20:31:39+00:00
+60a886b9-5e57-4a80-bfba-e1e2a4536038,477e699c-4eb3-4d4b-9397-3fa6bd943879,114100,Pago directo de venta f30d9273 - Cliente: Consumidor Final,2025-12-06T21:19:49+00:00
+7b9aff74-f80a-4c70-b401-0ed18c822f90,477e699c-4eb3-4d4b-9397-3fa6bd943879,29500,Pago directo de venta ec95993b - Cliente: Consumidor Final,2025-12-06T22:21:36+00:00
+bee1f0e4-fa28-4abb-b4f9-c1cf388c5aac,477e699c-4eb3-4d4b-9397-3fa6bd943879,37300,Pago directo de venta 53084416 - Cliente: Consumidor Final,2025-12-06T23:52:45+00:00
+820e183e-b76e-4f4f-918f-37c7459f6f1f,477e699c-4eb3-4d4b-9397-3fa6bd943879,83000,Pago directo de venta 62351b05 - Cliente: Consumidor Final,2025-12-06T23:56:31+00:00
+6413db9d-d189-4639-8e8d-25f82d912e7f,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta f7a5ed6c - Cliente: Consumidor Final,2025-12-09T23:05:32+00:00
+8db28679-0e8e-4e91-944a-d72ab83db33d,477e699c-4eb3-4d4b-9397-3fa6bd943879,28000,Transferencia,2025-12-09T23:10:39+00:00
+2d5c6569-85fa-4897-8631-baf202c6e4f1,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,1273900,Tranferencia Valeria Baez,2025-12-09T23:12:30+00:00
+83a64c81-e291-4cf3-8f95-bfe62f563ce8,477e699c-4eb3-4d4b-9397-3fa6bd943879,40600,Pago directo de venta b679f53f - Cliente: Consumidor Final,2025-12-09T23:43:30+00:00
+b7ef28ba-3e1b-4950-a5b0-f972c827525c,477e699c-4eb3-4d4b-9397-3fa6bd943879,78000,Pago directo de venta a18d1bf5 - Cliente: Consumidor Final,2025-12-10T13:21:25+00:00
+983fa5d7-1ea6-457d-820b-435c6971b35a,477e699c-4eb3-4d4b-9397-3fa6bd943879,108000,Pago a cuenta,2025-12-10T13:41:15+00:00
+503d888f-4121-47b1-a05e-597a6b24ade9,477e699c-4eb3-4d4b-9397-3fa6bd943879,40600,Pago directo de venta 1b04b22b - Cliente: Consumidor Final,2025-12-10T14:15:05+00:00
+763af8a7-ad35-4d33-8519-86ab7c5d7d09,477e699c-4eb3-4d4b-9397-3fa6bd943879,29000,Pago a cuenta,2025-12-10T14:19:59+00:00
+04b9c658-4f56-46da-a21f-90961f8e295a,477e699c-4eb3-4d4b-9397-3fa6bd943879,26000,Pago a cuenta,2025-12-10T14:56:26+00:00
+e0b5c39f-b254-4e9d-8d9b-7b802b124859,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,2000000,Pago a cuenta,2025-12-10T21:24:49+00:00
+fae4e1f7-dc32-40d6-bd20-312c184eff54,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,314300,Transferencia,2025-12-10T22:00:03+00:00
+bad4b8c9-8718-4109-acb9-e7ee80c167f1,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,215045,Pago a cuenta,2025-12-11T16:13:44+00:00
+d7dc444d-7944-429b-8319-c80a02f41823,477e699c-4eb3-4d4b-9397-3fa6bd943879,126900,Pago a cuenta,2025-12-11T16:20:12+00:00
+2399472d-599f-4485-a962-b8bdc682609c,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,81600,Pago directo de venta a1fbaad1 - Cliente: Consumidor Final,2025-12-11T21:15:30+00:00
+cd62ba5c-3beb-4cbb-8f78-595a9dff5d3c,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,6800,Pago directo de venta 0aea66c1 - Cliente: Consumidor Final,2025-12-11T21:15:50+00:00
+cc1c25f1-7901-4a8a-b860-dc128ce998d8,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,41300,Pago directo de venta e2ea82ca - Cliente: Consumidor Final,2025-12-11T22:46:36+00:00
+efefc25f-cc3e-4df9-a3b2-35e498c1d353,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,66300,Pago directo de venta 449bb503 - Cliente: Consumidor Final,2025-12-11T23:07:20+00:00
+c58d8b14-3df8-4fc4-9be8-1f887697053e,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,46300,Transferencia Alejandra Pedernera,2025-12-11T23:50:36+00:00
+32638e0f-30b1-4d0e-87e9-8c2b3d3fd4fa,477e699c-4eb3-4d4b-9397-3fa6bd943879,35300,Pago a cuenta,2025-12-12T12:45:10+00:00
+8336d0e5-ce1d-403e-85aa-f4b8d0fba31d,9288d1e3-18cc-40e7-8921-3ffed71a816b,14813.58,Pago a cuenta,2025-12-12T12:49:15+00:00
+3dfe336f-599d-4fd1-a06d-ab227263d7be,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,54000,Pago directo de venta 7fcf99dd - Cliente: Consumidor Final,2025-12-12T14:54:06+00:00
+e529b05e-ef72-4520-870f-5a3d8491a148,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,40000,Pago directo de venta 3a8cc738 - Cliente: Consumidor Final,2025-12-12T21:33:40+00:00
+176339a0-a76d-4588-819c-70fa1ff8fe79,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,898170,Pago a cuenta,2025-12-15T16:12:44+00:00
+444e6561-275a-4cd4-ad46-665a79d0de12,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,611386,Pago a cuenta,2025-12-15T16:48:18+00:00
+f6edebb3-5934-4e35-afcb-dd6ad1a7609b,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,22373,Pago a cuenta,2025-12-15T19:11:31+00:00
+44b44157-81d9-46ea-b1d3-a61f6e6da715,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,392642.01,Pago a cuenta,2026-01-02T15:43:56+00:00
+853023ed-0b2f-4c8b-805e-f229c05d5878,2d27f724-a414-4b37-afae-e56833cdd6e1,21000,Pago directo de venta 3f14dc30 - Cliente: Consumidor Final,2025-12-15T23:38:54+00:00
+543792a3-7c89-42d9-944d-f85049592679,2d27f724-a414-4b37-afae-e56833cdd6e1,4800,Pago directo de venta a0efa6ad - Cliente: Consumidor Final,2025-12-15T23:42:19+00:00
+1e9f929c-1e04-448c-a207-d63f9a01ee04,2d27f724-a414-4b37-afae-e56833cdd6e1,30500,Pago directo de venta 660dfd57 - Cliente: Consumidor Final,2025-12-16T13:59:18+00:00
+2a650484-5874-4537-bd7b-19b9668af45c,2d27f724-a414-4b37-afae-e56833cdd6e1,21000,Pago directo de venta f418c7d4 - Cliente: Consumidor Final,2025-12-16T14:05:03+00:00
+9216e2b2-835f-4d11-8da9-05b50cf948d8,2d27f724-a414-4b37-afae-e56833cdd6e1,19700,Pago directo de venta 4a3e6570 - Cliente: Consumidor Final,2025-12-16T14:06:33+00:00
+41b765fa-4b6c-4993-b426-10834bb5b662,2d27f724-a414-4b37-afae-e56833cdd6e1,26700,Pago directo de venta f29375ad - Cliente: Consumidor Final,2025-12-16T14:07:46+00:00
+cbce3bc2-feed-44c9-a4ce-60e6d126f0c4,2d27f724-a414-4b37-afae-e56833cdd6e1,46000,Pago directo de venta 00581194 - Cliente: Consumidor Final,2025-12-16T14:50:49+00:00
+6e1ef267-d437-4bce-b537-760f397ebf85,2d27f724-a414-4b37-afae-e56833cdd6e1,4000,Pago directo de venta f70cf86c - Cliente: Consumidor Final,2025-12-16T14:51:10+00:00
+037b01d6-8d4a-4a72-85e4-02c233edc5d5,2d27f724-a414-4b37-afae-e56833cdd6e1,38202,Pago a cuenta,2025-12-17T14:24:02+00:00
+e963b39a-bf27-4ffb-ab85-b8eb388dd61b,2d27f724-a414-4b37-afae-e56833cdd6e1,76404,Pago a cuenta,2025-12-17T14:24:29+00:00
+965c2a0a-e0b7-46b0-8042-339e3bff0057,ec1dfb6c-8a5a-460d-a306-268d64476a68,88800,Pago a cuenta,2025-12-17T14:54:22+00:00
+82621e59-9daa-495b-aec5-6121abbd466a,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,989651,Efectivo,2025-12-17T21:41:56+00:00
+95bd3fb7-a2c9-4402-bb3a-b49347b9d7db,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1800000,Efectivo,2025-12-17T21:43:53+00:00
+f36c79b9-9f7e-4fb3-8cdf-0514a03e058c,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,575000,Cheque,2025-12-17T21:45:14+00:00
+f236e38f-10f5-4086-9039-a4ca7a45ceae,477e699c-4eb3-4d4b-9397-3fa6bd943879,262800,Transferencias Varias,2025-12-17T23:01:42+00:00
+d2a26dd3-2bd6-4fb4-a44e-5d39768cd19c,477e699c-4eb3-4d4b-9397-3fa6bd943879,22000,Pago directo de venta 708b06f4 - Cliente: Consumidor Final,2025-12-18T13:24:39+00:00
+17258d68-4e38-4026-b1bf-d0d55488df3e,477e699c-4eb3-4d4b-9397-3fa6bd943879,50000,Pago directo de venta 5444c360 - Cliente: Consumidor Final,2025-12-18T13:26:38+00:00
+0338e95e-866b-4e87-8ad5-a0f797230bfd,5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda,1204310,Pago a cuenta,2025-12-18T16:14:20+00:00
+e651c0e2-cf24-4258-af2d-50f2aaa9eea4,477e699c-4eb3-4d4b-9397-3fa6bd943879,31700,Pago directo de venta 73c4f6b9 - Cliente: Consumidor Final,2025-12-18T23:19:42+00:00
+9232344f-6a39-4751-9da6-a07bac19ed85,477e699c-4eb3-4d4b-9397-3fa6bd943879,37200,Pago directo de venta 74d5bcf7 - Cliente: Consumidor Final,2025-12-19T15:02:59+00:00
+91dbf0cc-ac7f-4880-b301-62ea96f78514,477e699c-4eb3-4d4b-9397-3fa6bd943879,53400,Pago directo de venta 770012b4 - Cliente: Consumidor Final,2025-12-19T15:07:16+00:00
+3e9b0c91-536e-46b3-816a-005b52fae90a,477e699c-4eb3-4d4b-9397-3fa6bd943879,19900,Pago directo de venta 1b5c4297 - Cliente: Consumidor Final,2025-12-19T21:16:57+00:00
+ffc40d11-84aa-4ffe-b475-b4f7e12008d7,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta cc461887 - Cliente: Consumidor Final,2025-12-19T22:17:23+00:00
+f2c55d54-461e-4bc6-902d-868c2691e9a5,477e699c-4eb3-4d4b-9397-3fa6bd943879,19900,Pago directo de venta 2498d157 - Cliente: Consumidor Final,2025-12-19T23:01:48+00:00
+fc0fd8ee-34d1-45ed-b26f-d7f452a13237,477e699c-4eb3-4d4b-9397-3fa6bd943879,26800,Pago directo de venta 9a2c8c4a - Cliente: Consumidor Final,2025-12-19T23:03:36+00:00
+436a8022-025c-441f-906b-fe0b4793c0a7,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Pago directo de venta 863e0e16 - Cliente: Consumidor Final,2025-12-20T14:17:40+00:00
+4d8a549e-7d21-48e3-ba50-706ade2b700a,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Pago directo de venta 1e503b59 - Cliente: Consumidor Final,2025-12-20T14:23:30+00:00
+f106fd1a-a6a7-428c-a6dc-8684fc03d6f8,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta 4e2217cb - Cliente: Consumidor Final,2025-12-20T15:44:42+00:00
+b88a2f52-8197-4183-bd81-91cf7d5f69f9,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,215045,Pago a cuenta,2025-12-20T16:13:45+00:00
+a9076a26-4af0-4d8f-b717-3f01a6345f13,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,254478,Pago a cuenta,2025-12-20T16:14:01+00:00
+fb339404-c0fa-432e-aabc-8f798e43aad6,cfd66450-a493-427a-a5bf-b2bc8c476ec5,1219841.16,Pago a cuenta,2025-12-20T16:21:34+00:00
+78468089-bb29-427b-bdab-3f3a084c1d41,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,123436.48,Pago a cuenta,2025-12-20T16:23:37+00:00
+bc983748-7d17-4ab1-90d1-5a4f63ce5274,477e699c-4eb3-4d4b-9397-3fa6bd943879,300000,Transferencia Miguel Nieve,2025-12-20T20:57:40+00:00
+2b197b72-63d5-42ce-974a-24aa29b8861c,477e699c-4eb3-4d4b-9397-3fa6bd943879,33500,Pago directo de venta f13c34b2 - Cliente: Consumidor Final,2025-12-20T22:04:13+00:00
+e3685ef6-f149-4eef-9992-57007db33e4a,477e699c-4eb3-4d4b-9397-3fa6bd943879,30800,Pago directo de venta c8735626 - Cliente: Consumidor Final,2025-12-20T22:24:10+00:00
+1ec3bfe8-8e53-4262-adcb-6aa5e7dfd646,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta e707c737 - Cliente: Consumidor Final,2025-12-20T23:47:11+00:00
+17f5ed09-763c-4a97-a731-9813aad491d1,477e699c-4eb3-4d4b-9397-3fa6bd943879,22900,Pago directo de venta 6b93cd8c - Cliente: Consumidor Final,2025-12-20T23:51:07+00:00
+388f4c27-9738-44c4-b02b-92262b99237f,477e699c-4eb3-4d4b-9397-3fa6bd943879,60600,Pago a cuenta,2025-12-22T12:20:38+00:00
+8fe11623-4be7-4f26-8f61-843d42a2c9ee,477e699c-4eb3-4d4b-9397-3fa6bd943879,78000,Pago a cuenta,2025-12-22T13:37:11+00:00
+488fac3a-0ca0-4fc2-bf19-3bd326b9680d,477e699c-4eb3-4d4b-9397-3fa6bd943879,46500,Pago directo de venta 770aafa5 - Cliente: Consumidor Final,2025-12-22T15:10:39+00:00
+e7197f92-8f91-4846-a22a-1dacda47174b,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta 76f585eb - Cliente: Consumidor Final,2025-12-22T20:50:55+00:00
+31765be6-472c-4273-9af9-ed928f2ad6a6,477e699c-4eb3-4d4b-9397-3fa6bd943879,46700,Pago directo de venta 432962ef - Cliente: Consumidor Final,2025-12-22T21:30:47+00:00
+dcaca0a6-93b1-4a6d-b8b9-e48bdf6cc68c,477e699c-4eb3-4d4b-9397-3fa6bd943879,78000,Pago directo de venta 9d75bd02 - Cliente: Consumidor Final,2025-12-22T23:31:58+00:00
+31f3ad94-54ef-4675-aea6-3dae204b31ec,477e699c-4eb3-4d4b-9397-3fa6bd943879,4000,Pago directo de venta b7874252 - Cliente: Consumidor Final,2025-12-22T23:35:33+00:00
+326ab1e8-ec82-454e-9900-f4767a6ef3a3,477e699c-4eb3-4d4b-9397-3fa6bd943879,45800,Pago directo de venta 3c230aca - Cliente: Consumidor Final,2025-12-22T23:54:51+00:00
+a7f94d2a-7269-44f7-9b91-6869ef7836f1,477e699c-4eb3-4d4b-9397-3fa6bd943879,35000,transferencia ceeleste gonsalez,2025-12-23T00:30:07+00:00
+15b6a86c-7e0e-451f-8cb0-239d46eec71b,477e699c-4eb3-4d4b-9397-3fa6bd943879,90500,Transferencia  (diferencia de $91800),2025-12-23T23:37:01+00:00
+a8cd1621-e8fd-4cc9-9205-1241fbae6ec6,477e699c-4eb3-4d4b-9397-3fa6bd943879,25000,Pago directo de venta 85ece9e4 - Cliente: Consumidor Final,2025-12-23T23:54:19+00:00
+56e41df9-1c44-49bf-bb4c-663f3d7b306b,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1000000,Pago a cuenta,2025-12-24T12:31:43+00:00
+937f811d-82ee-4d23-9d26-d5b0924b5dab,477e699c-4eb3-4d4b-9397-3fa6bd943879,2772200,Pago a cuenta,2025-12-24T15:09:07+00:00
+a79c47f3-3927-443b-8a60-807337f547e5,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,3093330.75,Pago a cuenta,2025-12-26T14:55:55+00:00
+e3567380-3930-49dc-886d-36a98a561838,ec1dfb6c-8a5a-460d-a306-268d64476a68,208000,Pago a cuenta,2025-12-27T01:25:30+00:00
+70161fd9-b3bd-4f89-8d12-810732514ec3,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Pago directo de venta 51fc09e2 - Cliente: Consumidor Final,2025-12-27T22:02:28+00:00
+dbbe9a9e-aa66-4891-a7d4-f27533bd1f48,477e699c-4eb3-4d4b-9397-3fa6bd943879,67600,Pago directo de venta 786d727d - Cliente: Consumidor Final,2025-12-27T22:27:08+00:00
+bc41ec75-531d-4c58-81d0-8473d5b79a8a,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Pago directo de venta f040c689 - Cliente: Consumidor Final,2025-12-29T13:19:13+00:00
+4f6806ef-c9f8-42a4-9d6c-a2e29da345a0,477e699c-4eb3-4d4b-9397-3fa6bd943879,56000,Pago directo de venta 366f1075 - Cliente: Consumidor Final,2025-12-29T21:25:13+00:00
+8fdf7c29-7de1-42f3-83a9-2672148a777f,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta e8f2ee51 - Cliente: Consumidor Final,2025-12-29T21:56:43+00:00
+16ea1a80-f365-414b-9e89-cb0c17115f4a,477e699c-4eb3-4d4b-9397-3fa6bd943879,5600,Pago directo de venta 10fa40a3 - Cliente: Consumidor Final,2025-12-29T22:11:16+00:00
+f5fc8815-1f04-4927-aba5-2fc37ca24ad6,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta 894678c2 - Cliente: Consumidor Final,2025-12-29T22:18:06+00:00
+b0b7ef59-b2c8-4d6c-a733-5d343b55d1f6,477e699c-4eb3-4d4b-9397-3fa6bd943879,27000,Pago directo de venta f0f68fce - Cliente: Consumidor Final,2025-12-29T23:07:20+00:00
+492e7246-504f-4ea3-884e-4bbdbcdcbf46,477e699c-4eb3-4d4b-9397-3fa6bd943879,26000,Transferencia Prandina,2025-12-29T23:13:12+00:00
+496f76cd-0a8d-4061-a102-3280248f76fe,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,1498000,Efectivo,2025-12-30T20:58:38+00:00
+2d5206cb-1f9e-4963-8b61-6ee693085f40,477e699c-4eb3-4d4b-9397-3fa6bd943879,47000,Pago directo de venta 33dd8ec7 - Cliente: Consumidor Final,2025-12-30T22:30:06+00:00
+1270da33-dde3-4bdc-811e-edb3ec7d7876,477e699c-4eb3-4d4b-9397-3fa6bd943879,33900,Pago directo de venta 4cc79960 - Cliente: Consumidor Final,2025-12-30T22:59:19+00:00
+5b36f769-1cca-4681-8c67-dcd284a0214d,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1909402.56,Pago a cuenta,2025-12-31T15:54:53+00:00
+6496e87b-c284-428a-bcaa-ff6238b7b8a5,477e699c-4eb3-4d4b-9397-3fa6bd943879,922600,Pago a cuenta,2025-12-31T15:55:43+00:00
+cb2b93c0-f311-46f7-a5bf-77a9060aba24,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,573400,Pago a cuenta,2026-01-02T13:25:13+00:00
+a4b350bb-8005-4b18-8022-a4162f3812b6,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,26700,Tranferencia,2026-01-02T21:16:26+00:00
+333f6953-068d-42cc-b059-f54086e34982,477e699c-4eb3-4d4b-9397-3fa6bd943879,81700,Transferencia Diana Tolava,2026-01-02T21:17:31+00:00
+488106e0-a38c-4a23-b65b-c679cafe2ed9,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,74900,Pago directo de venta 0f3222ed - Cliente: Consumidor Final,2026-01-02T22:06:11+00:00
+08f402a2-03bf-4274-89bf-71b12fc3e265,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,21000,Pago directo de venta c92faf78 - Cliente: Consumidor Final,2026-01-02T23:04:40+00:00
+a23033bd-d048-42a6-b0ad-4b118046b4f6,477e699c-4eb3-4d4b-9397-3fa6bd943879,392500,Transferencia Miguel Nieve,2026-01-03T00:24:24+00:00
+ff610d9e-2518-41f7-b8ae-cda1cbc485a1,477e699c-4eb3-4d4b-9397-3fa6bd943879,49200,Pago directo de venta 10757463 - Cliente: Consumidor Final,2026-01-05T12:26:57+00:00
+f471bd85-9191-4572-bdde-af1ee0aa208f,477e699c-4eb3-4d4b-9397-3fa6bd943879,20500,Pago directo de venta f5e5b06c - Cliente: Consumidor Final,2026-01-05T12:56:58+00:00
+ab8cda94-779f-4c04-bff8-c297b1b38a7e,477e699c-4eb3-4d4b-9397-3fa6bd943879,39000,Pago directo de venta 03e2a045 - Cliente: Consumidor Final,2026-01-05T13:22:51+00:00
+5ba9cff3-840b-4996-bb2f-c4ae1d0e2cf6,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,78015,Pago a cuenta,2026-01-05T14:55:18+00:00
+6b42daaf-5efd-40f1-b27b-f527708a718a,477e699c-4eb3-4d4b-9397-3fa6bd943879,50300,Pago directo de venta 8022f8e9 - Cliente: Consumidor Final,2026-01-05T22:12:32+00:00
+e94e879c-327c-46fe-bc6b-80fbef8ce7e6,477e699c-4eb3-4d4b-9397-3fa6bd943879,20000,Pago directo de venta 404b0730 - Cliente: Consumidor Final,2026-01-05T22:20:56+00:00
+ac6f4216-ecdd-4a8a-948c-dd7b4be8e61f,477e699c-4eb3-4d4b-9397-3fa6bd943879,46000,Pago directo de venta 658b2158 - Cliente: Consumidor Final,2026-01-05T23:03:28+00:00
+3e51023c-6755-46b4-b6e3-0e6b10e51a82,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta 7b419ef5 - Cliente: Consumidor Final,2026-01-05T23:22:38+00:00
+7391928e-cfc7-48be-bc13-1e26e4418e10,477e699c-4eb3-4d4b-9397-3fa6bd943879,26700,Pago directo de venta bac0abbe - Cliente: Consumidor Final,2026-01-05T23:59:16+00:00
+a6785aa3-fe65-4e03-b8a5-3fda0b513404,477e699c-4eb3-4d4b-9397-3fa6bd943879,45700,Pago directo de venta 6ddecf2e - Cliente: Consumidor Final,2026-01-06T13:18:27+00:00
+56dd97ef-4f8c-4737-ace3-37bfcf2846cc,477e699c-4eb3-4d4b-9397-3fa6bd943879,29000,Pago a cuenta,2026-01-06T14:56:08+00:00
+70b9df78-edee-4453-9cd7-963b7f63235c,477e699c-4eb3-4d4b-9397-3fa6bd943879,44900,Pago directo de venta a90ad880 - Cliente: Consumidor Final,2026-01-06T20:16:19+00:00
+896bdbf0-5c98-4dab-bd96-d05c587e6e5e,477e699c-4eb3-4d4b-9397-3fa6bd943879,36500,Transferencia Laura Lucero,2026-01-06T21:54:14+00:00
+73b81867-13f7-4b1f-b46d-6d9b4e82ff5b,477e699c-4eb3-4d4b-9397-3fa6bd943879,19900,Transferencia Karina Rivero,2026-01-06T23:42:48+00:00
+27fb05d3-d337-4e53-ab90-e083132810e7,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,938474.41,Cheque + Efectivo,2026-01-07T21:04:57+00:00
+23f903c7-b867-42f6-8f19-e89c18237194,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,691390,Pago a cuenta,2026-01-07T21:14:39+00:00
+dd398ac0-50fb-4c59-8864-6aabc2d072f3,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,500000,Transferencia Florencia Medina,2026-01-08T20:50:00+00:00
+51aeb524-5dae-4616-8387-337b8578636f,477e699c-4eb3-4d4b-9397-3fa6bd943879,21900,Pago a cuenta,2026-01-09T15:20:52+00:00
+131a74a1-ea4e-4f1a-be81-bfd4af875104,477e699c-4eb3-4d4b-9397-3fa6bd943879,49200,Pago directo de venta e0ebf404 - Cliente: Consumidor Final,2026-01-09T22:22:19+00:00
+e07ff47f-c856-4a26-927f-e3a568219b35,477e699c-4eb3-4d4b-9397-3fa6bd943879,36400,Pago directo de venta 4f723fd9 - Cliente: Consumidor Final,2026-01-09T23:33:01+00:00
+b2fc2f6a-9a1d-41d4-9d7e-68192ede946a,477e699c-4eb3-4d4b-9397-3fa6bd943879,94000,Pago a cuenta,2026-01-10T12:47:43+00:00
+2ad12b4b-781c-468c-8f48-cdb20ad92e26,477e699c-4eb3-4d4b-9397-3fa6bd943879,52400,Pago directo de venta 4ba91e80 - Cliente: Consumidor Final,2026-01-10T13:48:59+00:00
+ef0663f5-9493-4978-b96f-b4e9bbb256a1,477e699c-4eb3-4d4b-9397-3fa6bd943879,35800,Pago directo de venta b5eaa314 - Cliente: Consumidor Final,2026-01-10T13:55:03+00:00
+76d8cb08-d141-43eb-bcd7-f19620238c6a,477e699c-4eb3-4d4b-9397-3fa6bd943879,33900,Pago directo de venta 32eb2062 - Cliente: Consumidor Final,2026-01-12T13:52:31+00:00
+0db66b2b-9f55-4fd9-b5c9-7c917fba693e,477e699c-4eb3-4d4b-9397-3fa6bd943879,124900,Pago directo de venta 61126e1b - Cliente: Consumidor Final,2026-01-12T23:24:13+00:00
+9d115426-ad7a-44d9-8c13-6b56c34fca94,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,300000,Transferencia Gregorio,2026-01-13T12:22:38+00:00
+2e1f01db-c81d-4ed8-b411-27861a834235,477e699c-4eb3-4d4b-9397-3fa6bd943879,37300,Pago directo de venta d7a5b26b - Cliente: Consumidor Final,2026-01-13T14:12:17+00:00
+ad0e64fd-4528-4eb0-9a6d-eeaaf2429079,477e699c-4eb3-4d4b-9397-3fa6bd943879,49200,Pago directo de venta bf622175 - Cliente: Consumidor Final,2026-01-13T14:13:39+00:00
+f2ada694-bef9-4a7d-9cd6-24875ca50b6b,477e699c-4eb3-4d4b-9397-3fa6bd943879,252000,Transferenci Jorge Russo,2026-01-13T15:00:23+00:00
+204dea3d-ddaa-4e57-8d5d-0b45647863b9,477e699c-4eb3-4d4b-9397-3fa6bd943879,33900,Tranferencia 12/10,2026-01-13T15:57:33+00:00
+e5c41097-f2b7-467b-b9ed-ded85acfbf9f,477e699c-4eb3-4d4b-9397-3fa6bd943879,25500,Pago directo de venta 15c37d53 - Cliente: Consumidor Final,2026-01-13T20:56:05+00:00
+d3bc31cb-1217-4e5c-90bc-b114ecbe07fd,477e699c-4eb3-4d4b-9397-3fa6bd943879,58400,Transferencia Mili Pastran,2026-01-14T13:29:34+00:00
+4cfe6780-7b2d-4a94-ae61-64cf8e1fbf24,477e699c-4eb3-4d4b-9397-3fa6bd943879,37300,Pago directo de venta 92bdc253 - Cliente: Consumidor Final,2026-01-14T14:42:08+00:00
+1100bcd9-c831-4cdf-865a-6a262c74862e,477e699c-4eb3-4d4b-9397-3fa6bd943879,3123350,Transferencia Facu,2026-01-14T16:07:28+00:00
+8619beb9-c67b-4394-85e6-44a7a102c5d5,cfd66450-a493-427a-a5bf-b2bc8c476ec5,1178308,Tranferencia Factura 00106802,2026-01-15T14:58:49+00:00
+7d5635f0-bb52-49fe-bdbf-02e7c11ba4bb,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,27000,Pago directo de venta f5b8a243 - Cliente: Consumidor Final,2026-01-15T15:51:14+00:00
+185272e9-9bfa-482e-8d16-a50034384a96,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,883539.02,Transferencia Facu (664842.31),2026-01-15T15:56:02+00:00
+d17d7a01-e190-47d7-80ee-7c1694ee25a8,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,1268592.13,Transferencia Facu (887118.20),2026-01-15T21:07:08+00:00
+b089b7f0-ee07-443d-9e30-1a0f8bfb86db,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,53500,Pago directo de venta 1e032bc1 - Cliente: Consumidor Final,2026-01-15T23:36:16+00:00
+7ad227ad-bfd9-4f96-8b55-88d76ce1f7d4,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,1000,Pago directo de venta 8d3dca09 - Cliente: Consumidor Final,2026-01-15T23:37:17+00:00
+c2f61ca8-cc08-4757-8354-690e4924ea86,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,71800,Pago directo de venta f14dac17 - Cliente: Consumidor Final,2026-01-15T23:56:05+00:00
+13476e98-4573-4502-b063-c0162e1b69d4,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,21500,Pago directo de venta 05e5011d - Cliente: Consumidor Final,2026-01-16T00:08:54+00:00
+365b603a-264c-4d07-8a85-1d81ca67de93,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,24900,Transferencia de Karina Rivero,2026-01-16T12:18:57+00:00
+0b0585c9-1565-490a-abbb-69dc1a500603,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,65000,Tranferencia de Daniel Quiroga,2026-01-16T13:23:58+00:00
+5b46116b-8005-426c-adbd-d7d14a4eb096,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,20300,Pago directo de venta 1bd7cdba - Cliente: Consumidor Final,2026-01-16T13:39:19+00:00
+bd1297cc-f8cd-4310-a8d9-d7445ea4f02b,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,23000,Transferencia Janet Scalogna,2026-01-16T14:29:36+00:00
+81b7c86e-0d73-4b18-a614-4759475b893a,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,63000,Transferencia De Miriam Tejada,2026-01-17T00:05:35+00:00
+82e5c245-50ff-41f8-92bb-58253e53b13a,477e699c-4eb3-4d4b-9397-3fa6bd943879,32300,Pago directo de venta d90be6e6 - Cliente: Consumidor Final,2026-01-17T12:53:54+00:00
+aa51911b-d166-4b04-9211-b56b1dfd26bf,477e699c-4eb3-4d4b-9397-3fa6bd943879,30500,Pago directo de venta ffd8a254 - Cliente: Consumidor Final,2026-01-17T12:55:57+00:00
+02be1a97-0eb2-40d0-ba74-e6eaad5c37b8,0b38765b-ba84-4a08-b50d-07f9b69acc2b,48000,Transferencia ,2026-01-17T13:26:52+00:00
+ef438b3b-14b9-4001-ba17-e93d51c5b145,0b38765b-ba84-4a08-b50d-07f9b69acc2b,80000,Pago directo de venta 939a8acf - Cliente: Consumidor Final,2026-01-17T13:33:20+00:00
+e70cfab3-3624-45d8-90e5-552fe9ba07f3,0b38765b-ba84-4a08-b50d-07f9b69acc2b,26700,Pago directo de venta b7d61d8c - Cliente: Consumidor Final,2026-01-17T15:04:55+00:00
+47bad703-e057-4cc9-9390-f3645b90c40c,0b38765b-ba84-4a08-b50d-07f9b69acc2b,22600,Pago directo de venta 5890c496 - Cliente: Consumidor Final,2026-01-17T15:28:56+00:00
+4822c988-b784-4d1f-8875-679c81d1c4ea,0b38765b-ba84-4a08-b50d-07f9b69acc2b,21000,Pago directo de venta 1fb4c9f0 - Cliente: Consumidor Final,2026-01-17T20:59:43+00:00
+2a6f6ee4-693c-4e46-ac45-f1692fc6bf92,0b38765b-ba84-4a08-b50d-07f9b69acc2b,33900,Pago directo de venta dee9622b - Cliente: Consumidor Final,2026-01-17T21:46:05+00:00
+f33e1684-b026-41f4-a215-de8479319c18,0b38765b-ba84-4a08-b50d-07f9b69acc2b,32500,Pago directo de venta d2e64578 - Cliente: Consumidor Final,2026-01-17T22:53:22+00:00
+badc58d0-2021-48c6-865d-8b5fd834e191,0b38765b-ba84-4a08-b50d-07f9b69acc2b,25000,Pago directo de venta 6e98e753 - Cliente: Consumidor Final,2026-01-17T23:24:57+00:00
+e1914739-1993-4db2-9f14-8f9194be7455,0b38765b-ba84-4a08-b50d-07f9b69acc2b,40500,Pago directo de venta f52b820d - Cliente: Consumidor Final,2026-01-18T00:06:15+00:00
+dd4d5b11-20e6-4c2b-b4a8-d414ed7c668c,0b38765b-ba84-4a08-b50d-07f9b69acc2b,57700,Pago directo de venta a2057f1d - Cliente: Consumidor Final,2026-01-19T16:09:41+00:00
+eb8f720e-101e-4802-911d-49a0bd80db64,0b38765b-ba84-4a08-b50d-07f9b69acc2b,44900,Pago directo de venta 784bdebf - Cliente: Consumidor Final,2026-01-19T21:58:57+00:00
+e8aacc4c-1d08-4239-b041-fea33efbb39f,0b38765b-ba84-4a08-b50d-07f9b69acc2b,26700,Pago directo de venta 6c1e7655 - Cliente: Consumidor Final,2026-01-19T22:55:31+00:00
+4ba6eadb-7c74-4cc3-a0fd-7ea8790d95df,0b38765b-ba84-4a08-b50d-07f9b69acc2b,21500,Pago directo de venta dcd71322 - Cliente: Consumidor Final,2026-01-19T23:40:32+00:00
+27a48472-db27-47f2-ad7e-9d2f3f5cf4e4,0b38765b-ba84-4a08-b50d-07f9b69acc2b,20300,Pago directo de venta 8cd31a81 - Cliente: Consumidor Final,2026-01-19T23:56:37+00:00
+edabb224-2ad1-490a-83c1-fcc4e190c83e,5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda,35486.64,Transferencia Facu ($33.002) ,2026-01-20T00:12:35+00:00
+a3b9720a-3f2c-45e3-85d2-0074e80792b6,0b38765b-ba84-4a08-b50d-07f9b69acc2b,67600,Pago directo de venta b332e98e - Cliente: Consumidor Final,2026-01-20T13:42:44+00:00
+f4f393a2-5328-4aa9-a2ba-1b8fb385e75e,0b38765b-ba84-4a08-b50d-07f9b69acc2b,46700,Pago directo de venta c4006ff8 - Cliente: Consumidor Final,2026-01-20T15:13:08+00:00
+e2f167a3-a3cf-4b07-bd19-f134676f6bb5,0b38765b-ba84-4a08-b50d-07f9b69acc2b,19900,Pago directo de venta 61ffd2ed - Cliente: Consumidor Final,2026-01-21T12:45:29+00:00
+02c3140a-3b23-4438-9488-9b85f2d9ec50,0b38765b-ba84-4a08-b50d-07f9b69acc2b,19900,Pago directo de venta 71bc75ef - Cliente: Consumidor Final,2026-01-21T14:47:42+00:00
+0144f7c7-9c50-4fa0-b4c6-d92963ffabbd,477e699c-4eb3-4d4b-9397-3fa6bd943879,2308250,Efectivo,2026-01-21T15:34:38+00:00
+98865257-7c88-43ac-9ff8-c3f27f907112,0b38765b-ba84-4a08-b50d-07f9b69acc2b,26700,Pago directo de venta 0a026f7d - Cliente: Consumidor Final,2026-01-21T15:59:45+00:00
+39de36d4-c8f8-4c9f-885e-2b7a81fd64c7,0b38765b-ba84-4a08-b50d-07f9b69acc2b,30500,Pago directo de venta 401ef994 - Cliente: Consumidor Final,2026-01-21T20:18:10+00:00
+224d8ea7-14ea-4974-ab13-8c60a90910d8,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,450000,Efectivo,2026-01-21T21:04:26+00:00
+3a1ee3f5-7c94-43f5-8a35-51d434f1d095,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,400000,Transferencia Facu,2026-01-21T22:57:57+00:00
+e52c5d2a-c1d4-4bd8-b54e-a9e948394c3c,0b38765b-ba84-4a08-b50d-07f9b69acc2b,42400,Pago directo de venta d5e41274 - Cliente: Consumidor Final,2026-01-22T22:26:11+00:00
+53fc38e0-f78f-4e5b-9122-2ef3d9b65275,0b38765b-ba84-4a08-b50d-07f9b69acc2b,2000,Pago directo de venta a2fc5f6d - Cliente: Consumidor Final,2026-01-22T22:32:46+00:00
+5eca433f-11b5-458c-8ffd-14d7d911de49,0b38765b-ba84-4a08-b50d-07f9b69acc2b,38000,Pago a cuenta,2026-01-26T23:23:48+00:00
+c202fbcf-47de-4d25-894e-c6b8bd579445,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,1051011.85,Pago a cuenta,2026-01-27T13:26:44+00:00
+3f0df2e6-ff80-4294-b85f-7cae0d3089f3,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,57400,Pago directo de venta 8b1ea02b - Cliente: Consumidor Final,2026-01-27T15:24:00+00:00
+3dd79bbd-2164-4ca0-ad50-1d2c6fa8d057,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1445196.73,Pago a cuenta,2026-01-28T21:37:54+00:00
+49699dd7-e988-4fa4-aa23-760a9c8c1264,477e699c-4eb3-4d4b-9397-3fa6bd943879,1273950,Pago a cuenta,2026-01-28T21:38:42+00:00
+a46598b1-1aa0-4d5b-9c75-d7c6b88777a9,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,1180500,Pago a cuenta,2026-01-28T21:41:16+00:00
+3d68fb81-0069-43f7-aeab-2970e41443a4,0b38765b-ba84-4a08-b50d-07f9b69acc2b,40500,Pago directo de venta 9bfd1a44 - Cliente: Consumidor Final,2026-01-29T12:25:38+00:00
+1ecb9bcf-9a6d-4d71-b580-89b4b693ed38,0b38765b-ba84-4a08-b50d-07f9b69acc2b,21000,Pago directo de venta f578db92 - Cliente: Consumidor Final,2026-01-29T12:35:56+00:00
+5d7f3d97-20b0-4b16-ab28-89e9eabceeab,0b38765b-ba84-4a08-b50d-07f9b69acc2b,45800,Pago directo de venta fef19329 - Cliente: Consumidor Final,2026-01-29T12:47:50+00:00
+5edf0d5d-7500-4739-ac74-3df8ffd2e203,0b38765b-ba84-4a08-b50d-07f9b69acc2b,25500,Pago directo de venta de6d2772 - Cliente: Consumidor Final,2026-01-29T13:17:21+00:00
+a1209af4-90b6-40e0-81fd-1886c64b1aef,0b38765b-ba84-4a08-b50d-07f9b69acc2b,87500,Pago directo de venta 33f0803c - Cliente: Consumidor Final,2026-01-29T14:46:31+00:00
+5f6e09f6-c20e-45bc-8132-2bde99322e14,0b38765b-ba84-4a08-b50d-07f9b69acc2b,72700,Pago directo de venta 451cf18a - Cliente: Consumidor Final,2026-01-29T14:59:38+00:00
+203f77c0-b6a4-4645-a84c-04a5f5ba43a4,0b38765b-ba84-4a08-b50d-07f9b69acc2b,62000,Pago directo de venta f15237b5 - Cliente: Consumidor Final,2026-01-29T15:26:34+00:00
+91379e04-20be-4b53-bef5-d07d9607bfaa,0b38765b-ba84-4a08-b50d-07f9b69acc2b,41500,Pago directo de venta 3ce0ab8b - Cliente: Consumidor Final,2026-01-29T21:28:28+00:00
+30be5025-dbd1-4ef9-814e-7e9498a8399d,0b38765b-ba84-4a08-b50d-07f9b69acc2b,24900,Pago directo de venta 3e0249e3 - Cliente: Consumidor Final,2026-01-29T23:43:19+00:00
+dfa8d4a4-d4d4-4c7c-a1b2-c83ce41d85f8,0b38765b-ba84-4a08-b50d-07f9b69acc2b,30500,Pago directo de venta 756a68bb - Cliente: Consumidor Final,2026-01-30T14:26:32+00:00
+7f302c99-88db-4db6-a122-1e1d3363d387,477e699c-4eb3-4d4b-9397-3fa6bd943879,21000,Pago directo de venta 5410877a - Cliente: Consumidor Final,2026-02-02T23:21:56+00:00
+2c498835-541c-4bea-a7be-da0ab7687e8b,477e699c-4eb3-4d4b-9397-3fa6bd943879,68500,Pago directo de venta 1b7ee815 - Cliente: Consumidor Final,2026-02-02T23:26:36+00:00
+254b093b-53bd-4a9a-9f77-f42abc4deb2a,477e699c-4eb3-4d4b-9397-3fa6bd943879,57700,Pago directo de venta 858dd12f - Cliente: Consumidor Final,2026-02-02T23:49:08+00:00
+e329d3f4-ee7e-4408-94b1-3be5a6c47f80,477e699c-4eb3-4d4b-9397-3fa6bd943879,48300,Pago directo de venta 255262fa - Cliente: Consumidor Final,2026-02-03T00:15:27+00:00
+57afc864-d13e-4750-bb2a-882c9dd6f3a8,cfd66450-a493-427a-a5bf-b2bc8c476ec5,1476627,Pago a cuenta,2026-02-03T13:05:01+00:00
+0ed76715-311c-4ff0-b9ed-52e3e9665300,5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda,373626,Pago a cuenta,2026-02-03T13:06:07+00:00
+2fddbe55-aefa-4d4b-a996-0ece0e388100,477e699c-4eb3-4d4b-9397-3fa6bd943879,41500,Pago directo de venta 91fd25bd - Cliente: Consumidor Final,2026-02-03T14:48:34+00:00
+0c970d6e-43c9-4aab-8d8e-67c218911753,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta bbecb239 - Cliente: Consumidor Final,2026-02-03T15:11:06+00:00
+f0c62745-4db2-4a41-bb07-712444129536,477e699c-4eb3-4d4b-9397-3fa6bd943879,78000,Pago directo de venta 9ca32494 - Cliente: Consumidor Final,2026-02-03T23:05:49+00:00
+ba4ef18d-dee1-40f3-a321-0f1f74cd29c4,477e699c-4eb3-4d4b-9397-3fa6bd943879,45700,Pago directo de venta 61c29e51 - Cliente: Consumidor Final,2026-02-03T23:11:27+00:00
+671a372a-d0a9-4408-921a-fae60f8b062f,477e699c-4eb3-4d4b-9397-3fa6bd943879,47100,Pago directo de venta 60e8c895 - Cliente: Consumidor Final,2026-02-03T23:40:54+00:00
+ecd2405d-ff4f-434c-ac82-3665cdda7326,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta 83b2ab9a - Cliente: Consumidor Final,2026-02-03T23:42:18+00:00
+3b40b464-272c-448d-ac98-be7a58843001,477e699c-4eb3-4d4b-9397-3fa6bd943879,243600,Transferencia Alejendra Giuliani,2026-02-03T23:46:58+00:00
+0e02d5cd-f967-4c3b-aaec-45ffe1a38ef6,477e699c-4eb3-4d4b-9397-3fa6bd943879,56000,Pago a cuenta,2026-02-04T12:57:33+00:00
+c5f65fb9-6c8a-42bb-88c2-8b6535f13481,477e699c-4eb3-4d4b-9397-3fa6bd943879,1949200,Pago a cuenta,2026-02-04T16:15:02+00:00
+4d4d851e-9cac-4246-8ce9-070e56ea0707,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,659000,Cheque,2026-02-04T21:15:05+00:00
+0b4da302-8efc-4066-a53f-c3493836df9c,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,50200,Pago directo de venta 64578527 - Cliente: Consumidor Final,2026-02-06T14:28:04+00:00
+a6c5e78e-df64-4a37-b496-e611a4fdd074,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,1126046.61,Pago a cuenta,2026-02-06T15:14:28+00:00
+6ac9670e-d907-4ac8-8537-ed00a130b7bc,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,49200,Pago a cuenta,2026-02-06T16:41:41+00:00
+13399f87-9662-40a5-a0af-67eb87e1c6be,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,29000,Pago directo de venta c426ddcd - Cliente: Consumidor Final,2026-02-06T20:57:37+00:00
+e8262e3d-cc9c-4c27-8699-66eca21838f4,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,651600,Transferencia,2026-02-06T23:33:06+00:00
+898fa793-f5f5-4546-9190-28a178d242c9,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,66000,Pago directo de venta c1be15de - Cliente: Consumidor Final,2026-02-07T12:35:38+00:00
+d66ce899-6862-4326-b44b-08edd17450d8,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,38900,Pago directo de venta fdf061c9 - Cliente: Consumidor Final,2026-02-07T12:55:53+00:00
+082301d3-497f-4c2d-b4c6-035a5b2763a2,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,52000,Pago a cuenta,2026-02-07T16:14:39+00:00
+08e75ce0-881b-4470-9da7-148266a68517,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,28900,Pago directo de venta 425ceb3e - Cliente: Consumidor Final,2026-02-07T22:36:28+00:00
+332ed698-00e9-4a4e-9557-f5c813ce8990,5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda,1190128,Pago a cuenta,2026-02-09T19:16:48+00:00
+108824ef-3b39-48cd-aea9-63abc24aa9cb,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,19900,Resto de transferencias,2026-02-09T22:51:59+00:00
+ff885b46-62a5-4ce3-a497-9ad367f32f98,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,44900,Pago directo de venta e14e58d6 - Cliente: Consumidor Final,2026-02-09T23:11:24+00:00
+a99d7bdd-fd29-4b84-af34-89d036dec91a,3eac8727-a950-41b1-9fa4-5c5e9b64a7d4,78000,Pago directo de venta c65ef036 - Cliente: Consumidor Final,2026-02-09T23:21:12+00:00
+63582046-b11e-4fc1-a606-b80baabbd8cb,477e699c-4eb3-4d4b-9397-3fa6bd943879,61700,Pago directo de venta b24dda88 - Cliente: Consumidor Final,2026-02-09T23:38:55+00:00
+5ef339e5-c023-4ada-92f6-74ff711aed98,477e699c-4eb3-4d4b-9397-3fa6bd943879,45000,Pago a cuenta,2026-02-10T15:37:17+00:00
+0ce74df4-dc06-46b5-b5a4-b7f79887927a,477e699c-4eb3-4d4b-9397-3fa6bd943879,42400,Pago directo de venta cc93fcc6 - Cliente: Consumidor Final,2026-02-10T20:19:14+00:00
+0d95992d-e8a9-4c9a-b635-c3e6168c5f7b,477e699c-4eb3-4d4b-9397-3fa6bd943879,27000,Pago directo de venta f5d7b0ca - Cliente: Consumidor Final,2026-02-10T22:24:59+00:00
+a53b64aa-0c15-44a1-b61e-95d0be0bb469,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta e0af8dd5 - Cliente: Consumidor Final,2026-02-10T23:34:28+00:00
+485b7cb6-2c3d-4699-b0c6-acdac8ec803a,88037b1b-6ae9-4a8b-ba34-0b17ec00abd4,500000,Pago a cuenta,2026-02-11T12:26:23+00:00
+535db569-8141-4fed-800c-1c356d542b96,477e699c-4eb3-4d4b-9397-3fa6bd943879,102000,Pago directo de venta 497f60c0 - Cliente: Consumidor Final,2026-02-11T14:34:32+00:00
+22ee8865-7b47-45f1-830c-376051df788c,477e699c-4eb3-4d4b-9397-3fa6bd943879,16900,Pago directo de venta f75bde81 - Cliente: Consumidor Final,2026-02-11T14:43:08+00:00
+595af0da-b99c-4b75-98c1-8df87bb883dc,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,911658.84,Pago a cuenta,2026-02-11T16:14:11+00:00
+7bebbe2e-585b-4f71-a287-c4a873bc36bc,477e699c-4eb3-4d4b-9397-3fa6bd943879,31000,Pago directo de venta 53c40009 - Cliente: Consumidor Final,2026-02-11T21:13:54+00:00
+03ef4f68-226d-4182-a7ab-13a149649f52,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,25457.6,2% Boleta 00000195,2026-02-11T21:23:26+00:00
+057bc675-fcce-4b11-9cfc-0ef96f8519f1,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1700000,Efectivo Pago a Cuenta,2026-02-11T21:25:00+00:00
+6923f4a5-96c4-4dd5-b77a-1f6eb6589fef,477e699c-4eb3-4d4b-9397-3fa6bd943879,55000,Pago a cuenta,2026-02-13T14:47:12+00:00
+59ae1438-6c96-4e73-b07a-9daf09289632,477e699c-4eb3-4d4b-9397-3fa6bd943879,325000,Pago a cuenta,2026-02-13T14:47:22+00:00
+e5f7e790-0afd-45de-90d8-7ed38f422ae0,477e699c-4eb3-4d4b-9397-3fa6bd943879,21500,Pago a cuenta,2026-02-13T14:57:24+00:00
+2c579b83-8717-448a-b387-f808deffff4c,477e699c-4eb3-4d4b-9397-3fa6bd943879,21800,Pago directo de venta bc0885e8 - Cliente: Consumidor Final,2026-02-13T21:20:41+00:00
+e0acf7b9-6d12-4a44-b5f0-8d84d66eca74,477e699c-4eb3-4d4b-9397-3fa6bd943879,90500,Pago directo de venta b4b5ab01 - Cliente: Consumidor Final,2026-02-13T21:52:43+00:00
+a4c0058b-6049-4a60-af8b-3b3bfe085d88,477e699c-4eb3-4d4b-9397-3fa6bd943879,24600,Pago directo de venta 18a83687 - Cliente: Consumidor Final,2026-02-13T21:57:40+00:00
+1242a631-ad0f-4a00-9a81-bd027919ce10,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,486808,Pago a cuenta,2026-02-14T12:24:32+00:00
+c743a90a-15a0-410b-84b7-4cd928de881a,97d5c37f-4a6a-4566-bd0e-2e822b187b3e,0.74,Pago a cuenta,2026-02-14T12:24:37+00:00
+3c78bf88-388c-4bbf-91fb-d9b018e287f1,477e699c-4eb3-4d4b-9397-3fa6bd943879,33900,Pago directo de venta 96b30fc2 - Cliente: Consumidor Final,2026-02-14T20:35:57+00:00
+73b4b595-2fd4-4046-9f0b-e568908178a2,477e699c-4eb3-4d4b-9397-3fa6bd943879,32500,Pago directo de venta 0c94ff01 - Cliente: Consumidor Final,2026-02-14T21:20:58+00:00
+d7be2331-ec94-4556-802e-c3753befd28a,477e699c-4eb3-4d4b-9397-3fa6bd943879,91500,Pago directo de venta a41dcfc5 - Cliente: Consumidor Final,2026-02-14T22:41:44+00:00
+763cf382-a5d6-4a58-88d3-0b2a0a326098,477e699c-4eb3-4d4b-9397-3fa6bd943879,91800,Pago directo de venta 82e84b89 - Cliente: Consumidor Final,2026-02-14T23:07:58+00:00
+8e01c608-866c-4f18-b201-40281f5e7430,477e699c-4eb3-4d4b-9397-3fa6bd943879,7500,Pago directo de venta b8a0caa4 - Cliente: Consumidor Final,2026-02-14T23:12:17+00:00
+8dd14ad2-79c2-4910-9940-0c59ac7ae775,bc26b3b9-bd20-46d8-a8fa-ac696fd35cec,660062.94,Pago a cuenta,2026-02-18T15:58:55+00:00
+d1eb7901-f71a-4874-8fc1-ab0a0c6522db,477e699c-4eb3-4d4b-9397-3fa6bd943879,61000,Pago a cuenta,2026-02-18T20:38:14+00:00
+7518f247-9d6c-430c-94dd-ef4605ac65a2,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta 50615d8c - Cliente: Consumidor Final,2026-02-18T21:25:35+00:00
+b3ab8b6e-448a-4605-9ed9-68a4243c2a41,477e699c-4eb3-4d4b-9397-3fa6bd943879,41700,Pago directo de venta a581535b - Cliente: Consumidor Final,2026-02-18T21:35:19+00:00
+f88fdac0-bd95-4e23-a9b1-3e610a3e3c09,477e699c-4eb3-4d4b-9397-3fa6bd943879,27000,Pago directo de venta fded21c4 - Cliente: Consumidor Final,2026-02-18T21:59:39+00:00
+e1e99d04-f96d-4906-8128-b33e92df3652,477e699c-4eb3-4d4b-9397-3fa6bd943879,21500,Pago directo de venta 8a1d3d30 - Cliente: Consumidor Final,2026-02-18T22:31:26+00:00
+f1fbf743-a047-43d3-9233-6cec6b5b7bc2,477e699c-4eb3-4d4b-9397-3fa6bd943879,28900,Pago directo de venta 9e361b76 - Cliente: Consumidor Final,2026-02-18T23:12:30+00:00
+6a13149e-539e-44a4-9a8b-b65c3e7d9d2a,477e699c-4eb3-4d4b-9397-3fa6bd943879,66700,Pago directo de venta 699799f2 - Cliente: Consumidor Final,2026-02-18T23:26:07+00:00
+dddf7ff0-8be4-4595-b66a-2aac0dddc480,477e699c-4eb3-4d4b-9397-3fa6bd943879,23000,Pago directo de venta e5737fc2 - Cliente: Consumidor Final,2026-02-18T23:27:46+00:00
+ba821349-4adc-4d14-b1b7-691c95e04534,8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd,1315000,Efectivo Pago a cuenta,2026-02-18T23:48:32+00:00
+f69f5cda-2afe-47a8-b48f-0765a6046b3f,477e699c-4eb3-4d4b-9397-3fa6bd943879,17000,Transferencia Nico Madallozzo,2026-02-18T23:49:40+00:00
+86ecad2c-1446-4473-80c6-1e4b9908408c,477e699c-4eb3-4d4b-9397-3fa6bd943879,2740200,Pago a cuenta,2026-02-19T16:42:07+00:00
+1dd5b3d6-1db8-49ff-9aba-5c730a64505f,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,44900,Pago directo de venta d42b72ce - Cliente: Consumidor Final,2026-02-19T21:42:07+00:00
+a9c61f05-12aa-4925-bdb4-95d54cd35018,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,38000,Pago a cuenta Transferencia,2026-02-19T22:01:38+00:00
+75ce91c6-3d03-447f-84a1-e6d326f0ddad,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,32500,Pago directo de venta f34011ff - Cliente: Consumidor Final,2026-02-19T23:26:38+00:00
+3f332ceb-1a25-4939-8b1b-87c518c89dc8,ce067ab2-56c2-4877-ae7a-8d3bdbbca949,42400,Pago directo de venta c332e2a6 - Cliente: Consumidor Final,2026-02-19T23:43:26+00:00

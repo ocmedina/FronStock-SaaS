@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { DndContext, DragOverlay, useDroppable, closestCenter } from "@dnd-kit/core";
 import { GripVertical } from "lucide-react";
 import { STATUS_COLUMNS } from "@/lib/orders/constants";
+import { getOrderStatus } from "@/lib/orders/filters";
 import { DraggableOrderCard } from "../cards/DraggableOrderCard";
 
 interface OrdersKanbanViewProps {
@@ -14,6 +15,7 @@ interface OrdersKanbanViewProps {
     onViewDetails: (id: string) => void;
     onCreateInvoice: (order: any) => void;
     onDeliverOrder: (order: any) => void;
+    onAssignToRoute: (order: any) => void;
     getServiceTypeBadge: (type: string) => React.ReactElement;
     getUrgencyBadge: (createdAt: string, status: string) => React.ReactElement | null;
 }
@@ -50,12 +52,13 @@ export function OrdersKanbanView({
     onViewDetails,
     onCreateInvoice,
     onDeliverOrder,
+    onAssignToRoute,
     getServiceTypeBadge,
     getUrgencyBadge,
 }: OrdersKanbanViewProps) {
     const getOrdersByStatus = (statuses: string[]) => {
         return orders.filter((o) =>
-            statuses.includes(o.delivery_status || "pending")
+            statuses.includes(getOrderStatus(o))
         );
     };
 
@@ -105,6 +108,7 @@ export function OrdersKanbanView({
                                             onViewDetails={onViewDetails}
                                             onCreateInvoice={onCreateInvoice}
                                             onDeliverOrder={onDeliverOrder}
+                                            onAssignToRoute={onAssignToRoute}
                                             getServiceTypeBadge={getServiceTypeBadge}
                                             getUrgencyBadge={getUrgencyBadge}
                                         />

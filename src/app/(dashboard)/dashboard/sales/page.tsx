@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -24,8 +25,10 @@ import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
   const { organizationId, isLoading: orgLoading } = useOrganization();
+  const { canCreate, canEdit } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string; current_balance?: number | null }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -133,20 +136,28 @@ export default function POSPage() {
             .or("service_type.in.(counter,both),service_type.is.null")
             .eq("is_active", true)
             .order("name"),
+          supabase
+            .from("suppliers")
+            .select("id, name, current_balance")
+            .eq("organization_id", organizationId)
+            .gt("current_balance", 0)
+            .order("name"),
         ]);
 
-        const [productsRes, customersRes] = await Promise.race([
+        const [productsRes, customersRes, suppliersRes] = await Promise.race([
           fetchPromise,
           timeoutPromise
         ]) as any;
 
         if (productsRes.error) throw productsRes.error;
         if (customersRes.error) throw customersRes.error;
+        if (suppliersRes?.error) throw suppliersRes.error;
 
         console.log(`✅ Loaded fresh data: ${productsRes.data?.length || 0} products`);
         
         if (productsRes.data) setProducts(productsRes.data as Product[]);
         if (customersRes.data) setCustomers(customersRes.data);
+        if (suppliersRes?.data) setSuppliers(suppliersRes.data);
       }
     } catch (error: any) {
       console.error('❌ Error fetching data:', error);
@@ -300,7 +311,15 @@ export default function POSPage() {
   };
 
   // Process Sale
-  const processSale = async (payments?: Array<{ method: string; amount: number }>) => {
+  const processSale = async (
+    payments?: Array<{ method: string; amount: number }>,
+    options?: { supplierSettlement?: { supplierId: string; amount: number } }
+  ) => {
+    if (!canCreate("sales")) {
+      toast.error("No tienes permisos para registrar ventas");
+      return;
+    }
+
     if (cart.length === 0 || !organizationId) {
       toast.error("El carrito está vacío");
       return;
@@ -353,6 +372,27 @@ export default function POSPage() {
           description: `Total: $${total.toLocaleString("es-AR")}`,
         });
 
+        if (options?.supplierSettlement?.supplierId && options.supplierSettlement.amount > 0) {
+          try {
+            const { registerSupplierPayment } = await import('@/actions/suppliers');
+            const supplierPayment = await registerSupplierPayment({
+              supplierId: options.supplierSettlement.supplierId,
+              amount: options.supplierSettlement.amount,
+              paymentMethod: 'cash_from_sales',
+              paymentDate: new Date().toISOString().split('T')[0],
+              notes: `Pago aplicado desde venta #${result.sale_number || result.sale_id || ''} (método venta: ${paymentMethod})`,
+            });
+
+            if (supplierPayment.error) {
+              toast.error(`Venta registrada, pero no se pudo saldar proveedor: ${supplierPayment.error}`);
+            } else {
+              toast.success('Deuda de proveedor saldada con esta venta');
+            }
+          } catch (supplierPaymentError: any) {
+            toast.error(`Venta registrada, pero no se pudo saldar proveedor: ${supplierPaymentError?.message || 'Error desconocido'}`);
+          }
+        }
+
         clearCart();
         fetchData();
       } else {
@@ -385,6 +425,11 @@ export default function POSPage() {
 
   // Suspend Sale
   const handleSuspendSale = () => {
+    if (!canCreate("sales")) {
+      toast.error("No tienes permisos para suspender ventas");
+      return;
+    }
+
     if (cart.length === 0) {
       toast.error("El carrito está vacío");
       return;
@@ -434,7 +479,7 @@ export default function POSPage() {
         action: () => setShowSuspended(true),
         enabled: suspendedSales.length > 0,
       },
-      { key: "F12", description: "Cobrar", action: processSale, enabled: cart.length > 0 },
+      { key: "F12", description: "Cobrar", action: processSale, enabled: cart.length > 0 && canCreate("sales") },
       {
         key: "Escape",
         description: "Cancelar",
@@ -471,12 +516,12 @@ export default function POSPage() {
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[100vh] -m-3 md:-m-6 bg-background">
+    <div className="flex flex-col min-h-[100dvh] lg:h-[100vh] -m-3 md:-m-6 bg-background">
       {/* Header */}
-      <div className="h-16 border-b border-border bg-background px-6 flex items-center justify-between">
+      <div className="h-14 md:h-16 border-b border-border bg-background px-3 md:px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">🏪 FrontStock POS</h1>
-          <span className="text-sm text-muted-foreground">v2.0</span>
+          <h1 className="text-lg md:text-2xl font-bold">🏪 FrontStock POS</h1>
+          <span className="text-xs md:text-sm text-muted-foreground">v2.0</span>
         </div>
       </div>
 
@@ -490,11 +535,11 @@ export default function POSPage() {
       />
 
       {/* Main Content */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left Column - Search & Cart */}
-        <div className="flex-1 flex flex-col min-h-0 border-r border-border">
+        <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-border">
           {/* Search Bar */}
-          <div className="p-6 pb-4">
+          <div className="p-3 md:p-6 md:pb-4">
             <SearchBar products={products} onProductSelect={addToCart} />
           </div>
 
@@ -512,9 +557,11 @@ export default function POSPage() {
         </div>
 
         {/* Right Column - Payment Panel Only */}
-        <div className="w-[480px] flex flex-col min-h-0">
+        <div className="w-full lg:w-[480px] flex flex-col lg:min-h-0">
           <PaymentPanel
             customers={customers}
+            suppliers={suppliers}
+            canSettleSupplierDebt={isOnline && canEdit("suppliers")}
             selectedCustomerId={selectedCustomerId}
             subtotal={subtotal}
             discount={discount}
@@ -528,7 +575,9 @@ export default function POSPage() {
       </div>
 
       {/* Status Bar */}
-      <StatusBar />
+      <div className="hidden md:block">
+        <StatusBar />
+      </div>
 
       {/* Quick Actions */}
       <QuickActions

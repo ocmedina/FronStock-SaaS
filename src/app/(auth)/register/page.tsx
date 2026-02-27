@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { acceptInvitationForRegisteredUser } from '@/actions/invitations';
 
 function RegisterForm() {
     const [email, setEmail] = useState('');
@@ -86,19 +87,16 @@ function RegisterForm() {
 
             // If invited, join the organization
             if (invitationInfo && authData.user) {
-                // Create profile with organization
-                await supabase.from('profiles').upsert({
-                    id: authData.user.id,
-                    full_name: fullName,
-                    organization_id: invitationInfo.organizationId,
-                    role: invitationInfo.role,
+                const invitationResult = await acceptInvitationForRegisteredUser({
+                    token: invitationInfo.token,
+                    userId: authData.user.id,
+                    fullName,
                 });
 
-                // Mark invitation as accepted
-                await supabase
-                    .from('invitations')
-                    .update({ status: 'accepted' })
-                    .eq('token', invitationInfo.token);
+                if (invitationResult.error) {
+                    setError(invitationResult.error);
+                    return;
+                }
 
                 // Redirect to dashboard
                 router.push('/dashboard');

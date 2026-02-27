@@ -18,7 +18,7 @@ const DEFAULT_SHORTCUTS = [
 
 export function StatusBar({ shortcuts = DEFAULT_SHORTCUTS }: StatusBarProps) {
     return (
-        <div className="h-10 bg-muted/30 border-t border-border px-4 flex items-center gap-4 text-xs">
+        <div className="h-10 bg-muted/30 border-t border-border px-4 flex items-center gap-4 text-xs overflow-x-auto whitespace-nowrap">
             <div className="flex items-center gap-2 text-muted-foreground">
                 <Zap className="h-3 w-3" />
                 <span className="font-medium">Atajos:</span>

@@ -1,0 +1,23 @@
+Orden sugerido de importación (evita romper relaciones):
+1. settings
+2. profiles
+3. brands
+4. categories
+5. suppliers
+6. customers
+7. products
+8. purchase_orders
+9. purchase_order_items
+10. purchases
+11. purchase_items
+12. supplier_payments
+13. orders
+14. order_items
+15. sales
+16. sale_items
+17. payments
+18. stock_movements
+19. expenses
+20. cash_movements
+21. daily_reports
+22. invoices

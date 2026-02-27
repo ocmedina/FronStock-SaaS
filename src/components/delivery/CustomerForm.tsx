@@ -16,10 +16,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
-import { useOrganization } from "@/contexts/OrganizationContext";
 import { Loader2, Building2, User, MapPin, CreditCard, Calendar } from "lucide-react";
 import type { Customer } from "@/types/database.types";
+import { saveDeliveryCustomer } from "@/actions/delivery";
 
 interface CustomerFormProps {
   customer?: Customer | null;
@@ -28,8 +27,6 @@ interface CustomerFormProps {
 }
 
 export default function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProps) {
-  const { organizationId } = useOrganization();
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [isBusiness, setIsBusiness] = useState(!!customer?.business_type);
 
@@ -100,13 +97,11 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!organizationId) return;
 
     setLoading(true);
 
     try {
       const dataToSave: any = {
-        organization_id: organizationId,
         name: formData.name.trim(),
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
@@ -145,22 +140,12 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
         dataToSave.preferred_visit_time = null;
       }
 
-      let error;
+      const result = await saveDeliveryCustomer({
+        customerId: customer?.id,
+        data: dataToSave,
+      });
 
-      if (customer?.id) {
-        // Update
-        const result = await supabase
-          .from("customers")
-          .update(dataToSave)
-          .eq("id", customer.id);
-        error = result.error;
-      } else {
-        // Insert
-        const result = await supabase.from("customers").insert([dataToSave]);
-        error = result.error;
-      }
-
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       toast.success(customer ? "Cliente actualizado" : "Cliente creado");
       onSuccess();

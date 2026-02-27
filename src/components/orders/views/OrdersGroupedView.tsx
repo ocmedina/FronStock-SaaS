@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User } from "lucide-react";
+import { getOrderStatus } from "@/lib/orders/filters";
 
 interface OrdersGroupedViewProps {
     orders: any[];
@@ -57,11 +58,18 @@ export function OrdersGroupedView({ orders, onViewDetails }: OrdersGroupedViewPr
                                 onClick={() => onViewDetails(order.id)}
                             >
                                 <div className="flex items-center justify-between mb-2">
-                                    <Badge className="text-xs">
-                                        {order.delivery_status === "delivered"
-                                            ? "✓ Completado"
-                                            : "En proceso"}
-                                    </Badge>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="text-xs">
+                                            {getOrderStatus(order) === "delivered"
+                                                ? "✓ Completado"
+                                                : "En proceso"}
+                                        </Badge>
+                                        {order.is_offline_pending && (
+                                            <Badge variant="secondary" className="text-[10px]">
+                                                Pendiente offline
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <span className="text-xs text-muted-foreground">
                                         #{order.id.slice(0, 6)}
                                     </span>

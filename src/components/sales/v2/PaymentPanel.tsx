@@ -18,13 +18,18 @@ import { CustomerSelector } from './CustomerSelector';
 
 interface PaymentPanelProps {
     customers: Customer[];
+    suppliers?: Array<{ id: string; name: string; current_balance?: number | null }>;
+    canSettleSupplierDebt?: boolean;
     selectedCustomerId: string | null;
     subtotal: number;
     discount?: number;
     surcharge?: number;
     total: number;
     onCustomerChange: (customerId: string | null) => void;
-    onProcessSale: (payments: Array<{ method: PaymentMethod; amount: number }>) => void;
+    onProcessSale: (
+        payments: Array<{ method: PaymentMethod; amount: number }>,
+        options?: { supplierSettlement?: { supplierId: string; amount: number } }
+    ) => void;
     processing?: boolean;
 }
 
@@ -38,6 +43,8 @@ const BILLS = [10000, 5000, 2000, 1000, 500, 200, 100, 50];
 
 export function PaymentPanel({
     customers,
+    suppliers = [],
+    canSettleSupplierDebt = false,
     selectedCustomerId,
     subtotal,
     discount = 0,
@@ -52,19 +59,43 @@ export function PaymentPanel({
     const [cashReceived, setCashReceived] = useState<string>('');
     
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
-    const hasCredit = (selectedCustomer?.credit_limit || 0) > 0;
+    const creditLimit = Number(selectedCustomer?.credit_limit || 0);
+    const hasConfiguredLimit = creditLimit > 0;
     const currentBalance = selectedCustomer?.balance || 0;
-    const availableCredit = (selectedCustomer?.credit_limit || 0) + currentBalance;
-    const canUseCredit = hasCredit && availableCredit >= total;
+    const availableCredit = hasConfiguredLimit ? (creditLimit - currentBalance) : Number.POSITIVE_INFINITY;
+    const canUseCredit = Boolean(selectedCustomerId) && availableCredit >= total;
 
     // Mixed payments
     const [payments, setPayments] = useState<Payment[]>([]);
     const [newPaymentMethod, setNewPaymentMethod] = useState<PaymentMethod>('cash');
     const [newPaymentAmount, setNewPaymentAmount] = useState<string>('');
+    const [applySupplierSettlement, setApplySupplierSettlement] = useState(false);
+    const [supplierToSettleId, setSupplierToSettleId] = useState<string>('');
+    const [supplierSettlementAmount, setSupplierSettlementAmount] = useState<string>('');
 
     const change = cashReceived ? parseFloat(cashReceived) - total : 0;
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const remaining = total - totalPaid;
+    const suppliersWithDebt = suppliers.filter((s) => Number(s.current_balance || 0) > 0);
+    const selectedSupplier = suppliersWithDebt.find((s) => s.id === supplierToSettleId);
+    const selectedSupplierDebt = Number(selectedSupplier?.current_balance || 0);
+    const maxSupplierSettlement = Math.min(total, selectedSupplierDebt);
+    const parsedSupplierSettlementAmount = Number(supplierSettlementAmount || 0);
+    const hasValidSupplierSettlement =
+        applySupplierSettlement &&
+        Boolean(supplierToSettleId) &&
+        parsedSupplierSettlementAmount > 0 &&
+        parsedSupplierSettlementAmount <= maxSupplierSettlement;
+
+    useEffect(() => {
+        if (!applySupplierSettlement) {
+            setSupplierSettlementAmount('');
+        }
+    }, [applySupplierSettlement]);
+
+    useEffect(() => {
+        setSupplierSettlementAmount('');
+    }, [supplierToSettleId]);
 
     const calculateBillBreakdown = (amount: number) => {
         const breakdown: { bill: number; count: number }[] = [];
@@ -99,19 +130,24 @@ export function PaymentPanel({
     };
 
     const handleProcessSale = () => {
+        const settlementOptions = hasValidSupplierSettlement
+            ? { supplierSettlement: { supplierId: supplierToSettleId, amount: parsedSupplierSettlementAmount } }
+            : undefined;
+
         if (paymentMode === 'simple') {
-            onProcessSale([{ method: simpleMethod, amount: total }]);
+            onProcessSale([{ method: simpleMethod, amount: total }], settlementOptions);
         } else {
-            onProcessSale(payments);
+            onProcessSale(payments, settlementOptions);
         }
     };
 
     const canProcess =
-        paymentMode === 'simple'
+        (paymentMode === 'simple'
             ? simpleMethod === 'cash'
                 ? change >= 0
                 : true
-            : remaining <= 0;
+            : remaining <= 0) &&
+        (!applySupplierSettlement || hasValidSupplierSettlement);
 
     const getPaymentLabel = (method: PaymentMethod) => {
         const labels = {
@@ -126,11 +162,11 @@ export function PaymentPanel({
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Header */}
-            <div className="p-4 border-b border-border bg-muted/20">
-                <h2 className="text-xl font-bold">💳 Panel de Pago</h2>
+            <div className="p-3 md:p-4 border-b border-border bg-muted/20">
+                <h2 className="text-lg md:text-xl font-bold">💳 Panel de Pago</h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
                 {/* Customer Selection */}
                 <CustomerSelector
                     customers={customers}
@@ -195,7 +231,7 @@ export function PaymentPanel({
                                     className="h-12"
                                     onClick={() => setSimpleMethod('credit')}
                                     disabled={!selectedCustomerId || !canUseCredit}
-                                    title={!selectedCustomerId ? 'Selecciona un cliente' : !hasCredit ? 'Cliente sin límite de crédito' : !canUseCredit ? 'Excede límite de crédito disponible' : ''}
+                                    title={!selectedCustomerId ? 'Selecciona un cliente' : !canUseCredit ? 'Excede límite de crédito disponible' : ''}
                                 >
                                     <Wallet className="h-4 w-4 mr-2" />
                                     Fiado
@@ -223,30 +259,40 @@ export function PaymentPanel({
                                     )}
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Límite de Crédito:</span>
-                                        <span className="font-medium">${(selectedCustomer.credit_limit || 0).toLocaleString()}</span>
+                                        <span className="font-medium">
+                                            {hasConfiguredLimit ? `$${creditLimit.toLocaleString()}` : 'Sin límite'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Balance Actual:</span>
                                         <span className={cn(
                                             "font-medium",
-                                            currentBalance < 0 ? "text-red-500" : "text-green-500"
+                                            currentBalance > 0 ? "text-red-500" : "text-green-500"
                                         )}>
-                                            ${Math.abs(currentBalance).toLocaleString()} {currentBalance < 0 ? '(Debe)' : currentBalance > 0 ? '(A favor)' : ''}
+                                            ${Math.abs(currentBalance).toLocaleString()} {currentBalance > 0 ? '(Debe)' : currentBalance < 0 ? '(A favor)' : ''}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between pt-2 border-t border-blue-500/20">
-                                        <span className="font-medium">Crédito Disponible:</span>
-                                        <span className="font-bold text-lg">${availableCredit.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs text-muted-foreground">
-                                        <span>Después de esta venta:</span>
-                                        <span className={cn(
-                                            "font-medium",
-                                            (availableCredit - total) >= 0 ? "text-green-600" : "text-red-600"
-                                        )}>
-                                            ${(availableCredit - total).toLocaleString()}
-                                        </span>
-                                    </div>
+                                    {hasConfiguredLimit ? (
+                                        <>
+                                            <div className="flex justify-between pt-2 border-t border-blue-500/20">
+                                                <span className="font-medium">Crédito Disponible:</span>
+                                                <span className="font-bold text-lg">${availableCredit.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs text-muted-foreground">
+                                                <span>Después de esta venta:</span>
+                                                <span className={cn(
+                                                    "font-medium",
+                                                    (availableCredit - total) >= 0 ? "text-green-600" : "text-red-600"
+                                                )}>
+                                                    ${(availableCredit - total).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="pt-2 border-t border-blue-500/20 text-xs text-muted-foreground">
+                                            Fiado habilitado sin límite máximo configurado.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -264,11 +310,11 @@ export function PaymentPanel({
                                     value={cashReceived}
                                     onChange={(e) => setCashReceived(e.target.value)}
                                     placeholder="$0"
-                                    className="h-14 text-2xl font-bold text-center"
+                                    className="h-12 md:h-14 text-xl md:text-2xl font-bold text-center"
                                 />
 
                                 {/* Quick Amount Buttons */}
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -305,7 +351,7 @@ export function PaymentPanel({
                                             </span>
                                             <span
                                                 className={cn(
-                                                    'text-3xl font-bold',
+                                                    'text-2xl md:text-3xl font-bold',
                                                     change >= 0 ? 'text-emerald-600' : 'text-destructive'
                                                 )}
                                             >
@@ -463,6 +509,55 @@ export function PaymentPanel({
                 )}
 
                 {/* Summary */}
+                {canSettleSupplierDebt && suppliersWithDebt.length > 0 && (
+                    <div className="space-y-3 p-3 rounded-lg border border-border bg-muted/20">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Saldar deuda de proveedor con esta venta</Label>
+                            <Button
+                                type="button"
+                                variant={applySupplierSettlement ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setApplySupplierSettlement((prev) => !prev)}
+                            >
+                                {applySupplierSettlement ? 'Activado' : 'Desactivado'}
+                            </Button>
+                        </div>
+
+                        {applySupplierSettlement && (
+                            <div className="space-y-2">
+                                <Select value={supplierToSettleId} onValueChange={setSupplierToSettleId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar proveedor con deuda" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {suppliersWithDebt.map((supplier) => (
+                                            <SelectItem key={supplier.id} value={supplier.id}>
+                                                {supplier.name} - Deuda ${Number(supplier.current_balance || 0).toLocaleString('es-AR')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Input
+                                    type="number"
+                                    inputMode="decimal"
+                                    min="0"
+                                    max={maxSupplierSettlement > 0 ? maxSupplierSettlement : undefined}
+                                    placeholder={maxSupplierSettlement > 0 ? `Máx: $${maxSupplierSettlement.toLocaleString('es-AR')}` : 'Monto a saldar'}
+                                    value={supplierSettlementAmount}
+                                    onChange={(e) => setSupplierSettlementAmount(e.target.value)}
+                                />
+
+                                {selectedSupplier && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Deuda actual: ${selectedSupplierDebt.toLocaleString('es-AR')} · Máximo a aplicar desde esta venta: ${maxSupplierSettlement.toLocaleString('es-AR')}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className="space-y-2 pt-4 border-t border-border">
                     <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal:</span>
@@ -488,12 +583,12 @@ export function PaymentPanel({
             </div>
 
             {/* Process Button */}
-            <div className="p-4 border-t border-border">
+            <div className="p-3 md:p-4 border-t border-border">
                 <Button
                     onClick={handleProcessSale}
                     disabled={!canProcess || processing}
                     className={cn(
-                        'w-full h-16 text-xl font-bold rounded-xl',
+                        'w-full h-14 md:h-16 text-base md:text-xl font-bold rounded-xl',
                         'bg-gradient-to-r from-emerald-600 to-emerald-500',
                         'hover:from-emerald-700 hover:to-emerald-600',
                         'shadow-lg shadow-emerald-500/30',
@@ -502,7 +597,7 @@ export function PaymentPanel({
                         'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                 >
-                    {processing ? '⏳ Procesando...' : '💰 COBRAR (F12)'}
+                    {processing ? '⏳ Procesando...' : '💰 COBRAR'}
                 </Button>
             </div>
         </div>

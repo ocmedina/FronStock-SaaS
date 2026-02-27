@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
+const SESSION_TIMEOUT_KEY = 'security-session-timeout-minutes';
+
 interface SessionTimeoutProps {
     timeoutInMinutes?: number;
     warningTimeInMinutes?: number;
@@ -17,9 +19,18 @@ export function SessionTimeout({
     const supabase = createClient();
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const lastActivityRef = useRef<number>(Date.now());
+    const timeoutMinutesRef = useRef<number>(timeoutInMinutes);
 
-    // Converts minutes to milliseconds
-    const timeoutMs = timeoutInMinutes * 60 * 1000;
+    const getTimeoutMs = useCallback(() => {
+        const raw = localStorage.getItem(SESSION_TIMEOUT_KEY);
+        const parsed = Number(raw);
+        if (Number.isFinite(parsed) && parsed >= 5) {
+            timeoutMinutesRef.current = parsed;
+        } else {
+            timeoutMinutesRef.current = timeoutInMinutes;
+        }
+        return timeoutMinutesRef.current * 60 * 1000;
+    }, [timeoutInMinutes]);
 
     const logout = useCallback(async () => {
         try {
@@ -36,6 +47,7 @@ export function SessionTimeout({
 
     const resetTimer = useCallback(() => {
         lastActivityRef.current = Date.now();
+        const timeoutMs = getTimeoutMs();
 
         if (timerRef.current) {
             clearTimeout(timerRef.current);
@@ -53,14 +65,53 @@ export function SessionTimeout({
                 resetTimer();
             }
         }, timeoutMs);
-    }, [timeoutMs, logout]);
+    }, [getTimeoutMs, logout]);
 
     useEffect(() => {
+        const syncTimeoutFromServer = async () => {
+            try {
+                const { data: userData } = await supabase.auth.getUser();
+                const userId = userData.user?.id;
+                if (!userId) return;
+
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('organization_id')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                const organizationId = profileData?.organization_id;
+                if (!organizationId) return;
+
+                const { data: prefData } = await supabase
+                    .from('user_security_preferences')
+                    .select('session_timeout_minutes')
+                    .eq('user_id', userId)
+                    .eq('organization_id', organizationId)
+                    .maybeSingle();
+
+                const timeout = prefData?.session_timeout_minutes;
+                if (typeof timeout === 'number' && timeout >= 5) {
+                    localStorage.setItem(SESSION_TIMEOUT_KEY, String(timeout));
+                    window.dispatchEvent(new Event('security-timeout-changed'));
+                }
+            } catch {
+                // no-op fallback to local/default timeout
+            }
+        };
+
+        syncTimeoutFromServer();
+
         // Events to listen for
         const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
 
         // Initial setup
         resetTimer();
+
+        const handleTimeoutChanged = () => {
+            resetTimer();
+        };
+        window.addEventListener('security-timeout-changed', handleTimeoutChanged as EventListener);
 
         // Add event listeners
         const handleActivity = () => {
@@ -78,6 +129,7 @@ export function SessionTimeout({
             if (timerRef.current) {
                 clearTimeout(timerRef.current);
             }
+            window.removeEventListener('security-timeout-changed', handleTimeoutChanged as EventListener);
             events.forEach(event => {
                 window.removeEventListener(event, handleActivity);
             });

@@ -3,6 +3,8 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { resolveDashboardModuleFromPath } from '@/lib/route-permissions';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -37,9 +39,10 @@ import {
     Search,
     FileText,
     Truck,
+    MapPin,
+    Building2,
+    CreditCard,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 
 interface MenuItem {
     href: string;
@@ -60,9 +63,19 @@ const menuSections: MenuSection[] = [
         icon: ShoppingCart,
         items: [
             { href: '/dashboard/sales', label: 'Punto de Venta', icon: ShoppingCart, description: 'Registrar ventas' },
-            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck, description: 'Delivery y encargos' },
             { href: '/dashboard/sales/history', label: 'Historial', icon: ClipboardList, description: 'Ver ventas realizadas' },
             { href: '/dashboard/invoices', label: 'Facturación', icon: FileText, description: 'Facturas y comprobantes' },
+            { href: '/dashboard/promotions', label: 'Promociones', icon: Tags, description: 'Descuentos y campañas' },
+        ],
+    },
+    {
+        title: 'Logística',
+        icon: Truck,
+        items: [
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck, description: 'Delivery y encargos' },
+            { href: '/dashboard/delivery/customers', label: 'Clientes', icon: Building2, description: 'Clientes de reparto' },
+            { href: '/dashboard/delivery/routes', label: 'Rutas', icon: MapPin, description: 'Planificación de recorridos' },
+            { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList, description: 'Cierres y turnos' },
         ],
     },
     {
@@ -79,8 +92,15 @@ const menuSections: MenuSection[] = [
         icon: Users,
         items: [
             { href: '/dashboard/customers', label: 'Clientes', icon: Users, description: 'Base de clientes' },
-            { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory, description: 'Gestionar proveedores' },
+            { href: '/dashboard/customers/debtors', label: 'Deudores', icon: CreditCard, description: 'Clientes con saldo' },
+        ],
+    },
+    {
+        title: 'Compras',
+        icon: PackageOpen,
+        items: [
             { href: '/dashboard/purchases', label: 'Compras', icon: PackageOpen, description: 'Órdenes de compra' },
+            { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory, description: 'Gestionar proveedores' },
         ],
     },
     {
@@ -104,8 +124,19 @@ const menuSections: MenuSection[] = [
 export function Navbar() {
     const pathname = usePathname();
     const { organization, profile } = useOrganization();
-    const { theme, toggleTheme } = useTheme();
+    const { resolvedTheme, toggleTheme } = useTheme();
+    const { canView } = usePermissions();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const visibleMenuSections = menuSections
+        .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => {
+                const requiredModule = resolveDashboardModuleFromPath(item.href);
+                return !requiredModule || canView(requiredModule);
+            }),
+        }))
+        .filter((section) => section.items.length > 0);
 
     const handleLogout = async () => {
         const { createClient } = require('@/lib/supabase/client');
@@ -152,7 +183,7 @@ export function Navbar() {
 
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center gap-1">
-                        {menuSections.map((section) => {
+                        {visibleMenuSections.map((section) => {
                             const SectionIcon = section.icon;
                             const hasActiveItem = section.items.some(
                                 item => pathname === item.href ||
@@ -223,7 +254,7 @@ export function Navbar() {
                             onClick={toggleTheme}
                             className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent h-9 w-9"
                         >
-                            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                         </Button>
 
                         {/* User Menu */}
@@ -316,7 +347,7 @@ export function Navbar() {
 
                             {/* Sections */}
                             <div className="space-y-4">
-                                {menuSections.map((section) => (
+                                {visibleMenuSections.map((section) => (
                                     <div key={section.title}>
                                         <p className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-4 mb-2">
                                             {section.title}

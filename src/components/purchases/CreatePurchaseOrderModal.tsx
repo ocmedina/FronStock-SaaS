@@ -256,40 +256,20 @@ export function CreatePurchaseOrderModal({
         setSaving(true);
 
         try {
-            // Create order
-            const { data: order, error } = await supabase
-                .from('purchase_orders')
-                .insert({
-                    organization_id: organizationId,
-                    supplier_id: supplier.id,
-                    order_number: `OC-${Date.now().toString().slice(-6)}`,
-                    status: 'pending',
-                    total: calculateTotal(),
-                    notes: notes || null,
-                })
-                .select()
-                .single();
+            const { createPurchaseOrder } = await import('@/actions/purchases');
+            const result = await createPurchaseOrder({
+                supplierId: supplier.id,
+                notes: notes || null,
+                items: items.map((item) => ({
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    quantity: item.quantity,
+                    unit_cost: item.unit_cost,
+                })),
+            });
 
-            if (error || !order) {
-                throw new Error(error?.message || 'Error al crear la orden');
-            }
-
-            // Create items
-            const orderItemsData = items.map((item) => ({
-                purchase_order_id: order.id,
-                product_id: item.product_id,
-                product_name: item.product_name,
-                quantity: item.quantity,
-                unit_cost: item.unit_cost,
-                total: item.quantity * item.unit_cost,
-            }));
-
-            const { error: itemsError } = await supabase
-                .from('purchase_order_items')
-                .insert(orderItemsData);
-
-            if (itemsError) {
-                throw new Error(itemsError.message);
+            if (result.error) {
+                throw new Error(result.error);
             }
 
             // Reset form

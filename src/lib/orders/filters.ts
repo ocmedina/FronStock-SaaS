@@ -22,34 +22,45 @@ export const filterOrders = (
     return filtered;
 };
 
+export const getOrderStatus = (order: any): string => {
+    const lifecycle = String(order?.lifecycle_status || "").toLowerCase();
+    if (lifecycle) return lifecycle;
+
+    const legacy = String(order?.delivery_status || "").toLowerCase();
+    if (legacy === "out_for_delivery") return "in_delivery";
+    if (legacy === "assigned_to_route") return "assigned";
+    if (legacy === "cancelled") return "not_delivered";
+    return legacy || "draft";
+};
+
 export const filterOrdersByStatus = (
     orders: any[],
     statuses: string[]
 ) => {
     return orders.filter((o) =>
-        statuses.includes(o.delivery_status || "pending")
+        statuses.includes(getOrderStatus(o))
     );
 };
 
 export const calculateOrderStats = (orders: any[]) => {
     const total = orders.length;
     const pending = orders.filter((o) =>
-        ["pending", "draft"].includes(o.delivery_status)
+        ["pending", "draft"].includes(getOrderStatus(o))
     ).length;
     const preparing = orders.filter((o) =>
-        ["preparing", "packed", "confirmed"].includes(o.delivery_status)
+        ["preparing", "packed", "confirmed"].includes(getOrderStatus(o))
     ).length;
     const ready = orders.filter((o) =>
-        ["ready", "assigned_to_route"].includes(o.delivery_status)
+        ["ready", "assigned_to_route", "assigned"].includes(getOrderStatus(o))
     ).length;
     const shipping = orders.filter(
-        (o) => o.delivery_status === "out_for_delivery"
+        (o) => ["out_for_delivery", "in_delivery"].includes(getOrderStatus(o))
     ).length;
     const delivered = orders.filter(
-        (o) => o.delivery_status === "delivered"
+        (o) => getOrderStatus(o) === "delivered"
     ).length;
     const totalRevenue = orders
-        .filter((o) => o.delivery_status === "delivered")
+        .filter((o) => getOrderStatus(o) === "delivered")
         .reduce((sum, o) => sum + (o.total || 0), 0);
 
     return {

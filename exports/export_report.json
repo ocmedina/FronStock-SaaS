@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-02-20T06:33:09.829Z",
+  "output_directory": "C:\\Users\\Noxi-PC\\OneDrive\\Documentos\\GitHub\\my-app\\exports\\system_export_20260220_033257",
+  "elapsed_seconds": 12.8,
+  "table_summary": [
+    {
+      "table": "settings",
+      "rows": 5,
+      "status": "ok"
+    },
+    {
+      "table": "profiles",
+      "rows": 5,
+      "status": "ok"
+    },
+    {
+      "table": "brands",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "table": "categories",
+      "rows": 0,
+      "status": "ok"
+    },
+    {
+      "table": "suppliers",
+      "rows": 15,
+      "status": "ok"
+    },
+    {
+      "table": "customers",
+      "rows": 203,
+      "status": "ok"
+    },
+    {
+      "table": "products",
+      "rows": 344,
+      "status": "ok"
+    },
+    {
+      "table": "purchase_orders",
+      "rows": 0,
+      "status": "error"
+    },
+    {
+      "table": "purchase_order_items",
+      "rows": 0,
+      "status": "error"
+    },
+    {
+      "table": "purchases",
+      "rows": 128,
+      "status": "ok"
+    },
+    {
+      "table": "purchase_items",
+      "rows": 462,
+      "status": "ok"
+    },
+    {
+      "table": "supplier_payments",
+      "rows": 366,
+      "status": "ok"
+    },
+    {
+      "table": "orders",
+      "rows": 719,
+      "status": "ok"
+    },
+    {
+      "table": "order_items",
+      "rows": 1712,
+      "status": "ok"
+    },
+    {
+      "table": "sales",
+      "rows": 2865,
+      "status": "ok"
+    },
+    {
+      "table": "sale_items",
+      "rows": 3490,
+      "status": "ok"
+    },
+    {
+      "table": "payments",
+      "rows": 4425,
+      "status": "ok"
+    },
+    {
+      "table": "stock_movements",
+      "rows": 1747,
+      "status": "ok"
+    },
+    {
+      "table": "expenses",
+      "rows": 0,
+      "status": "ok"
+    },
+    {
+      "table": "cash_movements",
+      "rows": 58,
+      "status": "ok"
+    },
+    {
+      "table": "daily_reports",
+      "rows": 73,
+      "status": "ok"
+    },
+    {
+      "table": "invoices",
+      "rows": 8,
+      "status": "ok"
+    }
+  ],
+  "failed_tables": [
+    {
+      "table": "purchase_orders",
+      "error": "Could not find the table 'public.purchase_orders' in the schema cache"
+    },
+    {
+      "table": "purchase_order_items",
+      "error": "Could not find the table 'public.purchase_order_items' in the schema cache"
+    }
+  ],
+  "totals": {
+    "total_tables": 22,
+    "successful_tables": 20,
+    "failed_tables": 2,
+    "total_rows": 16626
+  }
+}

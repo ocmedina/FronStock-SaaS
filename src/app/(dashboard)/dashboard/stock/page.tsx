@@ -6,6 +6,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   StockKPIs,
   StockChart,
@@ -68,39 +69,15 @@ export default function StockMovementsPage() {
   };
 
   const handleSave = async (formData: any) => {
-    if (!organizationId || !profile) return;
+    const { createStockMovement } = await import("@/actions/stock");
+    const result = await createStockMovement(formData);
 
-    const product = products.find((p) => p.id === formData.product_id);
-    if (!product) return;
-
-    const isEntry = formData.movement_type === "entry";
-    const quantityChange = isEntry ? formData.quantity : -formData.quantity;
-    const newStock = product.stock + quantityChange;
-
-    if (newStock < 0) {
-      alert("No hay suficiente stock para esta salida");
-      throw new Error("Insufficient stock");
+    if (result.error) {
+      toast.error(result.error);
+      throw new Error(result.error);
     }
 
-    await supabase.from("stock_movements").insert({
-      organization_id: organizationId,
-      product_id: formData.product_id,
-      product_name: product.name,
-      movement_type: formData.movement_type,
-      quantity: quantityChange,
-      previous_stock: product.stock,
-      new_stock: newStock,
-      reason: formData.reason,
-      reference_type: "manual",
-      notes: formData.notes || null,
-      created_by: profile.id,
-    });
-
-    await supabase
-      .from("products")
-      .update({ stock: newStock })
-      .eq("id", formData.product_id);
-
+    toast.success("Movimiento registrado");
     setShowModal(false);
     fetchData();
   };
@@ -169,7 +146,7 @@ export default function StockMovementsPage() {
             Historial de entradas, salidas y ajustes
           </p>
         </div>
-        {canCreate("products") && products.length > 0 && (
+        {canCreate("stock") && products.length > 0 && (
           <Button
             onClick={handleOpenModal}
             className="shadow-lg shadow-primary/20"

@@ -3,6 +3,8 @@ import { DragEndEvent, DragStartEvent, PointerSensor, useSensor, useSensors } fr
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { STATUS_COLUMNS } from "@/lib/orders/constants";
+import { getOrderStatus } from "@/lib/orders/filters";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 export const useOrderDragDrop = (
     orders: any[],
@@ -10,6 +12,7 @@ export const useOrderDragDrop = (
     refetch: () => void
 ) => {
     const supabase = createClient();
+    const { organizationId } = useOrganization();
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -36,23 +39,39 @@ export const useOrderDragDrop = (
         const targetColumn = STATUS_COLUMNS.find((col) => col.id === newColumnId);
         if (!targetColumn) return;
 
-        const newStatus = targetColumn.statuses[0];
+        const lifecycleByColumn: Record<string, string> = {
+            pending: "draft",
+            confirmed: "confirmed",
+            preparing: "confirmed",
+            ready: "assigned",
+            shipping: "in_delivery",
+            delivered: "delivered",
+        };
+
+        const newStatus = lifecycleByColumn[targetColumn.id] || "confirmed";
 
         const order = orders.find((o) => o.id === orderId);
-        if (!order || order.delivery_status === newStatus) return;
+        if (!order || getOrderStatus(order) === newStatus) return;
 
         // Actualización optimista
         setOrders((prev) =>
-            prev.map((o) => (o.id === orderId ? { ...o, delivery_status: newStatus } : o))
+            prev.map((o) =>
+                o.id === orderId
+                    ? { ...o, lifecycle_status: newStatus, ui_status: newStatus }
+                    : o
+            )
         );
 
         try {
-            const { error } = await supabase
-                .from("orders")
-                .update({ delivery_status: newStatus })
-                .eq("id", orderId);
+            const { data, error } = await supabase.rpc("set_order_status", {
+                p_org_id: organizationId,
+                p_order_id: orderId,
+                p_new_status: newStatus,
+                p_notes: "Actualizado desde tablero de pedidos",
+            });
 
             if (error) throw error;
+            if (data?.success === false) throw new Error(data?.error || "No se pudo actualizar");
 
             toast.success(`Pedido movido a ${targetColumn.label}`);
         } catch (error: any) {

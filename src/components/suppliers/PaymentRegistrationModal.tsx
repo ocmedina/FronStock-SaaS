@@ -81,27 +81,29 @@ export function PaymentRegistrationModal({
         setLoading(true);
 
         try {
-            const { data, error } = await supabase.rpc('register_supplier_payment', {
-                p_organization_id: organizationId,
-                p_supplier_id: supplierId,
-                p_purchase_order_id: (formData.purchase_order_id && formData.purchase_order_id !== 'no_order') ? formData.purchase_order_id : null,
-                p_amount: parseFloat(formData.amount),
-                p_payment_method: formData.payment_method,
-                p_payment_date: formData.payment_date,
-                p_reference_number: formData.reference_number || null,
-                p_notes: formData.notes || null,
+            const { registerSupplierPayment } = await import('@/actions/suppliers');
+            const result = await registerSupplierPayment({
+                supplierId,
+                purchaseOrderId: (formData.purchase_order_id && formData.purchase_order_id !== 'no_order') ? formData.purchase_order_id : null,
+                amount: parseFloat(formData.amount),
+                paymentMethod: formData.payment_method,
+                paymentDate: formData.payment_date,
+                referenceNumber: formData.reference_number || null,
+                notes: formData.notes || null,
             });
 
-            if (error) throw error;
+            if (result.error) {
+                throw new Error(result.error);
+            }
 
-            const result = data as { success: boolean; error?: string; new_balance?: number };
+            const paymentResult = result.data as { success: boolean; error?: string; new_balance?: number };
 
-            if (!result.success) {
-                throw new Error(result.error || 'Error al registrar el pago');
+            if (!paymentResult?.success) {
+                throw new Error(paymentResult?.error || 'Error al registrar el pago');
             }
 
             toast.success('Pago registrado exitosamente', {
-                description: `Nuevo balance: $${result.new_balance?.toLocaleString('es-AR')}`,
+                description: `Nuevo balance: $${paymentResult.new_balance?.toLocaleString('es-AR')}`,
             });
 
             onOpenChange(false);

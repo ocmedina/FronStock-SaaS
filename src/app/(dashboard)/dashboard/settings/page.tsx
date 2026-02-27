@@ -2,6 +2,8 @@
 
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useLayout } from '@/contexts/LayoutContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAppearance } from '@/contexts/AppearanceContext';
 import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -23,14 +25,32 @@ import {
     Settings,
     CreditCard,
     Database,
+    Monitor,
+    Type,
+    Minimize2,
+    Maximize2,
+    Clock3,
+    Laptop,
+    BellRing,
 } from 'lucide-react';
 import { PlansClientWrapper } from './plans/PlansClientWrapper';
 import { OrganizationSettingsForm } from '@/components/settings/OrganizationSettingsForm';
 import { OfflineDebugPanel } from '@/components/OfflineDebugPanel';
+import { LegacyImportPanel } from '@/components/settings/LegacyImportPanel';
+import { Switch } from '@/components/ui/switch';
 
 export default function SettingsPage() {
     const { organization, profile, refetch } = useOrganization();
     const { layoutMode, setLayoutMode } = useLayout();
+    const { theme, setTheme } = useTheme();
+    const {
+        density,
+        setDensity,
+        fontSize,
+        setFontSize,
+        sidebarDefaultCollapsed,
+        setSidebarDefaultCollapsed,
+    } = useAppearance();
 
     // Organization State
     const [orgName, setOrgName] = useState('');
@@ -42,6 +62,39 @@ export default function SettingsPage() {
 
     // Status State
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState<number>(60);
+    const [closingOtherSessions, setClosingOtherSessions] = useState(false);
+    const [notifyNewDevice, setNotifyNewDevice] = useState(false);
+    const [accessHistory, setAccessHistory] = useState<Array<{ at: string; device: string }>>([]);
+
+    const saveSecurityPreferences = async (payload: {
+        sessionTimeoutMinutes: number;
+        notifyNewDevice: boolean;
+        accessHistory: Array<{ at: string; device: string }>;
+    }) => {
+        if (!profile?.id || !profile.organization_id) {
+            return;
+        }
+
+        const { error } = await supabase
+            .from('user_security_preferences')
+            .upsert(
+                {
+                    user_id: profile.id,
+                    organization_id: profile.organization_id,
+                    session_timeout_minutes: payload.sessionTimeoutMinutes,
+                    notify_new_device: payload.notifyNewDevice,
+                    access_history: payload.accessHistory,
+                },
+                {
+                    onConflict: 'user_id,organization_id',
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+    };
 
     const supabase = createClient();
 
@@ -52,7 +105,126 @@ export default function SettingsPage() {
         if (profile?.full_name) {
             setProfileName(profile.full_name);
         }
+
+        const loadSecurityPreferences = async () => {
+            if (!profile?.id || !profile.organization_id) {
+                return;
+            }
+
+            const timeoutRaw = localStorage.getItem('security-session-timeout-minutes');
+            const timeoutParsed = Number(timeoutRaw);
+            const localTimeout = Number.isFinite(timeoutParsed) && timeoutParsed >= 5 ? timeoutParsed : 60;
+
+            const localNotify = localStorage.getItem('security-notify-new-device') === 'true';
+
+            const historyRaw = localStorage.getItem('security-access-history');
+            const historyParsed = historyRaw ? JSON.parse(historyRaw) : [];
+            const localHistory = Array.isArray(historyParsed) ? historyParsed : [];
+
+            const { data, error } = await supabase
+                .from('user_security_preferences')
+                .select('session_timeout_minutes, notify_new_device, access_history')
+                .eq('user_id', profile.id)
+                .eq('organization_id', profile.organization_id)
+                .maybeSingle();
+
+            if (error) {
+                setMessage({ type: 'error', text: `No se pudieron cargar preferencias de seguridad: ${error.message}` });
+                return;
+            }
+
+            const dbTimeout = typeof data?.session_timeout_minutes === 'number' ? data.session_timeout_minutes : localTimeout;
+            const dbNotify = typeof data?.notify_new_device === 'boolean' ? data.notify_new_device : localNotify;
+            const dbHistory = Array.isArray(data?.access_history) ? data.access_history : localHistory;
+
+            const currentDevice = `${navigator.platform || 'Desktop'} · ${navigator.language || 'es-AR'}`;
+            const nowIso = new Date().toISOString();
+
+            const shouldAppendCurrent =
+                dbHistory.length === 0 ||
+                typeof dbHistory[0]?.at !== 'string' ||
+                (Date.now() - new Date(dbHistory[0].at).getTime() > 30 * 60 * 1000);
+
+            const nextHistory = shouldAppendCurrent
+                ? [{ at: nowIso, device: currentDevice }, ...dbHistory].slice(0, 10)
+                : dbHistory.slice(0, 10);
+
+            setSessionTimeoutMinutes(dbTimeout);
+            setNotifyNewDevice(dbNotify);
+            setAccessHistory(nextHistory);
+
+            localStorage.setItem('security-session-timeout-minutes', String(dbTimeout));
+            localStorage.setItem('security-notify-new-device', String(dbNotify));
+            localStorage.setItem('security-access-history', JSON.stringify(nextHistory));
+            window.dispatchEvent(new Event('security-timeout-changed'));
+
+            if (!data || shouldAppendCurrent) {
+                await saveSecurityPreferences({
+                    sessionTimeoutMinutes: dbTimeout,
+                    notifyNewDevice: dbNotify,
+                    accessHistory: nextHistory,
+                });
+            }
+        };
+
+        loadSecurityPreferences().catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            setMessage({ type: 'error', text: `No se pudo sincronizar seguridad: ${message}` });
+        });
     }, [organization, profile]);
+
+    const handleSessionTimeoutChange = async (minutes: number) => {
+        setSessionTimeoutMinutes(minutes);
+        localStorage.setItem('security-session-timeout-minutes', String(minutes));
+        window.dispatchEvent(new Event('security-timeout-changed'));
+        try {
+            await saveSecurityPreferences({
+                sessionTimeoutMinutes: minutes,
+                notifyNewDevice,
+                accessHistory,
+            });
+            setMessage({ type: 'success', text: `Timeout de sesión sincronizado a ${minutes} minutos` });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            setMessage({ type: 'error', text: `No se pudo sincronizar timeout: ${message}` });
+        }
+    };
+
+    const handleNotifyNewDeviceChange = async (enabled: boolean) => {
+        setNotifyNewDevice(enabled);
+        localStorage.setItem('security-notify-new-device', String(enabled));
+        try {
+            await saveSecurityPreferences({
+                sessionTimeoutMinutes,
+                notifyNewDevice: enabled,
+                accessHistory,
+            });
+            setMessage({
+                type: 'success',
+                text: enabled
+                    ? 'Alertas de nuevo dispositivo activadas y sincronizadas'
+                    : 'Alertas de nuevo dispositivo desactivadas y sincronizadas',
+            });
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            setMessage({ type: 'error', text: `No se pudo sincronizar alerta: ${message}` });
+        }
+    };
+
+    const handleCloseOtherSessions = async () => {
+        setClosingOtherSessions(true);
+        setMessage(null);
+
+        const { error } = await supabase.auth.signOut({ scope: 'others' });
+
+        if (error) {
+            setMessage({ type: 'error', text: `No se pudieron cerrar otras sesiones: ${error.message}` });
+        } else {
+            setMessage({ type: 'success', text: 'Se cerraron las demás sesiones activas' });
+        }
+
+        setClosingOtherSessions(false);
+    };
 
     const handleSaveOrg = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -148,6 +320,10 @@ export default function SettingsPage() {
                         <Database className="h-4 w-4" />
                         Sistema Offline
                     </TabsTrigger>
+                    <TabsTrigger value="import" className="gap-2">
+                        <Database className="h-4 w-4" />
+                        Importación
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* General Settings */}
@@ -175,6 +351,41 @@ export default function SettingsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-4">
+                                    Tema
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <Button
+                                        type="button"
+                                        variant={theme === 'light' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setTheme('light')}
+                                    >
+                                        <Palette className="h-4 w-4" />
+                                        Claro
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={theme === 'dark' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setTheme('dark')}
+                                    >
+                                        <Shield className="h-4 w-4" />
+                                        Oscuro
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={theme === 'system' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setTheme('system')}
+                                    >
+                                        <Monitor className="h-4 w-4" />
+                                        Sistema
+                                    </Button>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium mb-4">
                                     Estilo de Navegación
@@ -232,6 +443,80 @@ export default function SettingsPage() {
                                         </div>
                                     </button>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-4">
+                                    Densidad de Interfaz
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <Button
+                                        type="button"
+                                        variant={density === 'comfortable' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setDensity('comfortable')}
+                                    >
+                                        <Maximize2 className="h-4 w-4" />
+                                        Cómoda
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={density === 'compact' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setDensity('compact')}
+                                    >
+                                        <Minimize2 className="h-4 w-4" />
+                                        Compacta
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-4">
+                                    Tamaño de Fuente
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <Button
+                                        type="button"
+                                        variant={fontSize === 'sm' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setFontSize('sm')}
+                                    >
+                                        <Type className="h-4 w-4" />
+                                        Pequeña
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={fontSize === 'md' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setFontSize('md')}
+                                    >
+                                        <Type className="h-4 w-4" />
+                                        Normal
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={fontSize === 'lg' ? 'default' : 'outline'}
+                                        className="justify-start gap-2"
+                                        onClick={() => setFontSize('lg')}
+                                    >
+                                        <Type className="h-4 w-4" />
+                                        Grande
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                                <div>
+                                    <p className="text-sm font-medium">Sidebar colapsado por defecto</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Al abrir el dashboard, la barra lateral inicia en modo compacto.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={sidebarDefaultCollapsed}
+                                    onCheckedChange={setSidebarDefaultCollapsed}
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -291,6 +576,97 @@ export default function SettingsPage() {
 
                 {/* Security Settings */}
                 <TabsContent value="security" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Clock3 className="h-5 w-5" />
+                                Sesión y Acceso
+                            </CardTitle>
+                            <CardDescription>
+                                Configura la seguridad operativa de tu cuenta en este dispositivo.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-3">Timeout de sesión por inactividad</label>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    {[15, 30, 60, 120].map((minutes) => (
+                                        <Button
+                                            key={minutes}
+                                            type="button"
+                                            variant={sessionTimeoutMinutes === minutes ? 'default' : 'outline'}
+                                            onClick={() => handleSessionTimeoutChange(minutes)}
+                                        >
+                                            {minutes} min
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                                <div>
+                                    <p className="text-sm font-medium flex items-center gap-2">
+                                        <BellRing className="h-4 w-4" />
+                                        Alertar nuevo dispositivo
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Guarda la preferencia local para avisarte cuando detectes accesos no habituales.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={notifyNewDevice}
+                                    onCheckedChange={handleNotifyNewDeviceChange}
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                                <div>
+                                    <p className="text-sm font-medium">Cerrar otras sesiones</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Cierra sesiones activas en otros dispositivos y deja solo esta abierta.
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={closingOtherSessions}
+                                    onClick={handleCloseOtherSessions}
+                                >
+                                    {closingOtherSessions ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                    Cerrar otras
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Laptop className="h-5 w-5" />
+                                Historial de Seguridad (Local)
+                            </CardTitle>
+                            <CardDescription>
+                                Últimos accesos registrados en este navegador.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {accessHistory.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Sin registros aún.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {accessHistory.map((entry) => (
+                                        <div key={`${entry.at}-${entry.device}`} className="flex items-center justify-between rounded-md border border-border p-3">
+                                            <span className="text-sm">{entry.device}</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(entry.at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     <Card className="border-destructive/20">
                         <CardHeader>
                             <CardTitle className="text-destructive flex items-center gap-2">
@@ -327,6 +703,11 @@ export default function SettingsPage() {
                 {/* Offline System */}
                 <TabsContent value="offline" className="space-y-4">
                     <OfflineDebugPanel />
+                </TabsContent>
+
+                {/* Legacy Import */}
+                <TabsContent value="import" className="space-y-4">
+                    <LegacyImportPanel />
                 </TabsContent>
             </Tabs>
         </div>

@@ -234,10 +234,16 @@ export default function SuppliersPage() {
             lead_time_days: parseInt(formData.lead_time_days) || 0,
         };
 
-        if (editingSupplier) {
-            await supabase.from('suppliers').update(supplierData).eq('id', editingSupplier.id);
-        } else {
-            await supabase.from('suppliers').insert([supplierData]);
+        const { saveSupplier } = await import('@/actions/suppliers');
+        const result = await saveSupplier({
+            supplierId: editingSupplier?.id,
+            data: supplierData,
+        });
+
+        if (result.error) {
+            alert(result.error);
+            setSaving(false);
+            return;
         }
 
         setSaving(false);
@@ -247,7 +253,12 @@ export default function SuppliersPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de eliminar este proveedor?')) return;
-        await supabase.from('suppliers').delete().eq('id', id);
+        const { deleteSupplier } = await import('@/actions/suppliers');
+        const result = await deleteSupplier(id);
+        if (result.error) {
+            alert(result.error);
+            return;
+        }
         fetchSuppliers();
     };
 
@@ -343,7 +354,7 @@ export default function SuppliersPage() {
                         {suppliers.length} proveedores registrados
                     </p>
                 </div>
-                {canCreate('products') && (
+                {canCreate('suppliers') && (
                     <Button onClick={() => handleOpenModal()} className="shadow-lg shadow-primary/20">
                         <Plus /> Nuevo Proveedor
                     </Button>
@@ -590,7 +601,7 @@ export default function SuppliersPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    {canCreate('products') && (
+                                                    {canCreate('suppliers') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon-sm"
@@ -614,7 +625,7 @@ export default function SuppliersPage() {
                                                     >
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
-                                                    {canEdit('products') && (
+                                                    {canEdit('suppliers') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon-sm"
@@ -627,7 +638,7 @@ export default function SuppliersPage() {
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
                                                     )}
-                                                    {canDelete('products') && (
+                                                    {canDelete('suppliers') && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon-sm"

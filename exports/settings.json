@@ -1,0 +1,22 @@
+[
+  {
+    "key": "business_name",
+    "value": "ZEUS ALIMENTOS"
+  },
+  {
+    "key": "business_address",
+    "value": "W. NUÑEZ 1073"
+  },
+  {
+    "key": "business_phone",
+    "value": "2634- 878607"
+  },
+  {
+    "key": "logo_url",
+    "value": "https://bqhybsdnqmmieftsberw.supabase.co/storage/v1/object/public/logos/logo-1762358317859"
+  },
+  {
+    "key": "layout_style",
+    "value": "sidebar"
+  }
+]

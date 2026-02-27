@@ -366,6 +366,7 @@ export function SupplierHistoryModal({
                                                                     {payment.payment_method === 'transfer' && 'Transferencia'}
                                                                     {payment.payment_method === 'check' && 'Cheque'}
                                                                     {payment.payment_method === 'card' && 'Tarjeta'}
+                                                                    {payment.payment_method === 'cash_from_sales' && 'Caja Ventas'}
                                                                 </Badge>
                                                             </TableCell>
                                                             <TableCell className="text-sm text-muted-foreground">

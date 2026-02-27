@@ -1,0 +1,204 @@
+id,full_name,phone,email,address,customer_type,created_at,is_active,debt,delivery_day,reference
+89e2907f-2169-4d4d-b217-3df71c82bdd1,Mabel Baroni,2634365485,,Mariano Gómez,minorista,2025-11-06T21:56:58.762756+00:00,true,121900,,
+7af27cff-fd75-463b-b5ff-fcfa411bb3b4,Dai Arce,2634514034,,Belgrano y Jorge newbery,minorista,2025-11-11T01:02:24.501751+00:00,true,0,,
+c2661a7c-b2a9-4ba0-8f14-b73b4c101d75,Fernando Arboleda,2634381899,,el Mirador s/n,mayorista,2025-11-12T12:58:48.49888+00:00,true,0,,supermercado mano izquierda
+08279dbf-c18a-44e6-aedb-d77401bfa432,Carlos Giacca,2634335813,,Belgrano s/n mundo nuevo,minorista,2025-11-06T13:49:16.771164+00:00,true,0,Jueves,
+6674a1b0-0d28-4e09-b125-1dacb58e7e92,Humberto Bertolino,2634500547,,Mariano Gómez,minorista,2025-11-06T14:11:00.800045+00:00,true,0,Jueves,
+333948aa-048c-4577-9480-83846df5277e,Angelica Flores,2634488921,,Arias (Mundo nuevo),minorista,2025-11-06T14:24:17.448395+00:00,true,0,Jueves,
+33b71899-c16a-4a2f-90cd-12d6802b9e38,Sole Moran (uhart,2634528613,,W. Nuñez,minorista,2025-11-12T20:40:40.247233+00:00,true,0,,
+596c0b45-ae98-465f-99c8-0050750d17f8,Claudia Requena,2634596327,,Paso de los Andes,minorista,2025-11-06T14:41:07.923016+00:00,true,0,,
+a094f242-a943-4201-9ce9-eb0effacc97a,Rossi terco,2634674018,,Caligniana y Florida,mayorista,2025-11-12T13:39:10.227647+00:00,true,0,,frente bodega gargantini
+6b094ea7-8157-4262-b050-7bc3f576e47e,Mario García,2634346959,,Salvador González y san Martín (Junín),mayorista,2025-11-07T13:38:08.425734+00:00,true,665000,Viernes,
+63482008-c2b0-4a9a-90f6-0bbe1ab46938,Corralón Don Gaspar,263 447-7327,,Carril Retamo s/n Philips,mayorista,2025-11-06T14:52:30.73864+00:00,true,0,Jueves,
+cbf3181a-ef47-4281-87fe-5f6134aba6a4,Oscar Ruiz,2634657195,,Sargento Cabral ,minorista,2025-11-13T02:48:24.719228+00:00,true,36700,,
+29c8d25c-bf6d-4089-b91f-217065d48948,German maza,2634518321,,,minorista,2025-11-07T15:56:53.8259+00:00,true,230800,Viernes,
+d1b72e60-9041-4480-a5b9-529a518b6a3a,Daiana Quiroga,2634942648,,tres acequias (s/n) Medrano,mayorista,2025-11-10T13:53:01.500755+00:00,true,1444400.01,Lunes,
+e67ac634-16a2-4717-a266-2a865d503d89,Gabriel Barrera,2634590539,,,mayorista,2025-11-08T13:06:14.576207+00:00,true,-32500,,
+5a277bc7-8935-49f4-b31c-faaa5c376e81,Consumidor Final,,,,minorista,2025-11-11T06:17:29.334988+00:00,true,-57800,,
+d59aa724-4732-4165-97cf-23697c043f11,Nicolás maddallozo,2634285118,,,minorista,2025-11-08T13:56:06.842643+00:00,true,49400,,
+fa62f8dd-9894-4de9-85c1-237c7cf9ccbd,Lorena Maltesse,2634247560,,Luzuriaga,minorista,2025-11-10T16:09:19.574756+00:00,true,260000,,
+d1154eb8-2893-4434-a1d8-b61113f7cb30,Matías perez,2634641029,,Barrio Rivadavia,mayorista,2025-11-12T14:06:21.37051+00:00,true,0,,
+56238983-8cd6-4495-ab95-389e34373800,Rodrigo Gentile,2634779582,,Pascual Comeglio y perito moreno,mayorista,2025-11-11T16:45:29.671669+00:00,true,0,,casa dos pisos
+d4733e0f-2747-4ffd-8275-bd31ae0a9ca1,Facu Gonzales (minimarket Vicky),2634575398,,santo lugares (barrio semiprivado),minorista,2025-11-07T12:50:27.000708+00:00,false,0,Viernes,
+3518dc13-0690-497b-9711-2968adcaac6c,Silvina Gonzáles,2634529888,,,mayorista,2025-11-07T15:25:03.546638+00:00,true,6207000,Viernes,
+80ba3111-86a2-41c0-9318-a461dd6cf071,Sandra Cruz,2634311849,,,mayorista,2025-11-07T16:08:47.97731+00:00,true,0,Martes,
+07a32cad-0c16-4673-84b7-8d143254b761,Sandra Cruz,2634311849,,,mayorista,2025-11-07T16:08:48.176294+00:00,true,0,Martes,
+e9365e66-8f7b-434d-9d62-4a87e0b3e9c7,Sandra Cruz,2634311849,,,mayorista,2025-11-07T16:08:50.297807+00:00,true,0,Martes,
+c74a5543-b578-489a-b7f9-37a8d5e8dfb2,Carlos Martinez,2634225265,,Barrio carrascosa,minorista,2025-11-06T16:55:03.738872+00:00,true,598000,Jueves,
+3c510b31-20cc-4cc4-b95c-dda5cbe9a7a9,Karina Rivero ,2634277849,,,minorista,2025-11-08T23:08:30.25066+00:00,true,322300,,
+9324c49d-babc-455e-ab7e-dc8dd1d135ca,Alejandra (juan XXIII y ejército de Los Andes),2634655548,,,minorista,2025-11-08T14:15:06.609463+00:00,true,0,,
+69f1dc91-c574-4528-b4c4-0ca3875e330a,Marisol Pereyra,2634714037,,,minorista,2025-11-11T23:51:47.68054+00:00,true,44700,,
+ebf0529b-597b-471d-8d57-5e3c51c65528,Marisol Rivero,2634398832,,Almirante Brown y liniers,mayorista,2025-11-12T16:56:39.451098+00:00,true,0,Miércoles,Santa María de oro
+161a0367-8d41-4c3d-8220-82e6a5a4ad85,Leandro (san Isidro norte),2634539434,,san Isidro norte,minorista,2025-11-13T01:21:21.29867+00:00,true,0,Jueves,
+7c586eba-c785-463e-b97c-6a2a386710af,Silvana Arayes,2634510965,,,minorista,2025-11-10T23:34:59.062581+00:00,true,0,,
+48f2ddc3-46b4-443c-ad37-b9ebc67e49de,Javito Lopez,2634307686,,La Florida E-4,mayorista,2025-11-12T12:55:54.267297+00:00,true,0,,
+1f5393ef-66c2-4923-ab21-6b89d5ed7a4c,Susana Farrando (aguado 1464),2615259303,,,minorista,2025-11-13T01:27:40.061204+00:00,true,0,,
+c0659c5a-5302-4f84-900d-41744b01db2e,Gustavo valli,2634694117,,Fausto Arenas,minorista,2025-11-11T20:10:27.643168+00:00,false,0,,
+3ec49231-7358-42a6-b6d4-d3f89e954600,Mariana Martins,2634505211,,La madrid frente plaza,minorista,2025-11-13T14:04:15.842491+00:00,true,0,,
+bebd374b-174a-49c5-9ded-c6462f935ab3,Gabriel BARRE8BP,,,,mayorista,2025-11-08T13:05:17.524434+00:00,false,0,,
+0b61b68e-9686-435f-885b-8bcfaa303e13,Ivana carrera,2634776327,,Comandante torres y bastan,mayorista,2025-11-10T15:03:23.381246+00:00,true,782300,Martes,
+036bebad-5ed1-4db6-ae77-78a42fdf3f44,Juanma boxeador ciclista paracaidista maratonista etc,2634332024,,carril retamo,minorista,2025-11-12T19:12:32.122525+00:00,true,1117640,,
+0bbfec03-dfb7-4ea1-ab97-47d85a9aea13,Consumidor Final,,,,minorista,2025-11-05T15:26:49.072005+00:00,false,0,,
+3419b6ef-df7c-44d3-baaf-c81a9a007a15,Facundo González ,2634575398,,,mayorista,2025-11-07T12:58:19.418909+00:00,true,344600,Viernes,
+9d43344a-b191-499f-aa59-b0a85cafe716,Adriana Baroni ,2634612563,,Mariano Gómez y alem,minorista,2025-11-11T16:52:01.321371+00:00,true,28900,,Portón grande
+348d3869-2f97-4f72-b29b-f4d9b1482130,Analia levalle,2634563318,,Emilio Civit 75,minorista,2025-11-06T23:54:17.50651+00:00,true,58500,,
+267b963a-a035-4f59-aa01-242baa33c344,Sebastián Morales,2634223285,,Avellaneda y Fausto Arenas,mayorista,2025-11-06T14:27:08.840509+00:00,true,2264000,Jueves,
+e36e1935-6e8e-49ed-a407-e4b28f91d1d6,Adela,2634793470,,W.nuñez,mayorista,2025-11-10T18:12:27.982593+00:00,true,1155400,Jueves,
+ab280261-222e-496e-9062-f5226ad3927a,Miriam Tejada Paris,2634485272,,,minorista,2025-11-06T16:08:46.146138+00:00,true,230900,,
+16b8d6da-6c05-462c-9862-c9c80e12629f,Jorge Escobar (Lavalle),2634798288,,Lavalle,minorista,2025-11-13T01:07:51.705271+00:00,true,56000,Martes,Juan.b.justo y Ferreira
+edbde11e-5974-45c8-a13a-553dfa11741b,Maria Paz,2634565018,,Belgrano s/n,minorista,2025-11-13T01:12:57.683075+00:00,true,76000,,Perro gran Danes
+ffe6b937-f737-47e1-9064-c5d91bf49f67,Adela ken-l,2634793470,,,minorista,2025-11-10T18:16:09.367484+00:00,true,108200,,
+3909ea00-501e-4941-8916-4eaae81302ec,Emanuel Restiffo,2634380808,,Liniers y perito moreno,mayorista,2025-11-13T01:16:06.94976+00:00,true,318400,,
+91674390-f1e3-420d-802d-4f0751380a80,Gabriel Barrera,2634590539,,,mayorista,2025-11-08T13:06:14.58366+00:00,false,0,,
+8e506233-c72a-4ece-b259-a60c6ca7ed6a,Silvia Patricia Meza,2634225172,,P. Olguin 245,minorista,2025-11-11T13:11:09.288481+00:00,true,79700,,Negocio
+288801d2-3af0-4323-af0a-556a31c268b4,Azul munivez,2634393211,,Barrio Lencina (carril florida),mayorista,2025-11-12T14:45:05.057391+00:00,true,321500,Miércoles,Supermercado
+98504e9c-ad84-48ab-9f36-b36f443d0320,Verónica mesa,2634941598,,Leonor Ferreyra 144,minorista,2025-11-11T23:45:02.945459+00:00,true,60900,,
+f6cfb2f6-575e-44c0-a664-d423854ce404,Laura Lucero,,,,minorista,2025-11-06T22:09:55.299554+00:00,true,0,,
+1899a6ed-5565-4b88-bf5f-7c02d9796a49,Miguel Longone,2634762896,,Juan B Justo 264,mayorista,2025-11-06T14:04:23.963465+00:00,true,21900,Martes,
+e72ac3d7-7f96-4227-bb65-d1aeae25eb5f,Quaglini Juan Carlos,2634548339,j@gmail.com,,minorista,2025-11-05T22:25:40.459602+00:00,true,377700,,
+93f37960-7f7d-4adb-a68b-855920a07984,Fernanda Lentini,2634741284,,,minorista,2025-11-08T22:23:43.964928+00:00,true,131900,,
+b606aefa-a50c-48f8-9cc3-d3b800daa609,Betty Gomez,261 515-0086,,Belgrano s/n Mundo Nuevo verdulería,minorista,2025-11-06T14:46:00.108513+00:00,true,236500,,
+9402f062-3ef8-44ad-91bc-1b4535eae059,Maria Gladys Maron,2634336867,,La Central,mayorista,2025-11-12T21:35:17.347974+00:00,true,0,,Todo suelto
+90f4c657-0852-46d6-81fc-2a104d291351,Valeria Chavez (pegado estación),263402861,,,mayorista,2025-11-13T21:50:04.002925+00:00,true,0,,
+3fbc0bbe-9b9d-4328-a10d-d0f6c4f16622,Damián del Souc,2634248577,,,minorista,2025-11-13T21:54:01.399888+00:00,true,0,,
+63c83745-ccd9-44b3-9eab-ee3a6ead07be,Mauricio Franccese,2634521295,,Italia y Rufino Ortega Rivadavia ,minorista,2025-11-29T13:20:43.034775+00:00,true,84800,,
+e7960706-b08e-4e3e-9b2e-23eaad12d30e,Pet shop firulais,2612454708,,Primavera,mayorista,2025-11-14T15:42:18.318667+00:00,true,0,,
+28065bf9-a456-428f-9091-b72fa05bddfb,Tomi Dalecio,,,Calle La Rioja,minorista,2025-11-14T21:07:32.849724+00:00,true,0,Viernes,Giagnoni
+21f155bc-0f1e-4ddc-adc0-7cebd8730664,Romina Berlingieri,2634665716,,,minorista,2025-11-14T21:26:58.847336+00:00,true,26700,,
+3b13ac48-9560-4b6c-a147-ca72f64a20cd,Juan Brandani,,,Mariano gomez,minorista,2025-11-14T15:52:45.981336+00:00,true,20700,,
+aa70ec85-7108-42d4-8aa2-b9e3030eb671,Maria Scalogna,2634639000,,barrio cooperativa,minorista,2025-11-17T15:13:38.298283+00:00,true,0,,Virgencita
+33d20d4f-b408-4c91-ad0e-e05f5f7a9b5d,Sonia ogas,26126575669,,W.Nuñez y Republica del Líbano,minorista,2025-11-17T15:15:00.064452+00:00,true,0,,
+1d66a829-9504-447c-8e18-c006dbaef035,Federico Ponti,2634518633,,Tres acequias 78,mayorista,2025-11-17T15:58:27.156+00:00,true,0,Lunes,Medrano
+79516933-7563-4ee6-87aa-10503366f66e,Mili Pastran,2616929134,,Italia y Republica del Libano 1306,minorista,2025-11-17T20:54:33.79552+00:00,true,0,,
+73ff160b-de7d-47f0-8668-5fcb62d4643e,Cabrera Mariela,2334612564,,Carril retamo ,minorista,2025-11-27T14:07:19.368439+00:00,true,26400,,Mundo nuevo
+c9b40d20-0626-4f99-9721-fce4769e6c6a,Carlitos Los Chicos,2634616789,,W. Nuñez y Godoy Cruz Rivadavia,minorista,2025-11-28T14:53:12.52528+00:00,true,120400,,
+24c125aa-d90c-4893-bf37-ba1cf2d1428d,Fabri curetti,2634339204,,,minorista,2025-11-13T21:51:52.075478+00:00,true,437100,,
+df64842f-ca11-4098-8bca-c1866d4523cc,Lorena Romero (la florida),2634800990,,La Florida L-13,minorista,2025-11-19T15:43:07.462954+00:00,true,227300,,
+ffa4a0b5-84cc-405c-b42c-8d91f40bc226,Susana Mendoza,2634524584,,Brandsen,minorista,2025-11-18T14:57:04.8633+00:00,true,0,,frente miriam
+2cf6fa6e-d298-4ef2-bf10-ec9a459db2bb,Fabio caini,2634334505,,San Isidro y Alem,minorista,2025-11-18T15:44:17.383489+00:00,true,0,,
+338f4e25-11ba-4c5f-9663-128f0704d511,Escudero Miguel Angel,,,,minorista,2025-11-18T15:47:33.315417+00:00,true,22000,,
+00bf3035-f946-4358-b8d8-db0cb125aad5,Miriam Parente,2664252102,,Sargento Cabral y Alem,minorista,2025-11-18T17:42:00.298264+00:00,true,0,,
+a0ec0d4e-c10a-4bd2-b8c3-ef1b9f039e97,Susana Chiara,2634284628,,Mutual cuyo sobre Güemes ,minorista,2025-11-25T16:05:11.12884+00:00,true,42000,,
+c1b21bde-242a-42d4-8a3a-869e559c8c55,Cristina Valiente,2634387658,,Lavalle 962,mayorista,2025-11-28T15:15:57.107841+00:00,true,1866500,,Pegado a vea
+1ac9b43c-e39d-4675-a4e8-df13e0a15de3,Antonieta Silva (amiga Iva),2634398588,,Agustin Alvarez,minorista,2025-11-18T23:55:52.473949+00:00,true,12000,,
+9be07ca2-42e8-4a37-ac75-4033a6d77942,karen Miranda,2634891792,,la madrid pegado a denis,minorista,2025-11-19T13:11:47.277543+00:00,true,0,,
+5e48cb7e-afd3-4147-a61c-f490c368508d,Gonza TYG,2634842088,,España casi san isidro,minorista,2025-11-19T13:34:38.428998+00:00,true,0,,
+a34ce379-fbb0-43d1-ba5c-d972fff208d1,Nani casanova,2634200673,,Barrio Juan XXIII,minorista,2025-11-19T15:33:30.505083+00:00,true,0,,
+9e9d868d-a577-4091-9715-686dbaf4ef1b,Jesica sosa,2634517172,,Justo Estrada,mayorista,2025-11-19T15:59:47.605801+00:00,true,0,,
+a6eca176-4295-4118-8cd9-e3c3a7433422,Fiama Soria (Santa María),,,Juan abzurduy c-1,minorista,2025-11-19T17:05:52.02797+00:00,true,0,,
+36081733-1d02-4c0d-a025-1b7a911bfa37,Roque Gimenez,,,San Isidro (Rosimel),minorista,2025-11-19T17:39:59.518956+00:00,true,0,,
+c95f8e4a-14fb-4fb0-9271-6cd3618f44d9,Nieves,2634388447,,Avenida libertador,minorista,2025-11-19T22:42:23.372716+00:00,true,110400,,
+34e3514c-90dc-4d87-b002-b6d938f06d05,Amiga Lidia Silva,2634502344,,Mariano Gomez 1301 ,minorista,2025-11-28T23:28:46.27603+00:00,true,65700,,porton negro con letras
+cb757330-9728-4259-886e-169af8859134,Joni Cappelloni,2634225472,,Barrio los Otoyanes B-4,minorista,2025-11-20T17:10:43.749471+00:00,true,0,,
+ac75c218-fdb5-4674-992d-2d98955ad844,Barbero Flor,2634950528,,YPF Philips,minorista,2025-11-20T20:24:47.917506+00:00,true,0,,
+ace01ba6-2abc-44ed-bd68-d9ab27856862,Barbero Agustina,2634687307,,YPF Philips,minorista,2025-11-20T20:34:42.432736+00:00,true,0,,
+fc88714c-3f33-4ea8-88a2-59e2c93cdc93,Gustavo Simón verdulería,2616649820,,Fausto arena e independencia,mayorista,2025-11-20T14:19:47.153925+00:00,true,129000,,
+1f8a0167-2d8b-48df-ae93-a8bb787a4cc6,Popeye,2617109550,,Giagnoni,minorista,2025-11-21T16:06:41.887191+00:00,true,0,,
+6bb4d131-1351-4e92-a9a3-61d455f26ebd,Mabel cabeza,2634586919,,Barrio cipreses,minorista,2025-11-21T16:08:56.575376+00:00,true,0,,
+adbadad8-8e79-4d0c-b151-3e4ada2106e8,Agroquimicos Maual,2616126177,,,minorista,2025-11-22T12:21:37.956866+00:00,true,0,,
+067be49b-363a-477a-a61c-d715a96c150f,Oasis Marta Maza,2634665555,,Sarmiento y Agustín Álvarez,minorista,2025-11-25T12:47:51.783267+00:00,true,0,,
+8bfb6c37-51a8-4722-b0c9-71d034996428,Miguel Nieves,263 473-6535,,San isidro y Peron,minorista,2025-11-06T16:43:19.933523+00:00,true,2441588,Jueves,
+5f55e806-e771-4eb7-a838-9a454c5de692,Carina Aguero,2634636947,,Barrio Carrizales A-9,minorista,2025-11-26T17:04:18.467901+00:00,true,0,,Frente las vias
+3750be8c-a062-4e85-a477-8a2c535c9f14,Marisa salinas,2634614261,,Cipreses c-8,minorista,2025-11-18T15:49:59.453635+00:00,true,79500,,
+9e9255c7-d726-408f-99b3-8403ec1dded1,Maxi Coroa,2634537345,,barrio 9 de julio,minorista,2025-11-15T13:06:35.939455+00:00,true,306700,,
+3d0cf131-ce58-40c1-8c55-088d996d8777,Caba Yanela,2634887266,,salta y la rioja,mayorista,2025-11-17T23:46:16.910715+00:00,true,1117200,Martes,Frente escuela formosa
+344ac47e-632e-4feb-ba62-1908bb185507,Belen Martinez,2634754355,,Barrio soem c-12 Rivadavia ,minorista,2025-11-28T21:10:48.607531+00:00,true,0,,
+caf865b0-80af-42f6-9d96-8151dc8adb07,Ivana Rivas,2634250206,,falucho barrio coperativa,mayorista,2025-11-13T11:13:13.579867+00:00,true,569700,,
+f1064672-6710-4d24-8413-5bdcffda2bf4,Juan Videla ,2634886675,,Barrio cipreses ,minorista,2025-11-29T13:27:44.030788+00:00,true,89100,,
+6c92b27a-6059-4dcf-845e-afe644a49f90,Dani Ferreyra,2634612343,,Barrio los cipreses ,minorista,2025-12-01T13:29:36.7679+00:00,true,63000,,
+aee61262-567d-4bb9-8e5b-0f494afd050c,Benardinelli Elizabeth ,2634668888,,Agustín Álvarez 221,minorista,2025-11-29T13:25:11.053986+00:00,true,0,,
+0a2ca2fa-702a-46e1-ade2-2458944cb953,Claudio Barrio nuevo,2634627253,,San Isidro y anzorenas,minorista,2025-11-25T16:15:34.579558+00:00,true,651999.99,,Bon o bon
+3fc70208-bf57-4000-aabe-964be6a961dc,Gentile Nicolas,2634797127,,Agustin Alvares 33 Rivadavia,minorista,2025-11-28T13:45:51.639455+00:00,true,78000,,
+171acf95-81d7-4090-813f-80f5813cd08e,Silvia Dromi,2634355467,,Mitre y Lanin,minorista,2025-11-14T23:10:57.721256+00:00,true,1219100,,
+3ef96b10-2b6c-4bf2-93f5-c63e9e7a91d5,Emilce (Vecina),,,B° Los Cipreces,minorista,2025-11-18T23:49:55.88434+00:00,true,93500,,
+1357e080-71d0-4056-b906-784a0be67715,Ceferino Campamentos,2616262044,,Campamentos A-11,mayorista,2025-11-19T15:37:31.155599+00:00,true,66800,,
+29bf4449-01a6-478b-b4fb-bf88eeaff0f3,Sara Gonzales,2634538302,,Güemes,minorista,2025-11-20T14:42:45.503229+00:00,true,122700,,
+416cdaf0-a72e-4873-a58f-e51d87fb8cb0,Brenda Cappelloni,2634333696,,Barrio juan XXIII M-B C-5,minorista,2025-11-21T18:35:23.47547+00:00,true,10000,,Calle san Agustín 
+1afbc8b3-7fbf-409e-baf8-c669135db53c,Maxi villegas,2334355143,,Barrio los carrizales,minorista,2025-11-17T16:03:01.333309+00:00,true,349000,,
+566bade9-822b-4273-8a52-52c1563b735c,Eduardo sozzi,2634947462,,Sarmiento 72,minorista,2025-11-17T15:18:34.326084+00:00,true,540500,Lunes,corralón medrano
+ef219dd9-ed85-434b-bc9f-8386702b43c6,Yamila Arguello,2334743783,,Barrio father,minorista,2025-11-13T20:57:46.942678+00:00,true,82200,,
+a2006d64-3fd7-4fc9-a577-6be8bdc0ffdd,Sergio Gagliardi,2634215548,,fausto arena casi civit,minorista,2025-11-13T15:51:27.511724+00:00,true,453100,,
+f2d61015-db68-4aac-b95b-1651c28986c9,Ezequiel otoyanes,2634211700,,Otoyanes A-13,mayorista,2025-11-20T20:14:39.356648+00:00,true,64300,,
+4653e904-bd75-433f-8874-9ca60ab84d3a,Echegaray Ariel,2617048020,,Bermejo (Rafael obligado 80 gas),minorista,2025-12-01T14:48:46.629004+00:00,true,0,,porton marron
+8c07ecdb-afe7-4f53-be73-32792f80e564,Elvira Huertas,2634639584,,Aguado 1020,minorista,2025-12-02T14:35:02.373162+00:00,true,0,,palmrera
+040e5d13-e1b2-4d37-877d-9789fab82d94,Roberto Del Souc,2615043029,,Balcarce 680 rivadavia,minorista,2025-12-02T15:08:17.417361+00:00,true,0,,
+e415c7d6-cf64-4737-b6ed-57f247677d9e,Marcelo Martinez,2634405591,,Fasuto Arenas 360 ,mayorista,2025-12-03T13:57:31.097731+00:00,true,0,,verduleria
+d6c34fab-2b67-4ba8-8f1c-4e1c8e83a4fe,German Orzo,2635002162,,constitucion 69,minorista,2025-12-03T14:08:47.65658+00:00,true,0,,frente clinica del sol
+67914540-dd5d-4182-be20-913e23c122d7,Maria Trameur,2634596988,,La central,minorista,2025-12-03T16:15:13.158778+00:00,true,0,,
+203de9fd-5a88-425b-aa36-57b4b7b77f99,Marcelo Santilli,2634940953,,ruta 62 libertad,minorista,2025-12-10T13:29:31.559182+00:00,true,56500,,
+a3450ee1-efa7-4fac-b315-d160b8d252c0,Manzur Marcos ,2634353468,,Fausto arena y arana,mayorista,2025-12-09T17:34:18.662665+00:00,true,27200,,
+ecb7f4f8-ff7a-4bab-bbe8-3470129a31f7,Andrea Balles,2634951315,,Andrade,minorista,2025-12-09T12:41:37.776543+00:00,true,123700,,negocio rejas negras
+3e14f33a-caf7-4ddd-9ea5-0b829b4ce1f9,Ceferino Gomez (MEDRANO),2634212856,,Sarmiento 231,mayorista,2025-12-01T14:54:35.800052+00:00,true,100700,Lunes,
+02f4b8a7-bb2b-467b-91eb-6f351d205b0c,Marina Buhler Millan,2634512890,,Lasdislao segura 199,minorista,2025-12-09T13:44:47.341429+00:00,true,107999.99,,infrasalud
+50bc4ec0-d815-4865-b182-4377fd88abd0,GIANE NEGOCIO VIAS,2634946205,,SARMIENTO Y LEONOR FERREIRA,mayorista,2025-12-23T15:08:03.697576+00:00,true,74700,,
+a699cf3e-df0e-4db8-95e0-0608d39c16c5,Nelba Lopez,2634552244,,Carril florida sn,mayorista,2025-12-10T15:39:52.048101+00:00,true,0,,verduleria
+5779f8d6-8e22-4e51-9e23-14d7c202d9cb,Selene,2634646416,,Isaac estrella (mundo nuevo),minorista,2025-12-11T11:59:42.474339+00:00,true,0,,
+d4174c31-fb56-47d5-8282-3310c8b9bfdc,Antonio Ramero,,,,minorista,2026-01-12T22:51:31.373409+00:00,true,30100,,
+7108f60e-1004-4661-b3ca-07e0fbef23fc,Quinteros Mariana,2634777510,,Barrio cooperativa los arboles C-14,minorista,2025-12-22T13:03:40.916845+00:00,true,0,,Calle río bamba
+83f590c8-c401-4143-bc43-b063ee8c0769,Gargantini Nicolas ,2634543537,,Fausto Arenas 957,minorista,2025-12-11T21:11:12.97859+00:00,true,95900,,
+9c312d48-777c-4033-9823-0fd279dd913e,Barroso Jesica,2614169141,,Barrio Carrizales A-18,minorista,2025-12-13T14:22:03.3937+00:00,true,0,,
+6e49b7f2-b6ae-48c5-98d4-e6b52f52fec9,Cantos johana,2915722440,,Barrio carrascosa (Liniers 3705),mayorista,2025-12-15T18:38:16.739898+00:00,true,0,,
+674d5b19-ddca-408b-95a5-27f6ca915cc3,Aguilera Eliana,2634718700,,Liniers y Leonor Ferreyra,minorista,2025-12-09T16:07:47.112725+00:00,true,0,,
+bef3507a-cc9b-4006-97a1-6d26226866f5,onzales celeste,,,,minorista,2025-12-17T15:21:50.466044+00:00,true,0,,
+acfb1f87-b9c9-4fde-940f-0f6d8ede2b31,Gonzales Celeste,2634802775,,liniers 170 santa maria de oro,minorista,2025-12-17T15:22:44.474696+00:00,true,39000,,
+1fe9c395-0988-4098-935d-d5e4930fff46,Gomez Lautaro,2634517901,,Justo Estrada s/n ,mayorista,2025-12-17T14:43:36.604218+00:00,true,100000,,Colorado
+6756bb14-7132-43d9-9b15-43111a2b4e61,coradella jorge,2615006236,,la florida,minorista,2025-12-17T16:53:10.409472+00:00,true,20700,,corralon san jorge
+10ddc769-7c88-4980-83f0-f0fa9d26a0f8,Baigorria Felipe ,,,ruta 60,mayorista,2025-12-18T14:53:10.636749+00:00,true,0,,philips
+f629e0aa-59a0-4aae-a217-2dcc68909f44,Javier YPF Philips,2634395504,,ruta 60 sn,minorista,2025-12-18T15:23:58.303352+00:00,true,0,,
+6242cfd9-0c15-4a11-99dd-49963ae25f4d,Felici Mariano,2634632844,,Lavalle y cura Brochero,minorista,2025-12-18T15:57:56.465413+00:00,true,43900,,
+9a5ff552-6de3-48da-be8e-c22d2e26a531,Gustavo Santillan (popeye),2617109550,,Batalla de caseros s/n Giagnoni,minorista,2025-12-19T13:34:34.470669+00:00,true,0,,
+a8026d41-0014-4620-bb08-3fe274453e8d,Donadel Diego (ypf junin),2634382321,,Mitre YPF,minorista,2025-12-19T13:46:28.228052+00:00,true,0,,
+b9d3dcad-81c7-4110-9b7b-fe4f30f5fc03,Mariana Cabrillana,2634560970,,B° Molina Campos E-1,minorista,2026-01-02T22:52:06.881791+00:00,true,30800,,
+37469284-91d8-4721-9a15-f7a08061722b,Puertas Lito,2634637674,,Barrio Luzuriaga c-2,mayorista,2025-12-22T19:17:30.853421+00:00,true,0,,
+77fd5ae0-1976-4d10-91d0-62f9efb8aa41,Ceferino Antonio,2634752070,,Barrio nueve de julio esquina reconquista,minorista,2025-12-22T23:40:10.332626+00:00,true,0,,
+d52d56df-b622-4417-9b62-d77b0a40f3c7,Tincho Lorca,2634518469,,Barrio santo lugares B 19,minorista,2025-12-28T00:36:33.161726+00:00,true,0,,
+b39fbad9-cf21-480e-a2d5-7ab21c684139,López Inés ,2634957283,,La madrid y Olguin,minorista,2025-12-29T22:50:22.140177+00:00,true,0,,
+9ff34749-034b-4844-8c47-4a862fbc93b1,López Inés ,2634957283,,La Madrid y olguin,minorista,2025-12-29T22:51:37.448684+00:00,true,0,,
+6d48352d-9327-43a8-b39c-d8ec02ab1a60,López Inés ,2634957283,,La madrid esq olguin,minorista,2025-12-29T22:59:06.575064+00:00,true,0,,
+4562904e-0df5-4698-92ab-2175a147c5df,López Inés,2634957283,,La madrid y Olguin,minorista,2025-12-29T23:19:42.956562+00:00,true,0,,
+bc27c5fb-49d7-4ff1-a589-b2e7f56b68db,Test Prueba,2222222222,,,minorista,2025-12-30T19:51:12.203994+00:00,false,0,,
+3f9a61b6-5e0b-4661-8176-ce123ec9206d,Test Prueba,2222222222,,,minorista,2025-12-30T19:52:20.889731+00:00,false,0,,
+a86a1446-5014-4d97-9065-857addec0bdc,Lopez Inés,2634957283,,La Madrid y olguin,minorista,2025-12-30T13:53:29.623696+00:00,true,46000,,
+9330de56-3e49-4803-9557-ddfc354ff28c,Octavio Medina,,,Barrio los cipreses C-4,mayorista,2025-12-29T16:58:20.272559+00:00,true,26900,,
+e250fb0e-b1af-4e89-ad3f-bca3bf232f62,beba gonzalez,,,barrio florida,mayorista,2025-12-17T19:53:12.432405+00:00,true,0,,
+5a5fe1ca-ae4d-446b-8301-843a65d4d5c6,Andrea Jaunin,2634595104,,Barrio las acacias B-10,minorista,2025-12-05T22:06:53.44675+00:00,true,63000,,Calle independencia 
+75e36104-8a57-4435-a247-cbe0386d2c34,Sabrina chandia,2634379213,,Calle Misiones s/n goagnoni,mayorista,2025-12-19T16:14:53.36966+00:00,true,0,,frente escuela giagnoni
+31e1d435-3197-4e25-a5b4-906b21e1d3ab,Diana Tolava,2634589391,,La Madrid 1325,mayorista,2026-01-02T16:22:52.594225+00:00,true,0,,
+6a507edc-be3d-4a84-ba47-965a1cb28fa6,Dante Vecino,,,,minorista,2026-01-05T22:56:29.63315+00:00,true,42400,,
+4f0d2567-b92a-4015-b19b-99c6ce123dc9,Eduardo Tartas,,,,minorista,2026-01-06T23:26:42.173443+00:00,true,44900,,
+f90d7972-0529-49ff-b1f9-c96eb472d272,Devito Franco,2634306761,,San Martín casi chañar,minorista,2026-01-07T22:06:42.655789+00:00,true,0,,Frente a sanmartano (taller)
+8a2fec33-66c2-418e-8368-2f33bf91723b,Arancibia Belen,2635015475,,Sarmiento 432,minorista,2026-01-08T14:52:47.391307+00:00,true,0,,pegado casa de repuestos
+4dfd891e-750b-4c47-950c-cbf480fa23e8,Liliana Mansoulet,2634211191,,San Isidro 653,minorista,2026-01-08T20:24:59.82347+00:00,true,0,,Pegado a kaba
+dd8785a2-ed8d-45a6-8296-d17676513032,Ladaga carlos,2634628190,,Barrio los cipreses c-7,minorista,2026-01-09T21:46:33.36624+00:00,true,0,,
+bc0d9694-2dc1-436e-a68f-e80bdb7a8677,Carli Ladaga,2634628190,,Barrio cipreses C-7,minorista,2026-01-09T21:47:23.451967+00:00,true,0,,
+e41dc2ed-37d1-4cfe-84a6-19fef113e221,Ibáñez pablo,2634414600,, Sarmiento 975,minorista,2025-12-15T22:34:24.927274+00:00,true,201900,,
+6482f029-b7ac-49ae-8786-669e77a0ff7d,Cesar Morales,2634310893,,Colon 127,mayorista,2025-12-13T00:12:37.435005+00:00,true,199300,,
+cf5eff61-c996-49c3-8236-b86444938793,Jorge Russo,,,,minorista,2026-01-13T14:27:08.385784+00:00,true,0,,
+fc186222-6a6c-42e9-be37-9bfa51451c9b,Leo Fredes,,,,minorista,2025-12-06T23:58:17.244476+00:00,true,70600,,
+fca710d8-bad2-4094-9f2e-0934d25866b9,palazzo,,,,minorista,2025-12-12T14:57:13.330076+00:00,true,49800,,
+aff13aac-1e07-4cc6-a881-a2c43fd33226,Panella Enrique,2634321129,,Lago paimun y Ameghino ,minorista,2025-12-12T15:54:16.041815+00:00,true,28400,,
+04c44540-164f-4e84-a6b8-1664dd450104,Lucas Vanella,2613375911,,Avellaneda ,minorista,2025-12-16T22:57:01.845866+00:00,true,59000,,
+59d12069-363a-44e4-b331-565d2eebac12,Di Bernardo Ariel,2334871682,,San Isidro 927,minorista,2025-12-01T22:29:24.787354+00:00,true,708800,,Frente ypf
+69341fe6-21fa-4263-9600-993d13f66eed,VARGAS VERONICA,2634409652,,M gOMEZ 924,minorista,2026-01-10T14:02:02.578507+00:00,true,43000,,
+7a3e8f78-c810-49a2-ba29-c5c6ec1e517d,Noelia Escalante ,2634309547,,Union y Galigniana - Los campamentos,minorista,2026-01-13T14:34:19.778197+00:00,true,0,Miércoles,
+a6d29c7f-a139-4e04-9e25-70e5ec161af1,Familia Narvaez ,2634271853,,Reconquista 961,minorista,2026-01-13T15:33:01.219307+00:00,true,0,,
+1a1968eb-f1af-4915-b96d-7ac309f012f5,Susi Mercadito,2634284628,,Mutual Cuyo C-13,minorista,2026-01-13T20:10:58.258809+00:00,true,0,,Calle Guemes frente taller Burgoa
+5e9768fb-7930-42b7-af9e-48ce588ecd8e,Mabel Lioy,2634579737,,Cabrera s/n Mundo Nuevo,minorista,2025-11-13T13:16:37.84626+00:00,true,0,,"A 500mts de belgrano, pasando las canchas del Pere a mano izquierda"
+346653bc-cfb0-4500-bb5e-329dd0800dea,Rocio Navarro,2634378885,,Calle Ortega ,minorista,2026-01-21T20:17:25.395391+00:00,true,0,,
+26e7ee8a-af36-49ae-b577-c8961d24bfdc,Beronica Alfaro,2634352518,,carril santo lugares pasando carril centro,minorista,2026-01-22T15:36:13.233966+00:00,true,0,,frente corralon los turquitos
+1dcf73dd-47cf-47b7-95b3-de9cc031b452,Aldo Gentile ,,,,minorista,2026-01-24T22:44:28.837018+00:00,true,39400,,
+79723149-6879-4e31-9c37-852666954a01,Subea Nora,2634271603,,andrade pasando baden,minorista,2026-01-26T14:49:52.477948+00:00,true,40200,,
+a7fa2783-dedb-42a5-a596-319658bed6ee,matias rodriguez,,,aconcagua 627,minorista,2026-01-29T20:23:38.484382+00:00,true,0,,
+1ed160c3-ec49-4d2c-a368-2b960d9860ae,Nicolas Gargantini,2634543537,,Fausto Arenas 957,minorista,2026-01-31T21:06:47.940976+00:00,true,0,,
+b0c2fe21-ed76-4706-b257-5b6492f0b483,Marcelo Gonzalez (Los Carrizales),,,Felix Yoben (kiosco),minorista,2026-02-05T22:18:38.42177+00:00,true,0,,
+95a34cba-8881-49a1-abaf-742d62b4337e,Allende Monica,2634251237,,Barrio 9 de Julio H-10,minorista,2026-02-06T14:37:30.212283+00:00,true,0,,
+61baee5a-09be-4c16-9c4f-0d6e7d2a8a58,Erica Farfan,2634386037,,Ruta 62 Frente al centro de salud,minorista,2026-02-07T23:31:26.192725+00:00,true,0,,La libertad
+c8628bd8-c3ab-4eaf-a6b5-c0cca3b06e98,Quiroga Maxi,2634942649,,Irigoyen 69 (Medrano),mayorista,2026-02-09T17:46:37.505184+00:00,true,0,,
+72f8f967-e75c-4b79-9bd6-3bb789e5c3aa,Mariela Moreno Farmacia,2634614037,,Lamadrid y Alem,minorista,2026-02-09T21:27:05.177753+00:00,true,138300,,
+dbfac9ce-0d0d-4026-8710-10b0963b2cc0,Carla Robledo,2634789418,,Matilde Ferrari y Buenos Vecinos,minorista,2026-01-14T12:33:51.466848+00:00,true,32500,Jueves,
+e83e4860-e4bd-4730-8f7e-1dffca273879,Mariana Peralta,2634278380,,Aguado1136,mayorista,2026-02-11T23:52:37.383628+00:00,true,0,,Todo suelto
+7eeafdee-f546-458c-b311-83a72b68b156,Eduardo Consoli (tartas),2634770758,,perito moreno 268,minorista,2026-02-12T12:22:32.578085+00:00,true,44900,,
+302faf30-8364-4cfd-9e41-200eb2a3c852,Layla Sanchez,,,Felix Yoben y Mario Vitale,minorista,2026-02-11T23:52:51.731731+00:00,true,19000,,
+e0f8c2fb-6b61-4dc4-9bd5-9e431d70a027,Norma -Gino Maturano ,2634663391,,Ushuaia 262,minorista,2026-02-13T13:31:13.902637+00:00,true,0,,
+ca1f5047-edd1-4d6e-b231-bd530a3717da,Roberto Carchano,2635007363-2634271676,,Juan B Justo ,minorista,2026-02-13T12:48:39.616117+00:00,true,146900,,
+23529b35-b068-4b96-971c-304344e93c92,Pali Panella ,2634797383,,Lago Paimun 472,minorista,2025-12-01T13:25:52.89667+00:00,true,101399.99,,

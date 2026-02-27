@@ -91,7 +91,7 @@ export function SearchBar({ products, onProductSelect, autoFocus = true }: Searc
                     onKeyDown={handleKeyDown}
                     onFocus={() => query && setShowResults(true)}
                     placeholder="🔍 Buscar por nombre, código o escanear..."
-                    className="h-14 pl-12 pr-12 text-lg rounded-xl border-2 focus:border-primary"
+                    className="h-11 md:h-14 pl-11 md:pl-12 pr-11 md:pr-12 text-base md:text-lg rounded-xl border-2 focus:border-primary"
                 />
                 <Barcode className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             </div>

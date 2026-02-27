@@ -1,0 +1,42 @@
+[
+  {
+    "id": "98fa451a-f292-4504-8421-d8987594f256",
+    "full_name": "Facundo Silveri",
+    "username": "Facundo",
+    "email": "facu123@gmail.com",
+    "role": "administrador",
+    "is_active": true
+  },
+  {
+    "id": "5bccfa48-e037-42d5-8dcf-7cfd6444aa1d",
+    "full_name": "Santino Silveri",
+    "username": "Santino",
+    "email": "santi123@gmail.com",
+    "role": "repartidor",
+    "is_active": true
+  },
+  {
+    "id": "d5f0677b-fc32-4d2d-bbd7-adb53ab0c03f",
+    "full_name": "Facundo Silveri",
+    "username": "FacundoReparto",
+    "email": "Facu1234@gmail.com",
+    "role": "repartidor",
+    "is_active": true
+  },
+  {
+    "id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "full_name": "Ivana",
+    "username": "Ivana",
+    "email": "ivana@gmail.com",
+    "role": "administrador",
+    "is_active": true
+  },
+  {
+    "id": "083ac116-0b50-4bfe-9019-fd12826c6073",
+    "full_name": "Octavio Medina",
+    "username": null,
+    "email": "octamedina239@gmail.com",
+    "role": "vendedor",
+    "is_active": true
+  }
+]

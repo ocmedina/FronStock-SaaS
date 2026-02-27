@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useDraggable } from "@dnd-kit/core";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { getOrderStatus } from "@/lib/orders/filters";
 
 interface DraggableOrderCardProps {
     order: any;
@@ -32,6 +33,7 @@ interface DraggableOrderCardProps {
     onViewDetails: (id: string) => void;
     onCreateInvoice: (order: any) => void;
     onDeliverOrder: (order: any) => void;
+    onAssignToRoute: (order: any) => void;
     getServiceTypeBadge: (type: string) => React.ReactElement;
     getUrgencyBadge: (createdAt: string, status: string) => React.ReactElement | null;
 }
@@ -42,6 +44,7 @@ export function DraggableOrderCard({
     onViewDetails,
     onCreateInvoice,
     onDeliverOrder,
+    onAssignToRoute,
     getServiceTypeBadge,
     getUrgencyBadge,
 }: DraggableOrderCardProps) {
@@ -120,12 +123,14 @@ export function DraggableOrderCard({
                             <Eye className="h-3 w-3 mr-2" />
                             Ver detalles
                         </DropdownMenuItem>
-                        <Link href={`/dashboard/orders/edit/${order.id}`}>
-                            <DropdownMenuItem className="cursor-pointer">
-                                <Edit className="h-3 w-3 mr-2" />
-                                Editar
-                            </DropdownMenuItem>
-                        </Link>
+                        {!order.is_offline_pending && (
+                            <Link href={`/dashboard/orders/edit/${order.id}`}>
+                                <DropdownMenuItem className="cursor-pointer">
+                                    <Edit className="h-3 w-3 mr-2" />
+                                    Editar
+                                </DropdownMenuItem>
+                            </Link>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={(e) => {
@@ -137,6 +142,18 @@ export function DraggableOrderCard({
                             <FileText className="h-3 w-3 mr-2" />
                             Crear factura
                         </DropdownMenuItem>
+                        {!order.is_offline_pending && !["delivered", "cancelled", "not_delivered"].includes(getOrderStatus(order)) && (
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAssignToRoute(order);
+                                }}
+                                className="text-indigo-600 dark:text-indigo-400 cursor-pointer"
+                            >
+                                <MapPin className="h-3 w-3 mr-2" />
+                                Asignar a ruta
+                            </DropdownMenuItem>
+                        )}
                         {column.id !== "delivered" && (
                             <DropdownMenuItem
                                 onClick={(e) => {
@@ -155,7 +172,12 @@ export function DraggableOrderCard({
 
             <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                 {getServiceTypeBadge(order.service_type)}
-                {getUrgencyBadge(order.created_at, order.delivery_status)}
+                {order.is_offline_pending && (
+                    <Badge variant="secondary" className="text-[10px]">
+                        Pendiente offline
+                    </Badge>
+                )}
+                {getUrgencyBadge(order.created_at, getOrderStatus(order))}
             </div>
 
             {order.customer?.address && (

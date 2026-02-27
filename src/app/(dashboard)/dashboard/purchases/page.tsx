@@ -44,6 +44,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Supplier {
   id: string;
@@ -159,6 +160,11 @@ export default function PurchaseOrdersPage() {
   }, [organizationId, fetchData]);
 
   const handleOpenNew = () => {
+    if (!canCreate("purchases")) {
+      toast.error("No tienes permisos para crear órdenes de compra");
+      return;
+    }
+
     setSelectedOrder(null);
     setFormData({ supplier_id: suppliers[0]?.id || "", notes: "" });
     setItems([]);
@@ -217,40 +223,32 @@ export default function PurchaseOrdersPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canCreate("purchases")) {
+      toast.error("No tienes permisos para crear órdenes de compra");
+      return;
+    }
+
     if (!organizationId || items.length === 0) return;
 
     setSaving(true);
 
-    // Create order
-    const { data: order, error } = await supabase
-      .from("purchase_orders")
-      .insert({
-        organization_id: organizationId,
-        supplier_id: formData.supplier_id,
-        order_number: `OC-${Date.now().toString().slice(-6)}`,
-        status: "pending",
-        total: calculateTotal(),
-      })
-      .select()
-      .single();
+    const { createPurchaseOrder } = await import('@/actions/purchases');
+    const result = await createPurchaseOrder({
+      supplierId: formData.supplier_id,
+      items: items.map((item) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        unit_cost: item.unit_cost,
+      })),
+    });
 
-    if (error || !order) {
-      console.error("Error creating order:", error);
+    if (result.error) {
+      toast.error(result.error);
       setSaving(false);
       return;
     }
-
-    // Create items
-    const orderItemsData = items.map((item) => ({
-      purchase_order_id: order.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      quantity: item.quantity,
-      unit_cost: item.unit_cost,
-      total: item.quantity * item.unit_cost,
-    }));
-
-    await supabase.from("purchase_order_items").insert(orderItemsData);
 
     setSaving(false);
     setShowModal(false);
@@ -266,6 +264,11 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleOpenReceiveModal = (order: PurchaseOrder) => {
+    if (!canEdit("purchases")) {
+      toast.error("No tienes permisos para recibir órdenes de compra");
+      return;
+    }
+
     setSelectedOrder(order);
     setShowModal(false);
     setShowReceiveModal(true);
@@ -314,7 +317,7 @@ export default function PurchaseOrdersPage() {
             Gestiona las compras a proveedores
           </p>
         </div>
-        {canCreate("products") && suppliers.length > 0 && (
+        {canCreate("purchases") && suppliers.length > 0 && (
           <Button
             onClick={handleOpenNew}
             className="shadow-lg shadow-primary/20"
@@ -753,7 +756,7 @@ export default function PurchaseOrdersPage() {
               >
                 Cerrar
               </Button>
-              {(selectedOrder?.status === "pending" || selectedOrder?.status === "ordered") && canEdit("products") && (
+              {(selectedOrder?.status === "pending" || selectedOrder?.status === "ordered") && canEdit("purchases") && (
                 <Button
                   onClick={() =>
                     selectedOrder && handleOpenReceiveModal(selectedOrder)

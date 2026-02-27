@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
     // A simple mistake could make it very hard to debug session issues.
 
     let user = null;
-    let authErrorType: 'none' | 'network' | 'invalid_token' | 'unknown' = 'none';
+    let authErrorType: 'none' | 'network' | 'invalid_token' | 'no_session' | 'unknown' = 'none';
 
     const isInvalidRefreshTokenError = (error: any) => {
         const message = (error?.message || '').toString();
@@ -59,6 +59,14 @@ export async function updateSession(request: NextRequest) {
         );
     };
 
+    const isMissingSessionError = (error: any) => {
+        const message = (error?.message || '').toString();
+        return (
+            error?.name === 'AuthSessionMissingError' ||
+            message.includes('Auth session missing')
+        );
+    };
+
     try {
         const { data, error } = await supabase.auth.getUser();
         if (error) {
@@ -71,6 +79,8 @@ export async function updateSession(request: NextRequest) {
                         supabaseResponse.cookies.delete(cookie.name);
                     }
                 });
+            } else if (isMissingSessionError(error)) {
+                authErrorType = 'no_session';
             } else if (isNetworkAuthError(error)) {
                 authErrorType = 'network';
                 console.warn('Network auth error in middleware, preserving session cookies');

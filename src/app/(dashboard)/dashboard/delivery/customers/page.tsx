@@ -68,6 +68,7 @@ export default function CustomersPage() {
       .from("customers")
       .select("*")
       .eq("organization_id", organizationId)
+      .in("service_type", ["delivery", "both"])
       .order("name");
 
     if (error) {
@@ -117,12 +118,18 @@ export default function CustomersPage() {
   }, [searchTerm, filterType, filterDebt, customers]);
 
   const handleDelete = async (id: string) => {
+    if (!canDelete("delivery")) {
+      toast.error("No tienes permisos para eliminar clientes");
+      return;
+    }
+
     if (!confirm("¿Eliminar este cliente?")) return;
 
-    const { error } = await supabase.from("customers").delete().eq("id", id);
+    const { deleteDeliveryCustomer } = await import("@/actions/delivery");
+    const result = await deleteDeliveryCustomer(id);
 
-    if (error) {
-      toast.error("Error al eliminar: " + error.message);
+    if (result.error) {
+      toast.error("Error al eliminar: " + result.error);
     } else {
       toast.success("Cliente eliminado");
       fetchCustomers();
@@ -147,7 +154,7 @@ export default function CustomersPage() {
             Gestión de clientes comerciales y consumidores finales
           </p>
         </div>
-        {canCreate("sales") && (
+        {canCreate("delivery") && (
           <Button
             onClick={() => {
               setSelectedCustomer(null);
@@ -351,7 +358,7 @@ export default function CustomersPage() {
 
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {canEdit("sales") && (
+                      {canEdit("delivery") && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -363,7 +370,7 @@ export default function CustomersPage() {
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
-                      {canDelete("sales") && (
+                      {canDelete("delivery") && (
                         <Button
                           variant="ghost"
                           size="icon"

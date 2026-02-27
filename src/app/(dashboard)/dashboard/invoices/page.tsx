@@ -156,8 +156,7 @@ export default function InvoicesPage() {
         );
     }
 
-    // Reuse "sales" permission pending a specific "invoices" permission
-    if (!canView("sales")) {
+    if (!canView("invoices")) {
         return <AccessDenied />;
     }
 
@@ -187,11 +186,11 @@ export default function InvoicesPage() {
                                 if (window.prompt("Escribe 'BORRAR' para confirmar") !== "BORRAR") return;
 
                                 setLoading(true);
-                                const { error } = await supabase
-                                    .rpc('reset_invoices', { p_organization_id: organizationId });
+                                const { resetInvoices } = await import('@/actions/invoices');
+                                const result = await resetInvoices();
 
-                                if (error) {
-                                    alert("Error al borrar facturas: " + error.message);
+                                if (result.error) {
+                                    alert("Error al borrar facturas: " + result.error);
                                 } else {
                                     alert("✅ Facturas borradas correctamente. La numeración se ha reiniciado.");
                                     fetchInvoices();
@@ -203,7 +202,7 @@ export default function InvoicesPage() {
                         <Trash2 className="h-4 w-4 mr-2" />
                         Resetear Facturación
                     </Button>
-                    {canCreate("sales") && (
+                    {canCreate("invoices") && (
                         <Button
                             onClick={() => setShowCreateModal(true)}
                             className="shadow-lg shadow-blue-500/20"

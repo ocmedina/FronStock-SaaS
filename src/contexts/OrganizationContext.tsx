@@ -77,16 +77,20 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
             setError(null);
 
-            // 1. Obtener usuario autenticado (USAR getSession)
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            // 1. Obtener usuario autenticado (getUser es más estable que getSession en cliente)
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            let user = userData?.user ?? null;
 
-            if (sessionError || !session?.user) {
-                console.log('No active session found');
+            if (userError || !user) {
+                const { data: { session } } = await supabase.auth.getSession();
+                user = session?.user ?? null;
+            }
+
+            if (!user) {
+                console.log('No active user found');
                 setIsLoading(false);
                 return;
             }
-
-            const user = session.user;
             
             // Local variables to track cache availability in this execution
 
@@ -111,8 +115,8 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
                             setPermissions(JSON.parse(cachedPermsStr));
                         }
                     }
-                    // Si tenemos datos en caché, quitamos loading para mostrar la UI
-                    setIsLoading(false);
+                    // Mantenemos loading hasta finalizar el fetch de red para evitar
+                    // decisiones de permisos con datos parciales de caché.
                 }
             } catch (e) {
                 console.warn('Error reading local cache:', e);
@@ -183,12 +187,15 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
             }
 
             // 5. Cargar permisos personalizados
-            const { data: permsData } = await supabase
+            const { data: permsData, error: permsError } = await supabase
                 .from('organization_permissions')
                 .select('role, module, can_view, can_create, can_edit, can_delete')
                 .eq('organization_id', profileData.organization_id);
 
-            if (permsData) {
+            if (permsError) {
+                console.warn('Could not fetch organization permissions, using role defaults fallback:', permsError.message);
+                setPermissions([]);
+            } else if (permsData) {
                 setPermissions(permsData);
                 localStorage.setItem(`perms_${profileData.organization_id}`, JSON.stringify(permsData));
             }

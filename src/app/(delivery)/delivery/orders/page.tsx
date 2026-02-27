@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Loader2,
     Package,
@@ -21,10 +28,17 @@ import { es } from "date-fns/locale";
 
 export default function DeliveryOrdersPage() {
     const { profile, organizationId } = useOrganization();
+    const searchParams = useSearchParams();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState<any[]>([]);
     const [activeRoute, setActiveRoute] = useState<any>(null);
+    const [deliveryOrder, setDeliveryOrder] = useState<any | null>(null);
+    const [paymentAmount, setPaymentAmount] = useState<string>("");
+    const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+    const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+    const [submittingDelivery, setSubmittingDelivery] = useState(false);
+    const targetOrderId = searchParams.get("orderId");
 
     useEffect(() => {
         if (profile?.id && organizationId) {
@@ -88,9 +102,14 @@ export default function DeliveryOrdersPage() {
                         unit_price,
                         total
                     ),
-                    route_stops(stop_order)
+                    order_payments(
+                        id,
+                        amount,
+                        payment_method
+                    ),
+                    route_stops(id, stop_order, visit_status)
                 `)
-                .eq("route_id", routeData.id)
+                .eq("assigned_route_id", routeData.id)
                 .order("created_at", { ascending: true });
 
             if (ordersError) throw ordersError;
@@ -104,33 +123,141 @@ export default function DeliveryOrdersPage() {
         }
     };
 
-    const handleMarkDelivered = async (orderId: string) => {
+    const openDeliverDialog = (order: any) => {
+        setDeliveryOrder(order);
+        setPaymentAmount(String(Number(order.total || 0)));
+        setPaymentMethod(order.payment_method || "cash");
+        setDeliveryConfirmed(false);
+    };
+
+    const closeDeliverDialog = () => {
+        if (submittingDelivery) return;
+        setDeliveryOrder(null);
+        setPaymentAmount("");
+        setPaymentMethod("cash");
+        setDeliveryConfirmed(false);
+    };
+
+    const getPaymentMethodLabel = (method?: string) => {
+        if (!method) return "Sin definir";
+
+        const normalized = method.toLowerCase();
+        const labels: Record<string, string> = {
+            cash: "Efectivo",
+            transfer: "Transferencia",
+            card: "Tarjeta",
+            mixed: "Mixto",
+            fiado: "Fiado",
+            credit: "Cuenta Corriente",
+            current_account: "Cuenta Corriente",
+            cuenta_corriente: "Cuenta Corriente",
+        };
+
+        return labels[normalized] || method;
+    };
+
+    const handleMarkDelivered = async () => {
+        if (!deliveryOrder) return;
+
+        const amount = Number(paymentAmount || 0);
+        const totalAmount = Number(deliveryOrder.total || 0);
+        const normalizedMethod = String(paymentMethod || "").toLowerCase();
+        const allowsPendingBalance = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(normalizedMethod);
+        const pendingAmount = Math.max(0, totalAmount - amount);
+        const paymentAuditNote = `Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}; Total=${totalAmount}; Saldo=${pendingAmount}`;
+
+        if (Number.isNaN(amount) || amount < 0) {
+            toast.error("Monto inválido");
+            return;
+        }
+
+        if (!allowsPendingBalance && amount < totalAmount) {
+            toast.error("Para este método debes cobrar el total del pedido");
+            return;
+        }
+
+        if (!deliveryConfirmed) {
+            toast.error("Confirma la entrega antes de continuar");
+            return;
+        }
+
+        setSubmittingDelivery(true);
         try {
-            const { error } = await supabase
+            const { error: methodError } = await supabase
                 .from("orders")
-                .update({ delivery_status: "delivered" })
-                .eq("id", orderId);
+                .update({ payment_method: paymentMethod })
+                .eq("id", deliveryOrder.id)
+                .eq("organization_id", organizationId);
+
+            if (methodError) throw methodError;
+
+            if (amount > 0) {
+                const { data: paymentData, error: paymentError } = await supabase.rpc("register_order_payment", {
+                    p_org_id: organizationId,
+                    p_order_id: deliveryOrder.id,
+                    p_method: paymentMethod,
+                    p_amount: amount,
+                    p_reference: null,
+                    p_notes: `Cobro registrado al entregar. ${paymentAuditNote}`,
+                });
+
+                if (paymentError) throw paymentError;
+                if (paymentData?.success === false) throw new Error(paymentData?.error || "No se pudo registrar el cobro");
+            }
+
+            const { data, error } = await supabase.rpc("set_order_status", {
+                p_org_id: organizationId,
+                p_order_id: deliveryOrder.id,
+                p_new_status: "delivered",
+                p_notes: `Entregado por repartidor. ${paymentAuditNote}`,
+            });
 
             if (error) throw error;
-            toast.success("Pedido marcado como entregado");
+            if (data?.success === false) throw new Error(data?.error || "No se pudo marcar como entregado");
+
+            await supabase
+                .from("route_stops")
+                .update({
+                    visit_status: "visited",
+                    visited_at: new Date().toISOString(),
+                    visit_notes: `Entrega registrada. Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}`,
+                })
+                .eq("order_id", deliveryOrder.id)
+                .eq("route_id", activeRoute?.id);
+
+            toast.success(amount > 0 ? "Pedido entregado y cobro registrado" : "Pedido marcado como entregado");
+            closeDeliverDialog();
             fetchMyOrders();
         } catch (error: any) {
             console.error("Error:", error);
             toast.error("Error al actualizar pedido");
+        } finally {
+            setSubmittingDelivery(false);
         }
     };
 
     const handleMarkNotHome = async (orderId: string) => {
         try {
-            const { error } = await supabase
-                .from("orders")
-                .update({ 
-                    delivery_status: "cancelled",
-                    delivery_notes: "Cliente no estaba en casa"
-                })
-                .eq("id", orderId);
+            const { data, error } = await supabase.rpc("mark_order_incident", {
+                p_org_id: organizationId,
+                p_order_id: orderId,
+                p_incident: "not_home",
+                p_notes: "Cliente no estaba en casa",
+            });
 
             if (error) throw error;
+            if (data?.success === false) throw new Error(data?.error || "No se pudo registrar incidencia");
+
+            await supabase
+                .from("route_stops")
+                .update({
+                    visit_status: "not_home",
+                    visited_at: new Date().toISOString(),
+                    visit_notes: "Cliente no estaba en casa",
+                })
+                .eq("order_id", orderId)
+                .eq("route_id", activeRoute?.id);
+
             toast.success("Marcado como no disponible");
             fetchMyOrders();
         } catch (error: any) {
@@ -141,6 +268,10 @@ export default function DeliveryOrdersPage() {
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
+            assigned: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+            in_delivery: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+            not_delivered: "bg-red-500/10 text-red-400 border-red-500/20",
+            rescheduled: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
             assigned_to_route: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
             out_for_delivery: "bg-purple-500/10 text-purple-400 border-purple-500/20",
             delivered: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -148,6 +279,10 @@ export default function DeliveryOrdersPage() {
         };
         
         const labels: Record<string, string> = {
+            assigned: "Asignado",
+            in_delivery: "En Camino",
+            not_delivered: "No Entregado",
+            rescheduled: "Reprogramado",
             assigned_to_route: "Asignado",
             out_for_delivery: "En Camino",
             delivered: "Entregado",
@@ -159,6 +294,21 @@ export default function DeliveryOrdersPage() {
                 {labels[status] || status}
             </Badge>
         );
+    };
+
+    const getOrderPaymentSummary = (order: any) => {
+        const payments = Array.isArray(order?.order_payments) ? order.order_payments : [];
+        const methods: string[] = Array.from(
+            new Set(
+                payments
+                    .map((p: any) => String(p.payment_method || "").toLowerCase())
+                    .filter(Boolean)
+            )
+        );
+
+        if (methods.length > 1) return "Mixto";
+        if (methods.length === 1) return getPaymentMethodLabel(methods[0]);
+        return getPaymentMethodLabel(order?.payment_method);
     };
 
     if (loading) {
@@ -187,8 +337,20 @@ export default function DeliveryOrdersPage() {
         );
     }
 
-    const pendingOrders = orders.filter(o => o.delivery_status !== 'delivered' && o.delivery_status !== 'cancelled');
-    const completedOrders = orders.filter(o => o.delivery_status === 'delivered');
+    const getCurrentStatus = (order: any) => order.lifecycle_status || order.delivery_status || "pending";
+    const pendingOrders = orders.filter((o) => !["delivered", "cancelled", "not_delivered"].includes(getCurrentStatus(o)));
+    const completedOrders = orders.filter((o) => getCurrentStatus(o) === "delivered");
+    const recentCompleted = completedOrders
+        .slice()
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 8);
+
+    const deliveryTotalAmount = Number(deliveryOrder?.total || 0);
+    const currentPaymentAmount = Number(paymentAmount || 0);
+    const currentMethod = String(paymentMethod || "").toLowerCase();
+    const currentMethodAllowsPending = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(currentMethod);
+    const pendingAmount = Math.max(0, deliveryTotalAmount - currentPaymentAmount);
+    const fullPaymentRequiredAndMissing = !currentMethodAllowsPending && currentPaymentAmount < deliveryTotalAmount;
 
     return (
         <div className="min-h-screen bg-slate-950 pb-20">
@@ -197,7 +359,7 @@ export default function DeliveryOrdersPage() {
                 <div className="max-w-2xl mx-auto">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-bold text-white">Mis Pedidos</h1>
+                            <h1 className="text-xl font-bold text-white">Operación de Entrega</h1>
                             <p className="text-sm text-slate-400">{activeRoute.name}</p>
                         </div>
                         <div className="text-right">
@@ -226,6 +388,11 @@ export default function DeliveryOrdersPage() {
 
             {/* Orders List */}
             <div className="max-w-2xl mx-auto p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Pendientes por entregar</h2>
+                    <span className="text-xs text-slate-400">{pendingOrders.length} pedidos</span>
+                </div>
+
                 {pendingOrders.length === 0 ? (
                     <Card className="p-12 text-center bg-slate-900 border-slate-800">
                         <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-emerald-500" />
@@ -259,8 +426,14 @@ export default function DeliveryOrdersPage() {
                                         )}
                                     </div>
                                 </div>
-                                {getStatusBadge(order.delivery_status)}
+                                {getStatusBadge(getCurrentStatus(order))}
                             </div>
+
+                            {targetOrderId === order.id && (
+                                <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs text-emerald-300">
+                                    Pedido seleccionado desde la ruta
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-2 mb-3 text-sm">
                                 <Package className="h-4 w-4 text-slate-400" />
@@ -273,7 +446,7 @@ export default function DeliveryOrdersPage() {
                                 </span>
                             </div>
 
-                            {order.delivery_status !== 'delivered' && order.delivery_status !== 'cancelled' && (
+                            {!["delivered", "cancelled", "not_delivered"].includes(getCurrentStatus(order)) && (
                                 <div className="flex gap-2 pt-3 border-t border-slate-800">
                                     <Button
                                         size="sm"
@@ -287,17 +460,141 @@ export default function DeliveryOrdersPage() {
                                     <Button
                                         size="sm"
                                         className="flex-1 bg-emerald-600 hover:bg-emerald-500"
-                                        onClick={() => handleMarkDelivered(order.id)}
+                                        onClick={() => openDeliverDialog(order)}
                                     >
                                         <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                                        Entregar
+                                        Entregar + Cobrar
                                     </Button>
                                 </div>
                             )}
                         </Card>
                     ))
                 )}
+
+                <div className="pt-2 border-t border-slate-800" />
+
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Entregas realizadas</h2>
+                    <Link href="/delivery/history">
+                        <Button variant="ghost" size="sm" className="h-7 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10">
+                            Ver historial
+                        </Button>
+                    </Link>
+                </div>
+
+                {recentCompleted.length === 0 ? (
+                    <Card className="p-5 bg-slate-900 border-slate-800">
+                        <p className="text-sm text-slate-400 text-center">Aún no hay entregas realizadas en esta ruta.</p>
+                    </Card>
+                ) : (
+                    <div className="space-y-2">
+                        {recentCompleted.map((order) => (
+                            <Card key={`done-${order.id}`} className="p-3 bg-slate-900/70 border-slate-800">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-white truncate">{order.customer?.name || "Cliente sin nombre"}</p>
+                                        <p className="text-xs text-slate-500">
+                                            Entregado {format(new Date(order.created_at), "dd MMM, HH:mm", { locale: es })}
+                                        </p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="font-mono text-sm font-semibold text-emerald-400">${order.total.toLocaleString()}</p>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">Entregado</Badge>
+                                            <Badge variant="outline" className="border-slate-700 text-slate-300 text-[10px]">
+                                                {getOrderPaymentSummary(order)}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
             </div>
+
+            <Dialog open={!!deliveryOrder} onOpenChange={(open) => !open && closeDeliverDialog()}>
+                <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Confirmar entrega y cobro</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                            <p className="text-sm text-slate-300 font-medium">{deliveryOrder?.customer?.name || "Cliente"}</p>
+                            <p className="text-xs text-slate-500">Total pedido: ${Number(deliveryOrder?.total || 0).toLocaleString()}</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="payment-amount" className="text-slate-300">Monto cobrado</Label>
+                            <Input
+                                id="payment-amount"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={paymentAmount}
+                                onChange={(e) => setPaymentAmount(e.target.value)}
+                                className="bg-slate-950 border-slate-700"
+                            />
+                            <p className="text-xs text-slate-500">
+                                {currentMethodAllowsPending
+                                    ? "Fiado/Cuenta Corriente: puedes dejar saldo pendiente."
+                                    : "Este método requiere cobrar el total del pedido."}
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-slate-300">Método elegido por cliente</Label>
+                            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                <SelectTrigger className="bg-slate-950 border-slate-700">
+                                    <SelectValue placeholder="Seleccionar método" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cash">Efectivo</SelectItem>
+                                    <SelectItem value="transfer">Transferencia</SelectItem>
+                                    <SelectItem value="card">Tarjeta</SelectItem>
+                                    <SelectItem value="mixed">Mixto</SelectItem>
+                                    <SelectItem value="fiado">Fiado</SelectItem>
+                                    <SelectItem value="credit">Cuenta Corriente</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
+                            <p className="text-slate-200">Método: <span className="font-semibold text-emerald-300">{getPaymentMethodLabel(paymentMethod)}</span></p>
+                            <p className="text-slate-200">Cobro: <span className="font-semibold text-emerald-300">${Number(paymentAmount || 0).toLocaleString()}</span></p>
+                            <p className="text-slate-200">Saldo: <span className="font-semibold text-emerald-300">${pendingAmount.toLocaleString()}</span></p>
+                        </div>
+
+                        {fullPaymentRequiredAndMissing && (
+                            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
+                                Para confirmar entrega con este método debes cobrar el total (${deliveryTotalAmount.toLocaleString()}).
+                            </div>
+                        )}
+
+                        <div className="flex items-start gap-2 rounded-lg border border-slate-700 p-3">
+                            <Checkbox
+                                id="confirm-delivery"
+                                checked={deliveryConfirmed}
+                                onCheckedChange={(checked) => setDeliveryConfirmed(checked === true)}
+                            />
+                            <Label htmlFor="confirm-delivery" className="text-sm text-slate-300 cursor-pointer">
+                                Confirmo que el pedido fue entregado y el método de pago es correcto.
+                            </Label>
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-2">
+                            <Button variant="outline" className="border-slate-700" onClick={closeDeliverDialog} disabled={submittingDelivery}>
+                                Cancelar
+                            </Button>
+                            <Button className="bg-emerald-600 hover:bg-emerald-500" onClick={handleMarkDelivered} disabled={submittingDelivery || !deliveryConfirmed || fullPaymentRequiredAndMissing}>
+                                {submittingDelivery && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                Confirmar entrega
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

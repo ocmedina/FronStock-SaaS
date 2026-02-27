@@ -20,7 +20,7 @@ export function QuickActions({
     onShortcutsClick,
 }: QuickActionsProps) {
     return (
-        <div className="fixed bottom-4 left-4 flex gap-2 z-40">
+        <div className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 md:left-4 md:translate-x-0 flex gap-2 z-40">
             {/* Suspended Sales */}
             {suspendedCount > 0 && onSuspendedClick && (
                 <Button

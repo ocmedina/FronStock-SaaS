@@ -62,9 +62,12 @@ export default function POSPageV2() {
 
         if (productsRes.data) setProducts(productsRes.data as Product[]);
         if (customersRes.data) {
-            setCustomers(customersRes.data);
+            const counterCustomers = customersRes.data.filter(
+                (c) => c.service_type === "counter" || c.service_type === "both"
+            );
+            setCustomers(counterCustomers);
             // Auto-select "Consumidor Final"
-            const finalConsumer = customersRes.data.find((c) => c.name === "Consumidor Final");
+            const finalConsumer = counterCustomers.find((c) => c.name === "Consumidor Final");
             if (finalConsumer && !selectedCustomerId) {
                 setSelectedCustomerId(finalConsumer.id);
             }

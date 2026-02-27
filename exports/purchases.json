@@ -1,0 +1,1154 @@
+[
+  {
+    "id": "07242491-24f7-4792-b583-420901d9989b",
+    "created_at": "2025-11-12T23:02:22+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00064433",
+    "total_amount": 2365904,
+    "amount_paid": 835860
+  },
+  {
+    "id": "e20115f3-f688-465e-a597-0aba7c7b679a",
+    "created_at": "2025-11-12T23:20:19+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 876425.29,
+    "amount_paid": 0
+  },
+  {
+    "id": "504fd49c-0b61-4491-8fc7-d4600905497f",
+    "created_at": "2025-11-12T23:41:34+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 366915.04,
+    "amount_paid": 0
+  },
+  {
+    "id": "bdb2e8d0-af42-4b4a-bb04-1743c895b548",
+    "created_at": "2025-11-12T23:59:53+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00129216",
+    "total_amount": 864070.35,
+    "amount_paid": 0
+  },
+  {
+    "id": "3486df67-6d23-434c-9d30-7968bb47e7cc",
+    "created_at": "2025-11-13T00:19:30+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "77992222",
+    "total_amount": 2003217.92,
+    "amount_paid": 0
+  },
+  {
+    "id": "6091a46b-81e2-48af-a493-6361d3a4d95d",
+    "created_at": "2025-11-13T22:12:46+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "000116921",
+    "total_amount": 121360,
+    "amount_paid": 0
+  },
+  {
+    "id": "ae5ad942-924a-4118-af35-23a9d26443fa",
+    "created_at": "2025-11-14T14:52:55+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "77992222",
+    "total_amount": 85888,
+    "amount_paid": 0
+  },
+  {
+    "id": "85969334-004b-481b-a4f2-d361d57928c9",
+    "created_at": "2025-11-14T15:02:21+00:00",
+    "supplier_id": "ec1dfb6c-8a5a-460d-a306-268d64476a68",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0003-00013414",
+    "total_amount": 503040,
+    "amount_paid": 0
+  },
+  {
+    "id": "deaa22d9-7a50-4bcb-b4c5-d894d3d984fe",
+    "created_at": "2025-11-14T15:04:42+00:00",
+    "supplier_id": "0b38765b-ba84-4a08-b50d-07f9b69acc2b",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0001-00019495",
+    "total_amount": 176772,
+    "amount_paid": 0
+  },
+  {
+    "id": "b3410ecb-6e50-4ed1-9813-2863473eec55",
+    "created_at": "2025-11-17T14:48:01+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "000117309",
+    "total_amount": 388308,
+    "amount_paid": 0
+  },
+  {
+    "id": "5c7a8a6e-d0a1-412c-b7ce-8b4d83518e95",
+    "created_at": "2025-11-17T15:55:55+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "3054676404091048851320214284905202602078",
+    "total_amount": 1126369.79,
+    "amount_paid": 0
+  },
+  {
+    "id": "383b5f3b-9681-4bd2-a592-339ca8f4b688",
+    "created_at": "2025-11-18T14:03:04+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "00013254",
+    "total_amount": 1204310,
+    "amount_paid": 0
+  },
+  {
+    "id": "b7770fa4-62c3-4728-b575-c956628e704c",
+    "created_at": "2025-11-18T23:37:49+00:00",
+    "supplier_id": "9288d1e3-18cc-40e7-8921-3ffed71a816b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00006218",
+    "total_amount": 70714.88,
+    "amount_paid": 0
+  },
+  {
+    "id": "0f85fde3-0405-421e-b7e2-1dfd68725b3c",
+    "created_at": "2025-11-19T14:12:27+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "(424)032(402)76130385185779848(91)0101D",
+    "total_amount": 578989.75,
+    "amount_paid": 0
+  },
+  {
+    "id": "5b5eb4db-5956-4c99-98ef-ea35f74a16b5",
+    "created_at": "2025-11-19T14:16:55+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 36264.45,
+    "amount_paid": 0
+  },
+  {
+    "id": "e3297059-47a3-49b6-95ae-b9d5e67dfcec",
+    "created_at": "2025-11-19T15:26:39+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "00064774",
+    "total_amount": 2176200,
+    "amount_paid": 0
+  },
+  {
+    "id": "76508373-c2dc-4786-9f2c-620f45bd0cc1",
+    "created_at": "2025-11-19T21:38:09+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24508625",
+    "total_amount": 513131,
+    "amount_paid": 0
+  },
+  {
+    "id": "e89259e4-c1c5-48ea-9869-9627414aad8c",
+    "created_at": "2025-11-19T21:43:07+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037308",
+    "total_amount": 402153.5,
+    "amount_paid": 0
+  },
+  {
+    "id": "cb66bf27-36eb-453c-a6b6-309a4be96e6d",
+    "created_at": "2025-11-19T21:50:43+00:00",
+    "supplier_id": "2d27f724-a414-4b37-afae-e56833cdd6e1",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 135498,
+    "amount_paid": 0
+  },
+  {
+    "id": "4c96fb4b-89a0-4f4e-bf04-35731120c654",
+    "created_at": "2025-11-20T16:18:36+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 1219841.16,
+    "amount_paid": 0
+  },
+  {
+    "id": "ddc985d7-c9f2-499b-8a1c-72b4f8dedf59",
+    "created_at": "2025-11-21T16:01:13+00:00",
+    "supplier_id": "ec1dfb6c-8a5a-460d-a306-268d64476a68",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 205999.92,
+    "amount_paid": 0
+  },
+  {
+    "id": "bba7c529-b0fd-4323-9fc2-38e20146eff6",
+    "created_at": "2025-11-25T23:01:45+00:00",
+    "supplier_id": "88037b1b-6ae9-4a8b-ba34-0b17ec00abd4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2100000,
+    "amount_paid": 887500
+  },
+  {
+    "id": "9258b969-bbf3-406c-b2d1-ddce5767e4db",
+    "created_at": "2025-11-26T16:01:02+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 893871,
+    "amount_paid": 0
+  },
+  {
+    "id": "2c9cbdfb-ef16-43c1-9b92-030e8d08924f",
+    "created_at": "2025-11-26T16:11:49+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 856258,
+    "amount_paid": 0
+  },
+  {
+    "id": "dfb513e1-a1cf-4aa2-8b5d-ef776c4c410f",
+    "created_at": "2025-11-26T23:40:00+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037309",
+    "total_amount": 376339.92,
+    "amount_paid": 0
+  },
+  {
+    "id": "ba7c489d-5a59-43d2-a724-d4ef110459c1",
+    "created_at": "2025-11-27T22:01:32+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00110729",
+    "total_amount": 254877.9,
+    "amount_paid": 0
+  },
+  {
+    "id": "1fd58605-62ee-45f7-8603-1d0a08699a00",
+    "created_at": "2025-11-28T15:27:03+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 484316.14,
+    "amount_paid": 0
+  },
+  {
+    "id": "998cec58-54aa-4391-a828-ad2109674413",
+    "created_at": "2025-11-28T15:41:21+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 553126.58,
+    "amount_paid": 0
+  },
+  {
+    "id": "2f489fe8-da83-47ee-911a-c4655f0007e8",
+    "created_at": "2025-11-28T15:57:29+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 198468,
+    "amount_paid": 0
+  },
+  {
+    "id": "d0a5e512-1b18-474d-aaab-efae5187671a",
+    "created_at": "2025-11-28T21:00:52+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "24509075",
+    "total_amount": 816021.93,
+    "amount_paid": 0
+  },
+  {
+    "id": "7863bdeb-395c-4180-8ec8-377eaa72f139",
+    "created_at": "2025-11-28T21:20:22+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00152063",
+    "total_amount": 31966.46,
+    "amount_paid": 0
+  },
+  {
+    "id": "513a0e6e-d0f7-4248-814a-6df0a2b3a95d",
+    "created_at": "2025-12-01T16:14:24+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 358674,
+    "amount_paid": 0
+  },
+  {
+    "id": "533d2d03-61ad-47ba-a7b9-1b03770aaf26",
+    "created_at": "2025-12-02T16:01:06+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 665148,
+    "amount_paid": 0
+  },
+  {
+    "id": "fe2f322d-be96-44d7-bd18-a4b27ffa80b2",
+    "created_at": "2025-12-02T21:53:14+00:00",
+    "supplier_id": "9288d1e3-18cc-40e7-8921-3ffed71a816b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00002-00006319",
+    "total_amount": 22600.05,
+    "amount_paid": 0
+  },
+  {
+    "id": "a7fb99b2-3d58-4598-83e7-88d8bac50d60",
+    "created_at": "2025-12-02T22:16:09+00:00",
+    "supplier_id": "9288d1e3-18cc-40e7-8921-3ffed71a816b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00002-00006318",
+    "total_amount": 118098.65,
+    "amount_paid": 0
+  },
+  {
+    "id": "304f9d15-1342-4c70-9bee-1309147c42c2",
+    "created_at": "2025-12-03T23:22:18+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00065373",
+    "total_amount": 1843100,
+    "amount_paid": 0
+  },
+  {
+    "id": "0a7449f2-a89f-4d60-ab6a-79be4046e6c7",
+    "created_at": "2025-12-03T23:42:11+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "02017",
+    "total_amount": 553126.62,
+    "amount_paid": 0
+  },
+  {
+    "id": "b6abc0dc-ef94-4af2-b23a-385cf336d63f",
+    "created_at": "2025-12-04T21:19:14+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24509265",
+    "total_amount": 675798.7,
+    "amount_paid": 0
+  },
+  {
+    "id": "87a76598-d245-45b4-a975-33e5e3250c0c",
+    "created_at": "2025-12-05T20:47:05+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037378",
+    "total_amount": 571918.1,
+    "amount_paid": 0
+  },
+  {
+    "id": "529aa41c-a864-45e7-b170-c32505c2a857",
+    "created_at": "2025-12-05T20:48:59+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037377",
+    "total_amount": 197372.01,
+    "amount_paid": 0
+  },
+  {
+    "id": "7dc977c7-e8b3-4ac3-bf08-09f3a8c73292",
+    "created_at": "2025-12-06T14:24:59+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 3036912.36,
+    "amount_paid": 0
+  },
+  {
+    "id": "cf9b0567-c6b3-4943-aa5f-f94f9b76cba8",
+    "created_at": "2025-12-06T15:03:35+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 898170,
+    "amount_paid": 0
+  },
+  {
+    "id": "9a452bb8-8566-4fe4-bcb7-60744a742cf6",
+    "created_at": "2025-12-09T23:07:08+00:00",
+    "supplier_id": "88037b1b-6ae9-4a8b-ba34-0b17ec00abd4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2100000,
+    "amount_paid": 0
+  },
+  {
+    "id": "43967a6f-eaef-4090-bc6a-6bc306528be8",
+    "created_at": "2025-12-10T22:14:04+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24509588",
+    "total_amount": 513426.78,
+    "amount_paid": 513426.78
+  },
+  {
+    "id": "0e77f83f-d8da-4446-99ec-e001a38bfd55",
+    "created_at": "2025-12-10T23:55:08+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037395",
+    "total_amount": 810058.2,
+    "amount_paid": 0
+  },
+  {
+    "id": "57a2d34a-4af4-4f66-9071-5141dd6d03d2",
+    "created_at": "2025-12-11T16:12:39+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 611386,
+    "amount_paid": 0
+  },
+  {
+    "id": "a645a3bf-6d96-4993-9172-d8664520d081",
+    "created_at": "2025-12-11T21:38:15+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00009-00106802",
+    "total_amount": 1177341.48,
+    "amount_paid": 0
+  },
+  {
+    "id": "64055ed6-3d7d-4cda-ba33-30149a99339c",
+    "created_at": "2025-12-12T14:13:11+00:00",
+    "supplier_id": "ec1dfb6c-8a5a-460d-a306-268d64476a68",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 297000,
+    "amount_paid": 0
+  },
+  {
+    "id": "9ea889fd-8013-47ee-9c17-d510a7a77012",
+    "created_at": "2025-12-12T14:53:06+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 197376,
+    "amount_paid": 0
+  },
+  {
+    "id": "e5919aa3-bebf-455d-9964-5535161bdeca",
+    "created_at": "2025-12-12T20:36:15+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037396",
+    "total_amount": 614798.1,
+    "amount_paid": 0
+  },
+  {
+    "id": "f4643220-50d0-4f4f-843b-8477b3eb078e",
+    "created_at": "2025-12-12T21:00:17+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24509745",
+    "total_amount": 378896.91,
+    "amount_paid": 378896.91
+  },
+  {
+    "id": "7a37962b-6b1c-4935-b8d0-2fa0b37c7e2c",
+    "created_at": "2025-12-16T21:00:33+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0010-0015433",
+    "total_amount": 35486.64,
+    "amount_paid": 0
+  },
+  {
+    "id": "48c9671a-4b4d-4cb1-bb59-22ecf083117b",
+    "created_at": "2025-12-17T21:27:32+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24509941",
+    "total_amount": 1497938.01,
+    "amount_paid": 0
+  },
+  {
+    "id": "7a87b41e-e720-4540-abe1-2ae938e2a107",
+    "created_at": "2025-12-17T22:56:13+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-00066019",
+    "total_amount": 3314100,
+    "amount_paid": 0
+  },
+  {
+    "id": "9af26c49-2df4-47fd-81ed-0d5caef25d4c",
+    "created_at": "2025-12-17T22:58:40+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-00066019",
+    "total_amount": 1109500,
+    "amount_paid": 0
+  },
+  {
+    "id": "a32a909c-5a7c-47bc-aac8-a962b13453e2",
+    "created_at": "2025-12-17T23:03:09+00:00",
+    "supplier_id": "2d27f724-a414-4b37-afae-e56833cdd6e1",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 152808,
+    "amount_paid": 0
+  },
+  {
+    "id": "009933ed-cd87-40be-8be5-1edcfd1fb5b0",
+    "created_at": "2025-12-17T23:25:07+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 484336.07,
+    "amount_paid": 0
+  },
+  {
+    "id": "50051360-e6b4-495f-b154-790939db7762",
+    "created_at": "2025-12-18T14:49:23+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 2228342.01,
+    "amount_paid": 0
+  },
+  {
+    "id": "84ea1392-ad82-4cac-9a81-99442ed7819d",
+    "created_at": "2025-12-20T14:16:50+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 864988.74,
+    "amount_paid": 0
+  },
+  {
+    "id": "d7085988-2730-4faa-bafd-6afea455fa28",
+    "created_at": "2025-12-23T21:31:00+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037498",
+    "total_amount": 925472.97,
+    "amount_paid": 0
+  },
+  {
+    "id": "7cf6ebb5-c84d-4318-ba0b-6be5c9af1401",
+    "created_at": "2025-12-26T22:17:04+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "037157",
+    "total_amount": 1178029.01,
+    "amount_paid": 0
+  },
+  {
+    "id": "731de00d-f88b-40dd-a941-e3983485aeb3",
+    "created_at": "2025-12-26T22:42:55+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "999900066378",
+    "total_amount": 1300100,
+    "amount_paid": 0
+  },
+  {
+    "id": "f6fbc77e-1580-4c39-95e8-3bcf17b370c4",
+    "created_at": "2025-12-29T20:45:11+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0000-000119607",
+    "total_amount": 200615,
+    "amount_paid": 0
+  },
+  {
+    "id": "61dc21fa-0288-41ce-aab2-07b10fb7a669",
+    "created_at": "2025-12-30T14:43:35+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 890051.88,
+    "amount_paid": 0
+  },
+  {
+    "id": "fd56f035-bcba-401a-9911-297a25d633d5",
+    "created_at": "2025-12-30T15:24:27+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 571834.14,
+    "amount_paid": 0
+  },
+  {
+    "id": "bf0ed86a-95da-4660-af5f-95b0ecba0b58",
+    "created_at": "2025-12-30T21:07:40+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0009-24510556",
+    "total_amount": 672137.42,
+    "amount_paid": 0
+  },
+  {
+    "id": "3f9a158a-1ad2-44e0-84bd-2b345ba030e1",
+    "created_at": "2025-12-30T22:22:18+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0015-00013883",
+    "total_amount": 401747.96,
+    "amount_paid": 0
+  },
+  {
+    "id": "aff5d20f-b0f4-4f10-8f66-0f988d237d47",
+    "created_at": "2026-01-02T15:43:21+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 392642.01,
+    "amount_paid": 0
+  },
+  {
+    "id": "34d04cf3-31e1-45cb-a9bf-66ff302bcc5d",
+    "created_at": "2026-01-02T15:54:56+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 2633600,
+    "amount_paid": 0
+  },
+  {
+    "id": "bcb7c925-f62e-4605-bbcb-74916fd900f5",
+    "created_at": "2026-01-02T23:50:17+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0001-00153218",
+    "total_amount": 68155.28,
+    "amount_paid": 0
+  },
+  {
+    "id": "2ca742ff-8e4d-4f58-ada1-6cfa6b188365",
+    "created_at": "2026-01-04T00:02:47+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "029414",
+    "total_amount": 691390,
+    "amount_paid": 0
+  },
+  {
+    "id": "0065f8a4-69b7-4c34-84b6-023a1cb5fbbc",
+    "created_at": "2026-01-05T21:49:26+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0000-000120021",
+    "total_amount": 368990,
+    "amount_paid": 0
+  },
+  {
+    "id": "45fddecc-5fb7-4e8d-a542-823dbac57ed2",
+    "created_at": "2026-01-07T21:03:44+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24510926",
+    "total_amount": 266398.02,
+    "amount_paid": 0
+  },
+  {
+    "id": "eaafc515-4be7-4651-a2d7-634e31693ca1",
+    "created_at": "2026-01-07T21:50:19+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2360450,
+    "amount_paid": 0
+  },
+  {
+    "id": "424a3d12-4b8b-4113-a314-90ec5c5fc113",
+    "created_at": "2026-01-08T20:48:41+00:00",
+    "supplier_id": "88037b1b-6ae9-4a8b-ba34-0b17ec00abd4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2100000,
+    "amount_paid": 0
+  },
+  {
+    "id": "5a3db7c8-37b9-46be-9da2-9ce19f956c6b",
+    "created_at": "2026-01-09T20:14:47+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "038771",
+    "total_amount": 611098.08,
+    "amount_paid": 0
+  },
+  {
+    "id": "175c907d-f38e-4bba-b0a8-4418da2b433e",
+    "created_at": "2026-01-09T20:23:02+00:00",
+    "supplier_id": "0b38765b-ba84-4a08-b50d-07f9b69acc2b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0001-00021563",
+    "total_amount": 1416446.3,
+    "amount_paid": 0
+  },
+  {
+    "id": "eabb90bd-6e64-44b9-bdbd-eb7704a538bc",
+    "created_at": "2026-01-09T20:27:49+00:00",
+    "supplier_id": "ec1dfb6c-8a5a-460d-a306-268d64476a68",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0003-00013493",
+    "total_amount": 462000.02,
+    "amount_paid": 462000.02
+  },
+  {
+    "id": "a7ecd0b1-46fe-4551-8f60-3123da06fff7",
+    "created_at": "2026-01-09T20:32:05+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24511017",
+    "total_amount": 507439.48,
+    "amount_paid": 507439.48
+  },
+  {
+    "id": "428c4114-05c4-4fb4-891a-b2cae3ba854b",
+    "created_at": "2026-01-09T20:33:44+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0487-00090886",
+    "total_amount": 883539.02,
+    "amount_paid": 0
+  },
+  {
+    "id": "d9dda5bd-0b3e-472f-898f-e1e1fd3cbc9d",
+    "created_at": "2026-01-09T21:02:50+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0010-00015797",
+    "total_amount": 1190299,
+    "amount_paid": 0
+  },
+  {
+    "id": "451c18a1-2911-4ad6-a3a7-c07e0ddd654d",
+    "created_at": "2026-01-14T21:30:13+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-000667129",
+    "total_amount": 2371050,
+    "amount_paid": 0
+  },
+  {
+    "id": "81e0ffe6-6b13-4bf3-9e6e-454a0b944455",
+    "created_at": "2026-01-15T15:41:51+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00009-00107924",
+    "total_amount": 2248114.49,
+    "amount_paid": 0
+  },
+  {
+    "id": "f553e1b1-6296-4da3-b7a0-88e1299a4c96",
+    "created_at": "2026-01-15T15:48:18+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0001-00153724",
+    "total_amount": 31966.46,
+    "amount_paid": 0
+  },
+  {
+    "id": "0da7d2d5-aea7-4da9-909b-aa21f355880d",
+    "created_at": "2026-01-15T21:05:17+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0487-00090885",
+    "total_amount": 1268592.13,
+    "amount_paid": 0
+  },
+  {
+    "id": "602f0554-4ebc-4fc9-8420-634e8e2dc34f",
+    "created_at": "2026-01-16T13:06:12+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "029491",
+    "total_amount": 242158.07,
+    "amount_paid": 0
+  },
+  {
+    "id": "4cfd7744-21ce-46fd-a602-974330e810ab",
+    "created_at": "2026-01-16T20:56:41+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24511355",
+    "total_amount": 304294.58,
+    "amount_paid": 304294.58
+  },
+  {
+    "id": "513a0dfd-16ca-4342-aff7-30e0bf3a62b0",
+    "created_at": "2026-01-19T13:28:22+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0488-00131224",
+    "total_amount": 521546.46,
+    "amount_paid": 0
+  },
+  {
+    "id": "d8312ee9-d63f-4719-9915-a48414b16620",
+    "created_at": "2026-01-19T15:21:09+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0000-000120973",
+    "total_amount": 281340,
+    "amount_paid": 281340
+  },
+  {
+    "id": "675f4c6b-0e62-4c6a-864a-fe9eb03ab4c7",
+    "created_at": "2026-01-21T21:36:38+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-00067476",
+    "total_amount": 1273950,
+    "amount_paid": 0
+  },
+  {
+    "id": "5888dcf3-b09f-4d98-bdd1-2c661c07abe4",
+    "created_at": "2026-01-21T21:53:29+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24511566",
+    "total_amount": 892217.46,
+    "amount_paid": 892217.46
+  },
+  {
+    "id": "6762dd03-ca4e-41c2-a32e-df5b108d3fce",
+    "created_at": "2026-01-21T21:58:28+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "038114",
+    "total_amount": 868010.58,
+    "amount_paid": 0
+  },
+  {
+    "id": "9c555cef-1dd1-48cc-b3e5-f63b00f825a2",
+    "created_at": "2026-01-21T22:04:27+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0010-00015949",
+    "total_amount": 2019122.51,
+    "amount_paid": 0
+  },
+  {
+    "id": "6ce722c9-1ab3-47b6-ae03-d38e99625848",
+    "created_at": "2026-01-22T20:46:27+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0010-00015962",
+    "total_amount": 813880.6,
+    "amount_paid": 0
+  },
+  {
+    "id": "431a9565-da56-4bcf-9feb-0141f122918e",
+    "created_at": "2026-01-23T14:48:56+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 573930,
+    "amount_paid": 0
+  },
+  {
+    "id": "5de123fb-4a47-4c19-93b3-5b45d2ed70f9",
+    "created_at": "2026-01-23T21:25:02+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24511682",
+    "total_amount": 217515.15,
+    "amount_paid": 217515.15
+  },
+  {
+    "id": "b9ecdaab-8bce-4c46-9a50-65cef9c37821",
+    "created_at": "2026-01-23T21:26:34+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0002-00113376",
+    "total_amount": 178413.5,
+    "amount_paid": 0
+  },
+  {
+    "id": "af8aaf9b-fa33-428f-af8d-b166c58d87a1",
+    "created_at": "2026-01-23T21:30:19+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0487-00091324",
+    "total_amount": 529465.39,
+    "amount_paid": 0
+  },
+  {
+    "id": "4020e912-a1e9-42b5-8a75-cf0a0ff85585",
+    "created_at": "2026-01-23T23:27:16+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0001-00088357",
+    "total_amount": 96145.92,
+    "amount_paid": 0
+  },
+  {
+    "id": "f81d6e41-18f3-4dfd-8ca2-b8c0f8eaa3d8",
+    "created_at": "2026-01-27T15:52:56+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 258730.5,
+    "amount_paid": 0
+  },
+  {
+    "id": "8e500395-5104-4019-ad48-f92bbd85d435",
+    "created_at": "2026-01-28T21:49:47+00:00",
+    "supplier_id": "9288d1e3-18cc-40e7-8921-3ffed71a816b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 41492,
+    "amount_paid": 41492
+  },
+  {
+    "id": "59bc4a85-dcb8-4bb6-a9c1-f01da325a6d4",
+    "created_at": "2026-01-28T22:09:09+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2727900,
+    "amount_paid": 0
+  },
+  {
+    "id": "e941ff2d-fa39-4a0c-bedc-27abcf6e7098",
+    "created_at": "2026-01-29T22:17:32+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 1431947.1,
+    "amount_paid": 0
+  },
+  {
+    "id": "4308c425-76c6-4731-bbfa-288d93cb9f87",
+    "created_at": "2026-01-30T14:09:35+00:00",
+    "supplier_id": "0b38765b-ba84-4a08-b50d-07f9b69acc2b",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 176775,
+    "amount_paid": 0
+  },
+  {
+    "id": "a038730a-51ac-474b-95a3-2f4e077947c0",
+    "created_at": "2026-01-30T21:00:11+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 1126046.61,
+    "amount_paid": 0
+  },
+  {
+    "id": "43e138e3-137c-40cf-a8c2-bee5d4b4d6fa",
+    "created_at": "2026-02-02T20:31:12+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0000-000121792",
+    "total_amount": 396507,
+    "amount_paid": 0
+  },
+  {
+    "id": "f392281d-a65e-45e1-af98-72702f1ff97b",
+    "created_at": "2026-02-03T20:55:32+00:00",
+    "supplier_id": "5dcf28cb-9c9a-4adc-a3e6-37062ae7bfda",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0010-00016132",
+    "total_amount": 35486.66,
+    "amount_paid": 0
+  },
+  {
+    "id": "dac4cdc9-6014-441f-83b4-946d65375c54",
+    "created_at": "2026-02-04T20:40:09+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-00068096",
+    "total_amount": 4206400,
+    "amount_paid": 0
+  },
+  {
+    "id": "3318873a-c2c0-4d0d-8a70-6f0d213002f9",
+    "created_at": "2026-02-04T20:53:49+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0487-00091667",
+    "total_amount": 911658.84,
+    "amount_paid": 0
+  },
+  {
+    "id": "08922f47-f441-4a5b-adbe-9abe5c56d778",
+    "created_at": "2026-02-04T22:11:40+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24512113",
+    "total_amount": 391925.95,
+    "amount_paid": 391925.95
+  },
+  {
+    "id": "3a145085-ddef-4655-bc26-ff0ed303ef0d",
+    "created_at": "2026-02-06T20:50:38+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00000195",
+    "total_amount": 1272880.13,
+    "amount_paid": 0
+  },
+  {
+    "id": "3be719ff-1074-4e8d-a1d4-a63336393508",
+    "created_at": "2026-02-06T21:58:35+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24512259",
+    "total_amount": 238464,
+    "amount_paid": 238464
+  },
+  {
+    "id": "8d8d1a9e-b2a3-4a71-a190-e4164a357d9c",
+    "created_at": "2026-02-06T23:32:14+00:00",
+    "supplier_id": "88037b1b-6ae9-4a8b-ba34-0b17ec00abd4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": null,
+    "total_amount": 2100000,
+    "amount_paid": 0
+  },
+  {
+    "id": "19401704-c6c8-4dfc-8b9c-15ea80718258",
+    "created_at": "2026-02-10T21:43:00+00:00",
+    "supplier_id": "3eac8727-a950-41b1-9fa4-5c5e9b64a7d4",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0000-000122391",
+    "total_amount": 346250,
+    "amount_paid": 0
+  },
+  {
+    "id": "65f88f45-f541-45ef-8002-b5f87fbf0a7c",
+    "created_at": "2026-02-10T21:49:31+00:00",
+    "supplier_id": "9288d1e3-18cc-40e7-8921-3ffed71a816b",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00002-00006705",
+    "total_amount": 49670.5,
+    "amount_paid": 0
+  },
+  {
+    "id": "473f7449-c35d-4636-960d-50e0858e1365",
+    "created_at": "2026-02-11T14:56:36+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": null,
+    "total_amount": 1738200,
+    "amount_paid": 1738200
+  },
+  {
+    "id": "dce20bba-bb0f-4aeb-b763-644ee8c61022",
+    "created_at": "2026-02-11T20:21:46+00:00",
+    "supplier_id": "97d5c37f-4a6a-4566-bd0e-2e822b187b3e",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0009-24512451",
+    "total_amount": 486808.74,
+    "amount_paid": 0
+  },
+  {
+    "id": "31ba0179-ad90-4888-b754-72f2719fcf6f",
+    "created_at": "2026-02-11T20:26:06+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0002-00114459",
+    "total_amount": 116700,
+    "amount_paid": 0
+  },
+  {
+    "id": "54aee33f-9fd3-4ea7-8f18-2dfe7187ffc5",
+    "created_at": "2026-02-11T20:27:58+00:00",
+    "supplier_id": "ce067ab2-56c2-4877-ae7a-8d3bdbbca949",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0002-00114484",
+    "total_amount": 63969.12,
+    "amount_paid": 0
+  },
+  {
+    "id": "148e00b5-9195-473c-89c6-7caa81da2fd3",
+    "created_at": "2026-02-11T21:26:18+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00000250",
+    "total_amount": 188169.84,
+    "amount_paid": 0
+  },
+  {
+    "id": "c5becc35-4755-40e0-af3e-24d158b7dce8",
+    "created_at": "2026-02-11T21:59:13+00:00",
+    "supplier_id": "df981c85-e4c8-4d57-9ca3-d49ea8346a95",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00000136",
+    "total_amount": 623240.88,
+    "amount_paid": 0
+  },
+  {
+    "id": "d07ddca6-5d83-49c5-8b96-d94b7cd68f9d",
+    "created_at": "2026-02-12T20:53:00+00:00",
+    "supplier_id": "bc26b3b9-bd20-46d8-a8fa-ac696fd35cec",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0488-00132037",
+    "total_amount": 660062.94,
+    "amount_paid": 0
+  },
+  {
+    "id": "a1795970-58d8-455d-bf13-f575e9d8b972",
+    "created_at": "2026-02-12T21:11:23+00:00",
+    "supplier_id": "cfd66450-a493-427a-a5bf-b2bc8c476ec5",
+    "profile_id": "98fa451a-f292-4504-8421-d8987594f256",
+    "invoice_number": "0001-00154605",
+    "total_amount": 1497781.69,
+    "amount_paid": 0
+  },
+  {
+    "id": "022a67b9-0321-446a-b204-14a3119dc15d",
+    "created_at": "2026-02-17T21:54:46+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00000276",
+    "total_amount": 806618.32,
+    "amount_paid": 0
+  },
+  {
+    "id": "e58e576a-9bea-4f08-9a6d-dcd7c89f2340",
+    "created_at": "2026-02-17T21:58:35+00:00",
+    "supplier_id": "ec1dfb6c-8a5a-460d-a306-268d64476a68",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0003-0013525",
+    "total_amount": 251500.04,
+    "amount_paid": 0
+  },
+  {
+    "id": "687cf8ad-38c5-4210-84bd-f9f031c02f2f",
+    "created_at": "2026-02-17T22:01:30+00:00",
+    "supplier_id": "6da2d699-2552-4bd3-9bc4-22ada49df1a8",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "0044-00000257",
+    "total_amount": 79189.05,
+    "amount_paid": 79189.05
+  },
+  {
+    "id": "b925d271-beeb-408c-b27d-bb4b005f9ae4",
+    "created_at": "2026-02-18T21:17:25+00:00",
+    "supplier_id": "8e4aa40a-37a3-4083-b1bb-4c1ac8018ddd",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "00000332",
+    "total_amount": 884665.65,
+    "amount_paid": 0
+  },
+  {
+    "id": "47d22b13-60f9-41ea-a33c-ba3808dbd0fb",
+    "created_at": "2026-02-19T20:35:57+00:00",
+    "supplier_id": "477e699c-4eb3-4d4b-9397-3fa6bd943879",
+    "profile_id": "debc1817-3797-4453-90fc-60a5b2d02dbe",
+    "invoice_number": "9999-00068790",
+    "total_amount": 1150250,
+    "amount_paid": 0
+  }
+]

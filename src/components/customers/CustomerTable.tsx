@@ -31,6 +31,8 @@ interface CustomerTableProps {
     onViewHistory: (customer: Customer) => void;
     startIndex: number;
     endIndex: number;
+    canEdit: boolean;
+    canDelete: boolean;
 }
 
 export function CustomerTable({
@@ -44,6 +46,8 @@ export function CustomerTable({
     onViewHistory,
     startIndex,
     endIndex,
+    canEdit,
+    canDelete,
 }: CustomerTableProps) {
     return (
         <>
@@ -132,21 +136,25 @@ export function CustomerTable({
                                                 >
                                                     <History className="h-4 w-4" />
                                                 </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => onEdit(customer)}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-destructive hover:text-destructive"
-                                                    onClick={() => onDelete(customer.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                {canEdit && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => onEdit(customer)}
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                {canDelete && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => onDelete(customer.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </TableCell>
                                     </TableRow>

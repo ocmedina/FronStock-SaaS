@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-02-20T06:33:09.787Z",
+  "control_totals": {
+    "total_customer_debt": 32247627.98,
+    "total_stock_units": 1001722,
+    "total_sales_amount": 57817000,
+    "total_orders_amount": 72201455.93,
+    "total_payments_amount": 193257057.88
+  },
+  "notes": [
+    "Usar estos valores para validar la migración en el sistema destino.",
+    "Comparar también cantidad de registros por tabla."
+  ]
+}

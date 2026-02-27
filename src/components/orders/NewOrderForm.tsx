@@ -9,7 +9,7 @@ import { useOfflineOrders } from "@/hooks/useOfflineOrders";
 import { offlineDB } from "@/lib/offline/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard } from "lucide-react";
+import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 
@@ -44,6 +44,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
     const [discountType, setDiscountType] = useState<"none" | "percentage" | "fixed">("none");
     const [discountValue, setDiscountValue] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
 
     // Product Search
     const [searchTerm, setSearchTerm] = useState("");
@@ -69,6 +70,13 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
             ? discountValue
             : 0;
     const total = subtotal - discountAmount + deliveryFee;
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const steps = [
+        { id: 1, title: "Cliente" },
+        { id: 2, title: "Productos" },
+        { id: 3, title: "Entrega" },
+        { id: 4, title: "Pago y Confirmación" },
+    ];
 
     // Search Products
     useEffect(() => {
@@ -168,7 +176,10 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 .filter((c: any) => {
                     const name = (c.name || '').toLowerCase();
                     const phone = (c.phone || '').toLowerCase();
-                    return name.includes(queryText) || phone.includes(queryText);
+                    const matchesText = name.includes(queryText) || phone.includes(queryText);
+                    const serviceType = c.service_type || "";
+                    const matchesChannel = serviceType === "delivery" || serviceType === "both";
+                    return matchesText && matchesChannel;
                 })
                 .slice(0, 10);
 
@@ -189,7 +200,9 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 .limit(10);
 
             if (data) {
-                setCustomers(data);
+                setCustomers(
+                    data.filter((c: any) => c.service_type === "delivery" || c.service_type === "both")
+                );
                 return;
             }
         } catch {
@@ -257,8 +270,32 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
         setPaymentMethod("cash");
         setDiscountType("none");
         setDiscountValue(0);
+        setCurrentStep(1);
         toast.success("Formulario limpiado");
         customerSearchRef.current?.focus();
+    };
+
+    const validateCurrentStep = () => {
+        if (currentStep === 1 && !customer) {
+            toast.error("Selecciona un cliente para continuar");
+            return false;
+        }
+
+        if (currentStep === 2 && items.length === 0) {
+            toast.error("Agrega al menos un producto para continuar");
+            return false;
+        }
+
+        return true;
+    };
+
+    const goToNextStep = () => {
+        if (!validateCurrentStep()) return;
+        setCurrentStep((prev) => Math.min(prev + 1, 4));
+    };
+
+    const goToPrevStep = () => {
+        setCurrentStep((prev) => Math.max(prev - 1, 1));
     };
 
     // Keyboard shortcuts
@@ -443,7 +480,57 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 </div>
             </div>
 
+            <section className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6" aria-label="Progreso de creación">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base md:text-lg font-semibold text-white">Nuevo pedido guiado</h2>
+                    <span className="text-xs text-slate-400">Paso {currentStep} de {steps.length}</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    {steps.map((step) => {
+                        const isDone = currentStep > step.id;
+                        const isActive = currentStep === step.id;
+
+                        return (
+                            <button
+                                key={step.id}
+                                type="button"
+                                onClick={() => {
+                                    if (step.id <= currentStep) setCurrentStep(step.id);
+                                }}
+                                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                                    isActive
+                                        ? "border-emerald-500 bg-emerald-500/10"
+                                        : isDone
+                                            ? "border-slate-700 bg-slate-950/80"
+                                            : "border-slate-800 bg-slate-950/40"
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    {isDone ? (
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                                    ) : (
+                                        <span className={`text-xs font-semibold ${isActive ? "text-emerald-400" : "text-slate-500"}`}>
+                                            {step.id}
+                                        </span>
+                                    )}
+                                    <span className={`text-sm font-medium ${isActive ? "text-white" : "text-slate-300"}`}>
+                                        {step.title}
+                                    </span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-emerald-500 transition-all"
+                        style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                    />
+                </div>
+            </section>
+
             {/* Customer Selection */}
+            {currentStep === 1 && (
             <section className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6" aria-labelledby="customer-section">
                 <h2 id="customer-section" className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <User className="h-5 w-5 text-emerald-500" aria-hidden="true" />
@@ -532,9 +619,22 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         </div>
                     </div>
                 )}
+
+                <div className="flex justify-end mt-6">
+                    <Button
+                        type="button"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                        onClick={goToNextStep}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                </div>
             </section>
+            )}
 
             {/* Products */}
+            {currentStep === 2 && (
             <section className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6" aria-labelledby="products-section">
                 <h2 id="products-section" className="text-base md:text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <Package className="h-5 w-5 text-emerald-500" aria-hidden="true" />
@@ -675,11 +775,100 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         </div>
                     </div>
                 )}
+
+                <div className="flex items-center justify-between mt-6">
+                    <Button type="button" variant="outline" className="border-slate-700 text-slate-300" onClick={goToPrevStep}>
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Anterior
+                    </Button>
+                    <div className="text-xs text-slate-400">
+                        {totalItems} producto(s) · Subtotal ${subtotal.toLocaleString()}
+                    </div>
+                    <Button
+                        type="button"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                        onClick={goToNextStep}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                </div>
             </section>
+            )}
 
             {/* Summary & Actions */}
+            {currentStep === 3 && (
+            <section className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6" aria-labelledby="delivery-section">
+                <h2 id="delivery-section" className="text-base md:text-lg font-semibold text-white mb-4">Entrega</h2>
+
+                <div className="space-y-4">
+                    <div className="bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm">
+                        <p className="text-slate-400">Cliente seleccionado</p>
+                        <p className="text-white font-medium">{customer?.name || "Sin cliente"}</p>
+                        <p className="text-slate-500 text-xs mt-1">{customer?.address || "Sin dirección cargada"}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label htmlFor="delivery-fee" className="text-xs text-slate-400 mb-1.5 block">Envío</label>
+                            <Input
+                                id="delivery-fee"
+                                type="number"
+                                className="bg-slate-950 border-slate-700 text-white h-9"
+                                value={deliveryFee}
+                                onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
+                                aria-label="Costo de envío"
+                                min="0"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="estimated-time" className="text-xs text-slate-400 mb-1.5 block">Tiempo (min)</label>
+                            <Input
+                                id="estimated-time"
+                                type="number"
+                                className="bg-slate-950 border-slate-700 text-white h-9"
+                                value={estimatedMins}
+                                onChange={(e) => setEstimatedMins(parseInt(e.target.value) || 0)}
+                                aria-label="Tiempo estimado de entrega en minutos"
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="delivery-notes" className="text-xs text-slate-400 mb-1.5 block">Notas de Entrega</label>
+                        <textarea
+                            id="delivery-notes"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white resize-none text-sm"
+                            rows={3}
+                            placeholder="Instrucciones especiales..."
+                            value={deliveryNotes}
+                            onChange={(e) => setDeliveryNotes(e.target.value)}
+                            aria-label="Notas de entrega"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-6">
+                    <Button type="button" variant="outline" className="border-slate-700 text-slate-300" onClick={goToPrevStep}>
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Anterior
+                    </Button>
+                    <Button
+                        type="button"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                        onClick={goToNextStep}
+                    >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                </div>
+            </section>
+            )}
+
+            {currentStep === 4 && (
             <section className="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-6" aria-labelledby="summary-section">
-                <h2 id="summary-section" className="text-base md:text-lg font-semibold text-white mb-4">Resumen</h2>
+                <h2 id="summary-section" className="text-base md:text-lg font-semibold text-white mb-4">Pago y Confirmación</h2>
 
                 <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-slate-400">
@@ -724,33 +913,6 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label htmlFor="delivery-fee" className="text-xs text-slate-400 mb-1.5 block">Envío</label>
-                            <Input
-                                id="delivery-fee"
-                                type="number"
-                                className="bg-slate-950 border-slate-700 text-white h-9"
-                                value={deliveryFee}
-                                onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
-                                aria-label="Costo de envío"
-                                min="0"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="estimated-time" className="text-xs text-slate-400 mb-1.5 block">Tiempo (min)</label>
-                            <Input
-                                id="estimated-time"
-                                type="number"
-                                className="bg-slate-950 border-slate-700 text-white h-9"
-                                value={estimatedMins}
-                                onChange={(e) => setEstimatedMins(parseInt(e.target.value) || 0)}
-                                aria-label="Tiempo estimado de entrega en minutos"
-                                min="0"
-                            />
-                        </div>
-                    </div>
-
                     <div>
                         <label htmlFor="payment-method" className="text-xs text-slate-400 mb-1.5 block">Método de Pago</label>
                         <select
@@ -767,20 +929,11 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         </select>
                     </div>
 
-                    <div>
-                        <label htmlFor="delivery-notes" className="text-xs text-slate-400 mb-1.5 block">Notas de Entrega</label>
-                        <textarea
-                            id="delivery-notes"
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white resize-none text-sm"
-                            rows={2}
-                            placeholder="Instrucciones especiales..."
-                            value={deliveryNotes}
-                            onChange={(e) => setDeliveryNotes(e.target.value)}
-                            aria-label="Notas de entrega"
-                        />
-                    </div>
-
                     <div className="h-px bg-slate-800" role="separator"></div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                        <span>Productos: {totalItems}</span>
+                        <span className="text-right">Envío: ${deliveryFee.toLocaleString()}</span>
+                    </div>
                     <div className="flex justify-between text-white text-lg font-bold">
                         <span>Total</span>
                         <span className="font-mono text-emerald-400" aria-label={`Total: ${total} pesos`}>${total.toLocaleString()}</span>
@@ -788,6 +941,16 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 </div>
 
                 <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        className="border-slate-700 text-slate-300"
+                        onClick={goToPrevStep}
+                        disabled={loading}
+                        aria-label="Volver al paso anterior"
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Anterior
+                    </Button>
                     <Button
                         variant="outline"
                         className="flex-1 border-slate-700 text-slate-300"
@@ -817,6 +980,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     </Button>
                 </div>
             </section>
+            )}
         </div>
     );
 }

@@ -5,6 +5,7 @@ import { ResponsiveModal } from "@/components/ui/responsive-modal";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { Loader2, Receipt, Phone, MapPin, User, Truck, Calendar, DollarSign, ChefHat, CheckCircle, Clock, Copy, AlertCircle } from "lucide-react";
 import { format, formatDistanceToNow, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
@@ -19,6 +20,7 @@ interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: OrderDetailsModalProps) {
+    const { organizationId } = useOrganization();
     const [order, setOrder] = useState<any>(null);
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -66,17 +68,43 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
         }
     };
 
+    const getCurrentStatus = (currentOrder: any) => {
+        if (!currentOrder) return 'assigned';
+        if (currentOrder.lifecycle_status) return currentOrder.lifecycle_status;
+
+        const legacyStatus = currentOrder.delivery_status;
+        if (legacyStatus === 'out_for_delivery') return 'in_delivery';
+        if (legacyStatus === 'delivered') return 'delivered';
+        if (legacyStatus === 'cancelled' || legacyStatus === 'returned') return 'not_delivered';
+        return 'assigned';
+    };
+
     const handleStatusChange = async (newStatus: string) => {
+        if (!organizationId || !orderId) return;
+
         setUpdating(true);
         try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ delivery_status: newStatus })
-                .eq('id', orderId);
+            const { data, error } = await supabase.rpc('set_order_status', {
+                p_org_id: organizationId,
+                p_order_id: orderId,
+                p_new_status: newStatus,
+                p_notes: 'Actualizado desde detalle de pedido',
+            });
 
             if (error) throw error;
+            if (data?.success === false) throw new Error(data?.error || 'No se pudo actualizar estado');
 
-            setOrder({ ...order, delivery_status: newStatus });
+            const mappedLegacyStatus =
+                newStatus === 'in_delivery' ? 'out_for_delivery'
+                    : newStatus === 'delivered' ? 'delivered'
+                        : newStatus === 'not_delivered' ? 'cancelled'
+                            : order?.delivery_status;
+
+            setOrder({
+                ...order,
+                lifecycle_status: newStatus,
+                delivery_status: mappedLegacyStatus,
+            });
             toast.success('Estado actualizado correctamente');
             onSuccess?.();
         } catch (error: any) {
@@ -93,20 +121,24 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
+            assigned: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+            in_delivery: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+            delivered: "bg-slate-700/50 text-slate-400 border-slate-600/20",
+            not_delivered: "bg-red-500/10 text-red-500 border-red-500/20",
+            rescheduled: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+            cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
             pending: "bg-amber-500/10 text-amber-500 border-amber-500/20",
             preparing: "bg-orange-500/10 text-orange-500 border-orange-500/20",
             ready: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
             out_for_delivery: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-            delivered: "bg-slate-700/50 text-slate-400 border-slate-600/20",
-            cancelled: "bg-red-500/10 text-red-500 border-red-500/20"
         };
 
         const labels: Record<string, string> = {
-            pending: "Pendiente",
-            preparing: "En Cocina",
-            ready: "Listo",
-            out_for_delivery: "En Camino",
+            assigned: "Asignado",
+            in_delivery: "En Reparto",
             delivered: "Entregado",
+            not_delivered: "No Entregado",
+            rescheduled: "Reprogramado",
             cancelled: "Cancelado"
         };
 
@@ -115,6 +147,24 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                 {labels[status] || status}
             </Badge>
         );
+    };
+
+    const getPaymentMethodLabel = (method?: string) => {
+        if (!method) return 'Sin definir';
+
+        const normalized = method.toLowerCase();
+        const labels: Record<string, string> = {
+            cash: 'Efectivo',
+            transfer: 'Transferencia',
+            card: 'Tarjeta',
+            mixed: 'Mixto',
+            fiado: 'Fiado',
+            credit: 'Cuenta Cte.',
+            current_account: 'Cuenta Cte.',
+            cuenta_corriente: 'Cuenta Cte.',
+        };
+
+        return labels[normalized] || method;
     };
 
     const getPaymentStatusBadge = (paymentStatus: string, paymentAmount: number, total: number) => {
@@ -130,24 +180,24 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
     const getUrgencyIndicator = (createdAt: string, status: string) => {
         const minutesAgo = differenceInMinutes(new Date(), new Date(createdAt));
 
-        if (status === 'pending' && minutesAgo > 30) {
+        if (status === 'assigned' && minutesAgo > 30) {
             return (
                 <Badge className="animate-pulse bg-red-500/20 text-red-400 border-red-500/30 text-xs">
                     ¡Urgente! {minutesAgo}min
                 </Badge>
             );
         }
-        if (status === 'preparing' && minutesAgo > 45) {
+        if (status === 'in_delivery' && minutesAgo > 45) {
             return (
                 <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
                     Revisar {minutesAgo}min
                 </Badge>
             );
         }
-        if (status === 'ready' && minutesAgo > 20) {
+        if (status === 'rescheduled' && minutesAgo > 20) {
             return (
                 <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
-                    Listo hace {minutesAgo}min
+                    Reprogramado hace {minutesAgo}min
                 </Badge>
             );
         }
@@ -155,6 +205,7 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
     };
 
     if (!orderId) return null;
+    const currentStatus = order ? getCurrentStatus(order) : 'assigned';
 
     return (
         <ResponsiveModal
@@ -179,7 +230,7 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                     {order && (
                         <div className="text-right">
                             <p className="text-3xl font-bold text-emerald-400">${order.total.toLocaleString()}</p>
-                            <p className="text-xs text-slate-400 capitalize">{order.payment_method === 'credit' ? 'Cuenta Cte.' : order.payment_method}</p>
+                            <p className="text-xs text-slate-400 capitalize">{getPaymentMethodLabel(order.payment_method)}</p>
                         </div>
                     )}
                 </div>
@@ -200,8 +251,8 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                             <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
                                 <p className="text-xs text-slate-500 mb-1">Estado</p>
                                 <div className="flex flex-col gap-1.5">
-                                    {getStatusBadge(order.delivery_status || 'pending')}
-                                    {getUrgencyIndicator(order.created_at, order.delivery_status || 'pending')}
+                                    {getStatusBadge(currentStatus || 'assigned')}
+                                    {getUrgencyIndicator(order.created_at, currentStatus || 'assigned')}
                                 </div>
                             </div>
                             <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
@@ -319,48 +370,41 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                         </div>
 
                         {/* Quick Actions */}
-                        {order.delivery_status !== 'delivered' && order.delivery_status !== 'cancelled' && (
+                        {currentStatus !== 'delivered' && currentStatus !== 'cancelled' && currentStatus !== 'not_delivered' && (
                             <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase mb-3">Acciones Rápidas</h3>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {order.delivery_status === 'pending' && (
+                                    {(currentStatus === 'assigned' || currentStatus === 'rescheduled') && (
                                         <Button
-                                            className="bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20"
-                                            onClick={() => handleStatusChange('preparing')}
-                                            disabled={updating}
-                                        >
-                                            {updating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ChefHat className="h-4 w-4 mr-2" />}
-                                            Enviar a Cocina
-                                        </Button>
-                                    )}
-                                    {order.delivery_status === 'preparing' && (
-                                        <Button
-                                            className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                                            onClick={() => handleStatusChange('ready')}
-                                            disabled={updating}
-                                        >
-                                            {updating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                                            Marcar Listo
-                                        </Button>
-                                    )}
-                                    {order.delivery_status === 'ready' && (
-                                        <Button
-                                            className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20"
-                                            onClick={() => handleStatusChange('out_for_delivery')}
+                                            className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 border border-purple-500/20"
+                                            onClick={() => handleStatusChange('in_delivery')}
                                             disabled={updating}
                                         >
                                             {updating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Truck className="h-4 w-4 mr-2" />}
-                                            Enviar a Reparto
+                                            Iniciar Reparto
                                         </Button>
                                     )}
-                                    {order.delivery_status === 'out_for_delivery' && (
+                                    {currentStatus === 'in_delivery' && (
                                         <Button
                                             className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
-                                            onClick={() => handleStatusChange('delivered')}
+                                            onClick={() => {
+                                                onOpenChange(false);
+                                                window.location.href = `/delivery/orders?orderId=${orderId}`;
+                                            }}
                                             disabled={updating}
                                         >
-                                            {updating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                                            Confirmar Entrega
+                                            <CheckCircle className="h-4 w-4 mr-2" />
+                                            Entregar + Cobrar
+                                        </Button>
+                                    )}
+                                    {currentStatus === 'in_delivery' && (
+                                        <Button
+                                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                                            onClick={() => handleStatusChange('not_delivered')}
+                                            disabled={updating}
+                                        >
+                                            {updating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-2" />}
+                                            Marcar Incidencia
                                         </Button>
                                     )}
                                 </div>

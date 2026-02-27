@@ -1,0 +1,6 @@
+id,full_name,username,email,role,is_active
+98fa451a-f292-4504-8421-d8987594f256,Facundo Silveri,Facundo,facu123@gmail.com,administrador,true
+5bccfa48-e037-42d5-8dcf-7cfd6444aa1d,Santino Silveri,Santino,santi123@gmail.com,repartidor,true
+d5f0677b-fc32-4d2d-bbd7-adb53ab0c03f,Facundo Silveri,FacundoReparto,Facu1234@gmail.com,repartidor,true
+debc1817-3797-4453-90fc-60a5b2d02dbe,Ivana,Ivana,ivana@gmail.com,administrador,true
+083ac116-0b50-4bfe-9019-fd12826c6073,Octavio Medina,,octamedina239@gmail.com,vendedor,true

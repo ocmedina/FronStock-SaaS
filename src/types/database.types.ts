@@ -40,7 +40,7 @@ export interface Customer {
   // Campos B2B
   business_type: string | null; // 'kiosco', 'restaurant', etc
   tax_id: string | null; // CUIT
-  balance: number; // Cuenta corriente (negativo = debe)
+  balance: number; // Cuenta corriente (positivo = debe, negativo = a favor)
   credit_limit: number;
   payment_terms: string; // 'contado', '7_dias', '15_dias', '30_dias'
   price_list: string; // 'default', 'mayorista', 'minorista'

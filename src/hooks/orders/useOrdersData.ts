@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { calculateOrderStats } from "@/lib/orders/filters";
+import { calculateOrderStats, getOrderStatus } from "@/lib/orders/filters";
 import { offlineDB } from "@/lib/offline/db";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineOrders } from "@/hooks/useOfflineOrders";
@@ -59,6 +59,7 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                     service_type: "delivery",
                     status: pendingOrder.status,
                     delivery_status: "pending",
+                    lifecycle_status: "draft",
                     total:
                         pendingOrder.payload.p_items?.reduce(
                             (sum, item) => sum + item.quantity * item.unit_price,
@@ -73,6 +74,7 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                         total: item.quantity * item.unit_price,
                     })) || [],
                     is_offline_pending: true,
+                    ui_status: "draft",
                 };
             });
 
@@ -111,9 +113,14 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                     new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
             );
 
-            if (cachedWithPending.length > 0) {
-                setOrders(cachedWithPending);
-                setStats(calculateOrderStats(cachedWithPending));
+            const cachedNormalized = cachedWithPending.map((order: any) => ({
+                ...order,
+                ui_status: getOrderStatus(order),
+            }));
+
+            if (cachedNormalized.length > 0) {
+                setOrders(cachedNormalized);
+                setStats(calculateOrderStats(cachedNormalized));
             }
 
             if (!isOnline) {
@@ -125,8 +132,7 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                 .select(
                     `*,
                     customer:customers(id, name, phone, address, zone, service_type),
-                    order_items(id, product_name, quantity, unit_price, total),
-                    routes(id, name, status)`
+                    order_items(id, product_name, quantity, unit_price, total)`
                 )
                 .eq("organization_id", organizationId)
                 .order("created_at", { ascending: false });
@@ -140,15 +146,53 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                 query = query.gte("created_at", weekAgo.toISOString());
             }
 
-            const { data, error } = await query;
+            let { data, error } = await query;
+
+            if (error) {
+                const fallbackQuery = supabase
+                    .from("orders")
+                    .select("*")
+                    .eq("organization_id", organizationId)
+                    .order("created_at", { ascending: false });
+
+                if (dateFilter === "today") {
+                    const today = new Date().toISOString().split("T")[0];
+                    fallbackQuery.gte("created_at", `${today}T00:00:00`);
+                } else if (dateFilter === "week") {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    fallbackQuery.gte("created_at", weekAgo.toISOString());
+                }
+
+                const fallback = await fallbackQuery;
+                data = fallback.data;
+                error = fallback.error;
+            }
 
             if (error) throw error;
 
-            setOrders(data || []);
-            setStats(calculateOrderStats(data || []));
+            const safeRows = Array.isArray(data) ? data : [];
 
-            if (data) {
-                const withSyncTimestamp = data.map((order: any) => ({
+            const normalizedData = safeRows.map((order: any) => {
+                let uiStatus = "draft";
+                try {
+                    uiStatus = getOrderStatus(order);
+                } catch {
+                    const fallbackStatus = String(order?.lifecycle_status || order?.delivery_status || "draft").toLowerCase();
+                    uiStatus = fallbackStatus || "draft";
+                }
+
+                return {
+                    ...order,
+                    ui_status: uiStatus,
+                };
+            });
+
+            setOrders(normalizedData);
+            setStats(calculateOrderStats(normalizedData));
+
+            if (normalizedData) {
+                const withSyncTimestamp = normalizedData.map((order: any) => ({
                     ...order,
                     last_synced: Date.now(),
                 }));
@@ -163,7 +207,12 @@ export const useOrdersData = (organizationId: string | null, dateFilter: string)
                 }
             }
         } catch (error: any) {
-            console.error("Error fetching orders:", error);
+            console.error("Error fetching orders", {
+                message: error?.message || "unknown",
+                code: error?.code || "unknown",
+                details: error?.details || null,
+                type: typeof error,
+            });
             if (orders.length === 0) {
                 toast.error("Error al cargar pedidos");
             }

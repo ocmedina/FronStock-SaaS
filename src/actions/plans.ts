@@ -19,12 +19,16 @@ export async function updatePlan(planId: PlanType) {
         // Get organization_id from profile
         const { data: profile } = await supabase
             .from('profiles')
-            .select('organization_id')
+            .select('organization_id, role')
             .eq('id', user.id)
             .single();
 
         if (!profile?.organization_id) {
             return { error: 'Organización no encontrada' };
+        }
+
+        if (!['owner', 'admin'].includes(String(profile.role || ''))) {
+            return { error: 'No tienes permisos para cambiar el plan' };
         }
 
         // Update organization plan using Admin Client (bypassing RLS)

@@ -23,7 +23,7 @@ export const STATUS_COLUMNS = [
         gradient: "from-blue-500/10 to-indigo-500/10",
         border: "border-blue-500/20",
         text: "text-blue-600 dark:text-blue-400",
-        statuses: ["confirmed"],
+        statuses: ["confirmed", "preparing", "packed"],
     },
     {
         id: "preparing",
@@ -41,7 +41,7 @@ export const STATUS_COLUMNS = [
         gradient: "from-cyan-500/10 to-teal-500/10",
         border: "border-cyan-500/20",
         text: "text-cyan-600 dark:text-cyan-400",
-        statuses: ["ready", "assigned_to_route"],
+        statuses: ["ready", "assigned_to_route", "assigned"],
     },
     {
         id: "shipping",
@@ -50,7 +50,7 @@ export const STATUS_COLUMNS = [
         gradient: "from-indigo-500/10 to-purple-500/10",
         border: "border-indigo-500/20",
         text: "text-indigo-600 dark:text-indigo-400",
-        statuses: ["out_for_delivery"],
+        statuses: ["out_for_delivery", "in_delivery"],
     },
     {
         id: "delivered",

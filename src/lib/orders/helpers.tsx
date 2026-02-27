@@ -26,6 +26,13 @@ export const getUrgencyBadge = (createdAt: string, status: string): React.ReactE
             </Badge>
         );
     }
+    if ((status === "assigned" || status === "in_delivery") && minutesAgo > 45) {
+        return (
+            <Badge className="bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 text-[10px]">
+                Ruta activa
+            </Badge>
+        );
+    }
     return null;
 };
 
@@ -73,10 +80,31 @@ export const getStatusBadge = (status: string): React.ReactElement => {
             </Badge>
         );
     }
+    if (status === "assigned") {
+        return (
+            <Badge className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs">
+                Asignado
+            </Badge>
+        );
+    }
     if (status === "out_for_delivery") {
         return (
             <Badge className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs">
                 En Camino
+            </Badge>
+        );
+    }
+    if (status === "in_delivery") {
+        return (
+            <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs">
+                En Reparto
+            </Badge>
+        );
+    }
+    if (status === "not_delivered" || status === "cancelled") {
+        return (
+            <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 text-xs">
+                No Entregado
             </Badge>
         );
     }

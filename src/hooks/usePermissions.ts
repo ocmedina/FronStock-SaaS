@@ -23,10 +23,14 @@ interface UsePermissionsReturn {
  * Lee de la tabla organization_permissions si está disponible, sino usa defaults
  */
 export function usePermissions(): UsePermissionsReturn {
-    const { profile, permissions: orgPermissions } = useOrganization();
+    const { profile, permissions: orgPermissions, isLoading } = useOrganization();
     const role = (profile?.role as Role) || null;
 
     const can = (module: string, action: 'view' | 'create' | 'edit' | 'delete') => {
+        if (isLoading) {
+            return action === 'view';
+        }
+
         // Owner siempre tiene todos los permisos
         if (role === 'owner') return true;
         if (!role) return false;
@@ -46,8 +50,11 @@ export function usePermissions(): UsePermissionsReturn {
                 // Encontró el permiso en la DB, usar ese valor
                 return Boolean(perm[field]);
             }
-            // Si hay permisos en la org pero no para este rol/módulo, 
-            // probablemente todavía no se inicializó, usar defaults
+            // Si falta una fila puntual (rol+módulo) en una configuración parcial,
+            // usar defaults para evitar bloquear roles válidos (ej: admin).
+            const roleDefaults = defaultRolePermissions[role];
+            const moduleDefaults = roleDefaults?.[module] as PermissionActions | undefined;
+            return Boolean(moduleDefaults?.[action]);
         }
 
         // Fallback a permisos por defecto (solo si no hay permisos en DB)

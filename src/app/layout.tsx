@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AppearanceProvider } from "@/contexts/AppearanceContext";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionTimeout } from "@/components/auth/SessionTimeout";
 import { PWARegister } from "@/components/PWARegister";
@@ -39,10 +40,12 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
         <ThemeProvider>
-          <PWARegister />
-          <SessionTimeout timeoutInMinutes={60} />
-          {children}
-          <Toaster />
+          <AppearanceProvider>
+            <PWARegister />
+            <SessionTimeout timeoutInMinutes={60} />
+            {children}
+            <Toaster />
+          </AppearanceProvider>
         </ThemeProvider>
       </body>
     </html>

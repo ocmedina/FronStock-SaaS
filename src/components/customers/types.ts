@@ -10,6 +10,8 @@ export interface Customer {
     balance: number;
     customer_type: "retail" | "wholesale";
     service_type: "counter" | "delivery" | "both";
+    credit_limit?: number;
+    payment_terms?: string;
     created_at: string;
 }
 
@@ -36,6 +38,7 @@ export interface CustomerSale {
     total: number;
     payment_method: string;
     payment_status: string;
+    credit_due_date?: string | null;
     created_at: string;
     sale_items: SaleItem[];
 }

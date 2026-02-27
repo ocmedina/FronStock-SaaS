@@ -14,7 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { DollarSign } from "lucide-react";
+import { AlertTriangle, DollarSign } from "lucide-react";
 import { Customer, AccountMovement, CustomerSale } from "./types";
 import { useState } from "react";
 
@@ -36,6 +36,25 @@ export function CustomerHistoryModal({
     onRegisterPayment,
 }: CustomerHistoryModalProps) {
     const [activeTab, setActiveTab] = useState<"movements" | "sales">("movements");
+
+    const getDueStatus = (sale: CustomerSale) => {
+        if (sale.payment_status !== "pending" || !sale.credit_due_date) {
+            return null;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const dueDate = new Date(`${sale.credit_due_date}T00:00:00`);
+        const millisPerDay = 1000 * 60 * 60 * 24;
+        const daysDiff = Math.round((dueDate.getTime() - today.getTime()) / millisPerDay);
+
+        return {
+            dueDate,
+            daysDiff,
+            isOverdue: daysDiff < 0,
+        };
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -148,6 +167,7 @@ export function CustomerHistoryModal({
                                         <TableRow>
                                             <TableHead>Fecha</TableHead>
                                             <TableHead>Estado</TableHead>
+                                            <TableHead>Vencimiento</TableHead>
                                             <TableHead className="text-right">Total</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -155,14 +175,17 @@ export function CustomerHistoryModal({
                                         {sales.length === 0 ? (
                                             <TableRow>
                                                 <TableCell
-                                                    colSpan={3}
+                                                    colSpan={4}
                                                     className="text-center text-muted-foreground py-8"
                                                 >
                                                     No hay compras registradas
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
-                                            sales.map((sale) => (
+                                            sales.map((sale) => {
+                                                const dueStatus = getDueStatus(sale);
+
+                                                return (
                                                 <TableRow key={sale.id}>
                                                     <TableCell>
                                                         <div className="flex flex-col">
@@ -179,11 +202,39 @@ export function CustomerHistoryModal({
                                                             {sale.payment_status}
                                                         </Badge>
                                                     </TableCell>
+                                                    <TableCell>
+                                                        {sale.payment_status !== "pending" ? (
+                                                            <span className="text-xs text-muted-foreground">No aplica</span>
+                                                        ) : !dueStatus ? (
+                                                            <Badge variant="outline">Sin fecha</Badge>
+                                                        ) : dueStatus.isOverdue ? (
+                                                            <Badge
+                                                                variant="destructive"
+                                                                className="inline-flex items-center gap-1"
+                                                            >
+                                                                <AlertTriangle className="h-3 w-3" />
+                                                                Vencido {Math.abs(dueStatus.daysDiff)}d
+                                                            </Badge>
+                                                        ) : dueStatus.daysDiff === 0 ? (
+                                                            <Badge variant="outline" className="border-amber-500 text-amber-700">
+                                                                Vence hoy
+                                                            </Badge>
+                                                        ) : (
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-medium">
+                                                                    {dueStatus.dueDate.toLocaleDateString()}
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {dueStatus.daysDiff} días
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell className="text-right font-bold">
                                                         ${sale.total.toLocaleString()}
                                                     </TableCell>
                                                 </TableRow>
-                                            ))
+                                            )})
                                         )}
                                     </TableBody>
                                 </Table>

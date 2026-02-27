@@ -72,7 +72,7 @@ export function Cart({
                         <div
                             key={item.product.id}
                             className={cn(
-                                'flex items-center gap-3 p-3 rounded-lg',
+                                'flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-lg',
                                 'bg-muted/50 hover:bg-muted transition-colors',
                                 'border border-transparent hover:border-border',
                                 'group'
@@ -109,7 +109,7 @@ export function Cart({
                             </div>
 
                             {/* Item Total */}
-                            <p className="w-24 text-right font-bold text-primary">
+                            <p className="w-full sm:w-24 text-left sm:text-right font-bold text-primary">
                                 ${itemTotal.toLocaleString()}
                             </p>
 
@@ -117,7 +117,7 @@ export function Cart({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => onRemove(item.product.id)}
                             >
                                 <Trash2 className="h-4 w-4" />

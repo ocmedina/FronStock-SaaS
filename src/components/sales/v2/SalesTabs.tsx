@@ -25,21 +25,21 @@ export function SalesTabs({
     onTabAdd,
 }: SalesTabsProps) {
     return (
-        <div className="flex items-center gap-2 px-6 py-3 border-b border-border bg-muted/20">
+        <div className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 border-b border-border bg-muted/20">
             {/* Tabs */}
             <div className="flex items-center gap-1 flex-1 overflow-x-auto">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
                         className={cn(
-                            'group flex items-center gap-2 px-4 py-2 rounded-lg transition-colors cursor-pointer',
+                            'group flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors cursor-pointer',
                             activeTabId === tab.id
                                 ? 'bg-primary text-primary-foreground'
                                 : 'bg-background hover:bg-accent'
                         )}
                         onClick={() => onTabChange(tab.id)}
                     >
-                        <span className="text-sm font-medium whitespace-nowrap">{tab.name}</span>
+                        <span className="text-xs md:text-sm font-medium whitespace-nowrap">{tab.name}</span>
                         {tabs.length > 1 && (
                             <button
                                 onClick={(e) => {
@@ -47,7 +47,7 @@ export function SalesTabs({
                                     onTabClose(tab.id);
                                 }}
                                 className={cn(
-                                    'opacity-0 group-hover:opacity-100 transition-opacity',
+                                    'opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity',
                                     'hover:bg-destructive/20 rounded p-0.5'
                                 )}
                             >

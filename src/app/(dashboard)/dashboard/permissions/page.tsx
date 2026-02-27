@@ -17,7 +17,7 @@ import {
 } from '@/lib/permissions';
 import { Shield, ShieldAlert, BadgeCheck } from 'lucide-react';
 
-const ROLES: Role[] = ['admin', 'manager', 'employee', 'viewer'];
+const ROLES: Role[] = ['admin', 'manager', 'employee', 'delivery', 'viewer'];
 
 export default function PermissionsPage() {
     const { permissions, updatePermission, isLoading: orgLoading } = useOrganization();

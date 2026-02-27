@@ -42,6 +42,8 @@ import {
   Edit,
   Trash2,
   Route,
+  Copy,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,7 +54,10 @@ export default function RoutesManagementPage() {
 
   const [routes, setRoutes] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [ordersByRoute, setOrdersByRoute] = useState<Record<string, { total: number; delivered: number }>>({});
+  const [ordersPool, setOrdersPool] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sendingOrdersRouteId, setSendingOrdersRouteId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
 
@@ -79,13 +84,13 @@ export default function RoutesManagementPage() {
     if (!organizationId) return;
     setLoading(true);
 
-    const [routesRes, driversRes] = await Promise.all([
+    const [routesRes, driversRes, ordersRes] = await Promise.all([
       supabase
         .from("routes")
         .select(`
           *,
           driver:profiles!routes_driver_id_fkey(id, full_name),
-          route_stops(id, visit_status)
+          route_stops(id, visit_status, customer_id, order_id)
         `)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false }),
@@ -93,12 +98,32 @@ export default function RoutesManagementPage() {
         .from("profiles")
         .select("id, full_name, role")
         .eq("organization_id", organizationId)
-        .in("role", ["admin", "driver"])
+        .in("role", ["owner", "admin", "manager", "employee", "delivery"])
         .order("full_name"),
+      supabase
+        .from("orders")
+        .select("id, customer_id, assigned_route_id, lifecycle_status, delivery_status")
+        .eq("organization_id", organizationId),
     ]);
 
     if (routesRes.data) setRoutes(routesRes.data);
     if (driversRes.data) setDrivers(driversRes.data);
+    if (ordersRes.data) {
+      setOrdersPool(ordersRes.data || []);
+      const grouped = (ordersRes.data || []).reduce((acc: Record<string, { total: number; delivered: number }>, order: any) => {
+        const routeId = order.assigned_route_id;
+        if (!routeId) return acc;
+        const status = order.lifecycle_status || order.delivery_status;
+        if (!acc[routeId]) acc[routeId] = { total: 0, delivered: 0 };
+        acc[routeId].total += 1;
+        if (status === "delivered") acc[routeId].delivered += 1;
+        return acc;
+      }, {});
+      setOrdersByRoute(grouped);
+    } else {
+      setOrdersPool([]);
+      setOrdersByRoute({});
+    }
 
     setLoading(false);
   };
@@ -108,6 +133,11 @@ export default function RoutesManagementPage() {
   }, [organizationId]);
 
   const handleCreateRoute = async () => {
+    if (!canCreate("delivery")) {
+      toast.error("No tienes permisos para crear rutas");
+      return;
+    }
+
     if (!organizationId || !formData.name || !formData.visit_day) {
       toast.error("Completa los campos obligatorios");
       return;
@@ -116,16 +146,15 @@ export default function RoutesManagementPage() {
     setLoading(true);
 
     try {
-      // Llamar a la función RPC para crear ruta con clientes
-      const { data, error } = await supabase.rpc("create_route_from_customers", {
-        p_org_id: organizationId,
-        p_route_name: formData.name,
-        p_zone: formData.zone || null,
-        p_visit_day: parseInt(formData.visit_day),
-        p_driver_id: formData.driver_id && formData.driver_id !== "none" ? formData.driver_id : null,
+      const { createDeliveryRoute } = await import("@/actions/delivery");
+      const result = await createDeliveryRoute({
+        name: formData.name,
+        zone: formData.zone,
+        visit_day: parseInt(formData.visit_day),
+        driver_id: formData.driver_id && formData.driver_id !== "none" ? formData.driver_id : null,
       });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       toast.success("Ruta creada con clientes asignados");
       setShowModal(false);
@@ -139,12 +168,15 @@ export default function RoutesManagementPage() {
   };
 
   const handleStartRoute = async (routeId: string) => {
-    try {
-      const { error } = await supabase.rpc("start_route", {
-        p_route_id: routeId,
-      });
+    if (!canEdit("delivery")) {
+      toast.error("No tienes permisos para iniciar rutas");
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const { startDeliveryRoute } = await import("@/actions/delivery");
+      const result = await startDeliveryRoute(routeId);
+      if (result.error) throw new Error(result.error);
 
       toast.success("Ruta iniciada");
       fetchData();
@@ -154,12 +186,15 @@ export default function RoutesManagementPage() {
   };
 
   const handleCompleteRoute = async (routeId: string) => {
-    try {
-      const { error } = await supabase.rpc("complete_route", {
-        p_route_id: routeId,
-      });
+    if (!canEdit("delivery")) {
+      toast.error("No tienes permisos para completar rutas");
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      const { completeDeliveryRoute } = await import("@/actions/delivery");
+      const result = await completeDeliveryRoute(routeId);
+      if (result.error) throw new Error(result.error);
 
       toast.success("Ruta completada");
       fetchData();
@@ -169,17 +204,112 @@ export default function RoutesManagementPage() {
   };
 
   const handleDeleteRoute = async (routeId: string) => {
+    if (!canDelete("delivery")) {
+      toast.error("No tienes permisos para eliminar rutas");
+      return;
+    }
+
     if (!confirm("¿Eliminar esta ruta?")) return;
 
     try {
-      const { error } = await supabase.from("routes").delete().eq("id", routeId);
-
-      if (error) throw error;
+      const { deleteDeliveryRoute } = await import("@/actions/delivery");
+      const result = await deleteDeliveryRoute(routeId);
+      if (result.error) throw new Error(result.error);
 
       toast.success("Ruta eliminada");
       fetchData();
     } catch (error: any) {
       toast.error("Error: " + error.message);
+    }
+  };
+
+  const handleReuseRoute = async (route: any) => {
+    if (!canCreate("delivery")) {
+      toast.error("No tienes permisos para reutilizar rutas");
+      return;
+    }
+
+    try {
+      const { reuseDeliveryRoute } = await import("@/actions/delivery");
+      const result = await reuseDeliveryRoute({ routeId: route.id });
+      if (result.error) throw new Error(result.error);
+
+      toast.success("Ruta reutilizada y guardada como nueva");
+      fetchData();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    }
+  };
+
+  const getAssignableOrderIdsForRoute = (route: any) => {
+    const customerIds = new Set(
+      (route.route_stops || [])
+        .map((stop: any) => stop.customer_id)
+        .filter(Boolean)
+    );
+
+    if (customerIds.size === 0) return [] as string[];
+
+    return (ordersPool || [])
+      .filter((order: any) => {
+        if (!order?.id || !order?.customer_id) return false;
+        if (!customerIds.has(order.customer_id)) return false;
+        if (order.assigned_route_id) return false;
+
+        const lifecycle = (order.lifecycle_status || "").toLowerCase();
+        const delivery = (order.delivery_status || "").toLowerCase();
+
+        const terminalLifecycle = ["delivered", "cancelled", "not_delivered"].includes(lifecycle);
+        const terminalDelivery = ["delivered", "cancelled"].includes(delivery);
+        if (terminalLifecycle || terminalDelivery) return false;
+
+        const eligibleLifecycle = ["confirmed", "assigned"].includes(lifecycle);
+        const eligibleDelivery = ["confirmed", "preparing", "packed"].includes(delivery);
+        return eligibleLifecycle || eligibleDelivery;
+      })
+      .map((order: any) => order.id);
+  };
+
+  const handleSendOrdersToRoute = async (route: any) => {
+    if (!canEdit("delivery")) {
+      toast.error("No tienes permisos para asignar pedidos");
+      return;
+    }
+
+    const orderIds = getAssignableOrderIdsForRoute(route);
+    if (orderIds.length === 0) {
+      toast.message("No hay pedidos pendientes para los clientes de esta ruta");
+      return;
+    }
+
+    setSendingOrdersRouteId(route.id);
+    try {
+      let rpcResult = await supabase.rpc("assign_orders_to_route", {
+        p_org_id: organizationId,
+        p_order_ids: orderIds,
+        p_route_id: route.id,
+      });
+
+      if (rpcResult.error && /p_org_id|function assign_orders_to_route\(uuid\[\], uuid\)/i.test(rpcResult.error.message || "")) {
+        rpcResult = await supabase.rpc("assign_orders_to_route", {
+          p_order_ids: orderIds,
+          p_route_id: route.id,
+        });
+      }
+
+      const { data, error } = rpcResult;
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(`${data.assigned_count} pedido(s) enviado(s) a la ruta`);
+        fetchData();
+      } else {
+        toast.error(data?.error || "No se pudieron enviar pedidos a la ruta");
+      }
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setSendingOrdersRouteId(null);
     }
   };
 
@@ -209,6 +339,34 @@ export default function RoutesManagementPage() {
     );
   };
 
+  const getNextStep = (status: string) => {
+    if (status === "planned") {
+      return {
+        title: "Iniciar ruta",
+        description: "Empieza el recorrido para habilitar entregas.",
+      };
+    }
+
+    if (status === "in_progress") {
+      return {
+        title: "Completar ruta",
+        description: "Finaliza cuando termines todas las paradas.",
+      };
+    }
+
+    if (status === "completed") {
+      return {
+        title: "Ruta finalizada",
+        description: "No requiere acción.",
+      };
+    }
+
+    return {
+      title: "Revisar estado",
+      description: "Confirma si corresponde reactivar o rehacer.",
+    };
+  };
+
   // Stats
   const stats = {
     total: routes.length,
@@ -225,7 +383,7 @@ export default function RoutesManagementPage() {
           <h1 className="text-3xl font-bold tracking-tight">Gestión de Rutas</h1>
           <p className="text-muted-foreground mt-1">Planifica y asigna rutas de reparto</p>
         </div>
-        {canCreate("sales") && (
+        {canCreate("delivery") && (
           <Button
             onClick={() => {
               resetForm();
@@ -282,6 +440,42 @@ export default function RoutesManagementPage() {
         </Card>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Cómo funciona Rutas</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3 text-sm">
+            <div className="rounded-lg border p-3">
+              <p className="font-medium">1) Crea la ruta</p>
+              <p className="text-muted-foreground mt-1">
+                Define nombre, día, zona y repartidor opcional.
+              </p>
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="font-medium">2) Inicia el recorrido</p>
+              <p className="text-muted-foreground mt-1">
+                Al iniciar, el chofer ya puede trabajar paradas y pedidos.
+              </p>
+            </div>
+            <div className="rounded-lg border p-3">
+              <p className="font-medium">3) Completa al finalizar</p>
+              <p className="text-muted-foreground mt-1">
+                Cierra la ruta cuando termine la jornada de entregas.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Estados:</span>
+            {getStatusBadge("planned")}
+            {getStatusBadge("in_progress")}
+            {getStatusBadge("completed")}
+            {getStatusBadge("cancelled")}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Routes Table */}
       <Card>
         <Table>
@@ -292,19 +486,21 @@ export default function RoutesManagementPage() {
               <TableHead>Día</TableHead>
               <TableHead>Paradas</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Qué sigue</TableHead>
+              <TableHead>Más info</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={8} className="h-24 text-center">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
             ) : routes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   No hay rutas creadas. Crea tu primera ruta para comenzar.
                 </TableCell>
               </TableRow>
@@ -313,7 +509,16 @@ export default function RoutesManagementPage() {
                 const completedStops = route.route_stops?.filter(
                   (s: any) => s.visit_status === "visited"
                 ).length || 0;
+                const pendingStops = route.route_stops?.filter(
+                  (s: any) => s.visit_status === "pending"
+                ).length || 0;
+                const notCompletedStops = route.route_stops?.filter(
+                  (s: any) => ["not_home", "closed", "skipped"].includes(s.visit_status)
+                ).length || 0;
                 const totalStops = route.route_stops?.length || 0;
+                const routeOrders = ordersByRoute[route.id] || { total: 0, delivered: 0 };
+                const progressPct = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0;
+                const assignableOrderCount = getAssignableOrderIdsForRoute(route).length;
 
                 return (
                   <TableRow key={route.id}>
@@ -366,13 +571,79 @@ export default function RoutesManagementPage() {
                           </div>
                         )}
                       </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Pedidos: {routeOrders.delivered}/{routeOrders.total} entregados
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Pendientes para enviar: {assignableOrderCount}
+                      </div>
                     </TableCell>
 
                     <TableCell>{getStatusBadge(route.status)}</TableCell>
 
+                    <TableCell>
+                      <div className="min-w-[220px]">
+                        <p className="text-sm font-medium">{getNextStep(route.status).title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {getNextStep(route.status).description}
+                        </p>
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="min-w-[240px] space-y-1 text-xs">
+                        <div className="text-muted-foreground">
+                          Creada: {new Date(route.created_at).toLocaleDateString()}
+                        </div>
+                        <div className="text-muted-foreground">
+                          Progreso: <span className="font-medium text-foreground">{progressPct}%</span>
+                        </div>
+                        <div className="text-muted-foreground">
+                          Pendientes: {pendingStops} · Incidencias: {notCompletedStops}
+                        </div>
+                        {route.started_at && (
+                          <div className="text-muted-foreground">
+                            Inicio: {new Date(route.started_at).toLocaleString()}
+                          </div>
+                        )}
+                        {route.completed_at && (
+                          <div className="text-muted-foreground">
+                            Fin: {new Date(route.completed_at).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {route.status === "planned" && canEdit("sales") && (
+                        {canEdit("delivery") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendOrdersToRoute(route)}
+                            disabled={sendingOrdersRouteId === route.id || assignableOrderCount === 0}
+                            title="Enviar pedidos pendientes de los clientes de esta ruta"
+                          >
+                            {sendingOrdersRouteId === route.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4 mr-1" />
+                            )}
+                            Enviar pedidos
+                          </Button>
+                        )}
+                        {canCreate("delivery") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleReuseRoute(route)}
+                            title="Reutilizar esta ruta guardada"
+                          >
+                            <Copy className="h-4 w-4 mr-1" />
+                            Reutilizar
+                          </Button>
+                        )}
+                        {route.status === "planned" && canEdit("delivery") && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -382,7 +653,7 @@ export default function RoutesManagementPage() {
                             Iniciar
                           </Button>
                         )}
-                        {route.status === "in_progress" && canEdit("sales") && (
+                        {route.status === "in_progress" && canEdit("delivery") && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -392,7 +663,7 @@ export default function RoutesManagementPage() {
                             Completar
                           </Button>
                         )}
-                        {canDelete("sales") && route.status === "planned" && (
+                        {canDelete("delivery") && route.status === "planned" && (
                           <Button
                             size="sm"
                             variant="ghost"

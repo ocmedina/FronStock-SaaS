@@ -5,7 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useState, createContext, useContext, useEffect, useMemo } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAppearance } from '@/contexts/AppearanceContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { createClient } from '@/lib/supabase/client';
+import { resolveDashboardModuleFromPath } from '@/lib/route-permissions';
 import {
     LayoutDashboard,
     ShoppingCart,
@@ -71,6 +74,15 @@ const menuSections: MenuSection[] = [
         ],
     },
     {
+        title: 'Logística',
+        items: [
+            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
+            { href: '/dashboard/delivery/customers', label: 'Clientes', icon: Building2 },
+            { href: '/dashboard/delivery/routes', label: 'Rutas', icon: MapPin },
+            { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList },
+        ],
+    },
+    {
         title: 'Inventario',
         items: [
             { href: '/dashboard/products', label: 'Productos', icon: Package },
@@ -83,13 +95,13 @@ const menuSections: MenuSection[] = [
         items: [
             { href: '/dashboard/customers', label: 'Clientes', icon: Users },
             { href: '/dashboard/customers/debtors', label: 'Deudores', icon: CreditCard },
-            { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory },
         ],
     },
     {
         title: 'Compras',
         items: [
             { href: '/dashboard/purchases', label: 'Compras', icon: PackageOpen },
+            { href: '/dashboard/suppliers', label: 'Proveedores', icon: Factory },
         ],
     },
     {
@@ -104,15 +116,6 @@ const menuSections: MenuSection[] = [
             { href: '/dashboard/users', label: 'Usuarios', icon: UserCog },
             { href: '/dashboard/permissions', label: 'Permisos', icon: Shield },
             { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
-        ],
-    },
-    {
-        title: 'Logística',
-        items: [
-            { href: '/dashboard/orders', label: 'Pedidos', icon: Truck },
-            { href: '/dashboard/delivery/customers', label: 'Clientes', icon: Building2 },
-            { href: '/dashboard/delivery/routes', label: 'Rutas', icon: MapPin },
-            { href: '/dashboard/delivery/shifts', label: 'Cajas / Recorridos', icon: ClipboardList },
         ],
     },
 ];
@@ -133,8 +136,13 @@ const SidebarContext = createContext<{
 export const useSidebar = () => useContext(SidebarContext);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { sidebarDefaultCollapsed } = useAppearance();
+    const [isCollapsed, setIsCollapsed] = useState(sidebarDefaultCollapsed);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+    useEffect(() => {
+        setIsCollapsed(sidebarDefaultCollapsed);
+    }, [sidebarDefaultCollapsed]);
 
     return (
         <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }}>
@@ -162,7 +170,8 @@ export function MobileMenuButton() {
 export function Sidebar() {
     const pathname = usePathname();
     const { organization } = useOrganization();
-    const { theme, toggleTheme } = useTheme();
+    const { canView } = usePermissions();
+    const { resolvedTheme, toggleTheme } = useTheme();
     const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
     const supabase = useMemo(() => createClient(), []);
     const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -246,7 +255,17 @@ export function Sidebar() {
             {/* Navigation */}
             <nav className="flex-1 px-2 py-4 overflow-y-auto no-scrollbar">
                 <div className="space-y-4">
-                    {menuSections.map((section) => (
+                    {menuSections.map((section) => {
+                        const visibleItems = section.items.filter((item) => {
+                            const requiredModule = resolveDashboardModuleFromPath(item.href);
+                            return !requiredModule || canView(requiredModule);
+                        });
+
+                        if (visibleItems.length === 0) {
+                            return null;
+                        }
+
+                        return (
                         <div key={section.title}>
                             {/* Section Header */}
                             {(!isCollapsed || isMobileOpen) && (
@@ -259,7 +278,7 @@ export function Sidebar() {
                             )}
                             {/* Section Items */}
                             <ul className="space-y-0.5">
-                                {section.items.map((item) => {
+                                {visibleItems.map((item) => {
                                     const isActive = pathname === item.href ||
                                         (item.href !== '/dashboard' && pathname.startsWith(item.href));
                                     const Icon = item.icon;
@@ -302,7 +321,7 @@ export function Sidebar() {
                                 })}
                             </ul>
                         </div>
-                    ))}
+                    )})}
                 </div>
             </nav>
 
@@ -339,11 +358,11 @@ export function Sidebar() {
                                         onClick={toggleTheme}
                                         className="w-10 h-10 flex items-center justify-center text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-all"
                                     >
-                                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                                        {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="right" className="bg-sidebar-accent text-sidebar-foreground border-sidebar-border">
-                                    {theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+                                    {resolvedTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
                                 </TooltipContent>
                             </Tooltip>
                         ) : (
@@ -351,7 +370,7 @@ export function Sidebar() {
                                 onClick={toggleTheme}
                                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-all border border-transparent hover:border-sidebar-border"
                             >
-                                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                                {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                                 <span>Tema</span>
                             </button>
                         )}

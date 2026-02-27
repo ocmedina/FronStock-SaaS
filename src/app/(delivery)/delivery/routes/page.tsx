@@ -16,6 +16,13 @@ type RouteStop = {
     visit_status: 'pending' | 'visited' | 'not_home' | 'closed' | 'skipped';
     visited_at: string | null;
     sale_id: string | null;
+    order_id?: string | null;
+    order?: {
+        id: string;
+        total: number;
+        lifecycle_status?: string | null;
+        payment_status?: string | null;
+    } | null;
     customer: {
         id: string;
         name: string;
@@ -64,7 +71,7 @@ export default function RoutesPage() {
             setActiveRoute(route);
 
             // Cargar paradas de la ruta con datos del cliente
-            const { data: stops, error: stopsError } = await supabase
+            let stopsResult: any = await supabase
                 .from('route_stops')
                 .select(`
                     id,
@@ -72,6 +79,13 @@ export default function RoutesPage() {
                     visit_status,
                     visited_at,
                     sale_id,
+                    order_id,
+                    order:orders(
+                        id,
+                        total,
+                        lifecycle_status,
+                        payment_status
+                    ),
                     customer:customers(
                         id,
                         name,
@@ -85,9 +99,48 @@ export default function RoutesPage() {
                 .eq('route_id', route.id)
                 .order('stop_order', { ascending: true });
 
+            if (stopsResult.error) {
+                stopsResult = await supabase
+                    .from('route_stops')
+                    .select(`
+                        id,
+                        stop_order,
+                        visit_status,
+                        visited_at,
+                        sale_id,
+                        order_id,
+                        customer:customers(
+                            id,
+                            name,
+                            address,
+                            phone,
+                            business_type,
+                            balance,
+                            credit_limit
+                        )
+                    `)
+                    .eq('route_id', route.id)
+                    .order('stop_order', { ascending: true });
+            }
+
+            if (stopsResult.error) {
+                stopsResult = await supabase
+                    .from('route_stops')
+                    .select('id, stop_order, visit_status, visited_at, sale_id, order_id, customer_id')
+                    .eq('route_id', route.id)
+                    .order('stop_order', { ascending: true });
+            }
+
+            const { data: stops, error: stopsError } = stopsResult;
+
             if (stopsError) {
-                console.error("Error fetching stops:", stopsError);
+                console.error("Error fetching stops", {
+                    message: stopsError?.message || 'unknown',
+                    code: stopsError?.code || 'unknown',
+                    details: stopsError?.details || null,
+                });
                 toast.error("Error al cargar paradas");
+                setRouteStops([]);
             } else {
                 setRouteStops(stops as any || []);
             }
@@ -313,15 +366,34 @@ export default function RoutesPage() {
                                                 Ir
                                             </Button>
                                         )}
-                                        <Link 
-                                            href={`/delivery/sale?routeStopId=${stop.id}&customerId=${customer.id}`} 
-                                            className="flex-1"
-                                        >
-                                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0" size="sm">
-                                                <CheckCircle className="h-4 w-4 mr-2" />
-                                                Vender
-                                            </Button>
-                                        </Link>
+                                        {stop.order_id ? (
+                                            <Link
+                                                href={`/delivery/orders?orderId=${stop.order_id}`}
+                                                className="flex-1"
+                                            >
+                                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0" size="sm">
+                                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                                    Entregar Pedido
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href={`/delivery/sale?routeStopId=${stop.id}&customerId=${customer.id}`}
+                                                className="flex-1"
+                                            >
+                                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0" size="sm">
+                                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                                    Vender
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
+
+                                {stop.order_id && stop.order && (
+                                    <div className="mt-3 p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-xs text-indigo-300 flex items-center justify-between">
+                                        <span>Pedido asignado</span>
+                                        <span className="font-mono">${Number(stop.order.total || 0).toLocaleString()}</span>
                                     </div>
                                 )}
 

@@ -76,10 +76,20 @@ export function AssignToRouteModal({
 
         setAssigning(true);
         try {
-            const { data, error } = await supabase.rpc("assign_orders_to_route", {
+            let rpcResult = await supabase.rpc("assign_orders_to_route", {
+                p_org_id: organizationId,
                 p_order_ids: orderIds,
                 p_route_id: selectedRoute,
             });
+
+            if (rpcResult.error && /p_org_id|function assign_orders_to_route\(uuid\[\], uuid\)/i.test(rpcResult.error.message || "")) {
+                rpcResult = await supabase.rpc("assign_orders_to_route", {
+                    p_order_ids: orderIds,
+                    p_route_id: selectedRoute,
+                });
+            }
+
+            const { data, error } = rpcResult;
 
             if (error) throw error;
 

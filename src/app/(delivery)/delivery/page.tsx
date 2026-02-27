@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Truck, ShoppingCart, MapPin, User, LogOut, Clock, CheckCircle2, Package, ChefHat, Bike, AlertCircle } from "lucide-react";
+import { Truck, ShoppingCart, MapPin, User, LogOut, Clock, CheckCircle2, Package, AlertCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -12,28 +11,27 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
-import { DeliveryConfirmationModal } from "@/components/delivery/DeliveryConfirmationModal";
 import { toast } from "sonner";
 
 type DeliveryOrder = {
     id: string;
+    lifecycle_status?: string;
     customer: { name: string; address: string; phone: string } | null;
     total: number;
-    delivery_status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
-    payment_status: 'paid' | 'pending';
+    delivery_status: string;
+    payment_status: string;
     payment_method: string;
     created_at: string;
-    items_count?: number; // Calculated or joined
+    order_items?: { quantity: number; product_name: string }[];
 };
 
 export default function DeliveryHomePage() {
     const { profile, organization } = useOrganization();
     const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+    const [todayDelivered, setTodayDelivered] = useState({ count: 0, total: 0 });
     const [loading, setLoading] = useState(true);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
-    const [deliveryConfirmOpen, setDeliveryConfirmOpen] = useState(false);
-    const [orderToDeliver, setOrderToDeliver] = useState<any>(null);
     const supabase = createClient();
 
     const handleViewDetails = (id: string) => {
@@ -42,6 +40,7 @@ export default function DeliveryHomePage() {
     };
 
     const fetchOrders = async () => {
+        if (!organization?.id) return;
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -50,6 +49,7 @@ export default function DeliveryHomePage() {
                     id,
                     total,
                     status,
+                    lifecycle_status,
                     delivery_status,
                     payment_status,
                     payment_method,
@@ -57,23 +57,50 @@ export default function DeliveryHomePage() {
                     customer:customers(name, address, phone),
                     order_items(quantity, product_name)
                 `)
+                .eq('organization_id', organization.id)
                 .order('created_at', { ascending: false })
                 .limit(20);
+
+            if (error) throw error;
 
             if (data) {
                 setOrders(data as any[]);
             }
+
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const { data: todayData, error: todayError } = await supabase
+                .from('orders')
+                .select('total, lifecycle_status, delivery_status')
+                .eq('organization_id', organization.id)
+                .gte('created_at', startOfDay.toISOString())
+                .order('created_at', { ascending: false });
+
+            if (todayError) throw todayError;
+
+            const deliveredToday = (todayData || []).filter((order: any) => {
+                const status = order.lifecycle_status || order.delivery_status;
+                return status === 'delivered';
+            });
+
+            setTodayDelivered({
+                count: deliveredToday.length,
+                total: deliveredToday.reduce((acc: number, order: any) => acc + Number(order.total || 0), 0),
+            });
         } catch (e) {
             console.error("Error fetching orders", e);
+            setTodayDelivered({ count: 0, total: 0 });
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper to format item summary
-    const getOrderSummary = (items: any[]) => {
-        if (!items || items.length === 0) return "Sin items";
-        return items.map(i => `${i.quantity}x ${i.product_name}`).join(", ");
+    const getCurrentStatus = (order: DeliveryOrder) => {
+        if (order.lifecycle_status) return order.lifecycle_status;
+        if (order.delivery_status === "out_for_delivery") return "in_delivery";
+        if (order.delivery_status === "cancelled") return "not_delivered";
+        return order.delivery_status || "assigned";
     };
 
     useEffect(() => {
@@ -103,22 +130,24 @@ export default function DeliveryHomePage() {
 
     const StatusBadge = ({ status }: { status: string }) => {
         const styles: Record<string, string> = {
-            pending: "bg-amber-500/20 text-amber-500 border-amber-500/20",
-            confirmed: "bg-blue-500/20 text-blue-500 border-blue-500/20",
-            preparing: "bg-orange-500/20 text-orange-500 border-orange-500/20",
-            ready: "bg-emerald-500/20 text-emerald-500 border-emerald-500/20",
-            out_for_delivery: "bg-purple-500/20 text-purple-500 border-purple-500/20",
-            delivered: "bg-slate-800 text-slate-400 border-slate-700",
+            draft: "bg-slate-500/20 text-slate-300 border-slate-500/20",
+            confirmed: "bg-blue-500/20 text-blue-400 border-blue-500/20",
+            assigned: "bg-indigo-500/20 text-indigo-400 border-indigo-500/20",
+            in_delivery: "bg-purple-500/20 text-purple-400 border-purple-500/20",
+            delivered: "bg-emerald-500/20 text-emerald-400 border-emerald-500/20",
+            not_delivered: "bg-red-500/20 text-red-500 border-red-500/20",
+            rescheduled: "bg-yellow-500/20 text-yellow-400 border-yellow-500/20",
             cancelled: "bg-red-500/20 text-red-500 border-red-500/20",
         };
 
         const labels: Record<string, string> = {
-            pending: "Pendiente",
+            draft: "Borrador",
             confirmed: "Confirmado",
-            preparing: "En Preparación",
-            ready: "Listo para Enviar",
-            out_for_delivery: "En Camino",
+            assigned: "Asignado",
+            in_delivery: "En Reparto",
             delivered: "Entregado",
+            not_delivered: "No Entregado",
+            rescheduled: "Reprogramado",
             cancelled: "Cancelado",
         };
 
@@ -129,44 +158,17 @@ export default function DeliveryHomePage() {
         );
     };
 
-    // Grouping Logic
-    const groupedOrders = orders.reduce((acc, order) => {
-        const customerId = (order as any).customer_id || 'guest';
-        const customerName = order.customer?.name || 'Cliente Mostrador';
-
-        if (!acc[customerId]) {
-            acc[customerId] = {
-                customerId,
-                customerName,
-                customerAddress: order.customer?.address || 'Retira en local',
-                customerPhone: order.customer?.phone || '',
-                orders: [],
-                totalAmount: 0,
-                lastCreatedAt: order.created_at
-            };
-        }
-
-        acc[customerId].orders.push(order);
-        acc[customerId].totalAmount += order.total;
-        if (new Date(order.created_at) > new Date(acc[customerId].lastCreatedAt)) {
-            acc[customerId].lastCreatedAt = order.created_at;
-        }
-
-        return acc;
-    }, {} as Record<string, any>);
-
-    const sortedGroups = Object.values(groupedOrders).sort((a: any, b: any) =>
-        new Date(b.lastCreatedAt).getTime() - new Date(a.lastCreatedAt).getTime()
-    );
-
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ delivery_status: newStatus })
-                .eq('id', orderId);
+            const { data, error } = await supabase.rpc("set_order_status", {
+                p_org_id: organization?.id,
+                p_order_id: orderId,
+                p_new_status: newStatus,
+                p_notes: "Actualizado desde centro operativo",
+            });
 
             if (error) throw error;
+            if (data?.success === false) throw new Error(data?.error || "No se pudo actualizar estado");
             toast.success("Estado actualizado");
             fetchOrders();
         } catch (e: any) {
@@ -174,10 +176,17 @@ export default function DeliveryHomePage() {
         }
     };
 
-    const handleDeliverGroup = (groupOrders: DeliveryOrder[]) => {
-        setOrderToDeliver(groupOrders);
-        setDeliveryConfirmOpen(true);
-    }
+    const actionableOrders = orders
+        .filter((order) => ["confirmed", "assigned", "in_delivery", "rescheduled"].includes(getCurrentStatus(order)))
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .slice(0, 8);
+
+    const kpis = {
+        toAssign: orders.filter((o) => getCurrentStatus(o) === "confirmed").length,
+        inRoute: orders.filter((o) => getCurrentStatus(o) === "in_delivery").length,
+        delivered: orders.filter((o) => getCurrentStatus(o) === "delivered").length,
+        pendingPayment: orders.filter((o) => o.payment_status === "pending" || o.payment_status === "partial").length,
+    };
 
     return (
         <div className="min-h-screen bg-slate-950 pb-20">
@@ -186,20 +195,14 @@ export default function DeliveryHomePage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                            Logística
+                            Centro de Operaciones
                         </h1>
                         <p className="text-xs text-slate-400 font-medium">
-                            {organization?.name || 'Panel de Reparto'}
+                            {organization?.name || 'Panel de Reparto'} • Preventa + Entrega
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
                         <ShiftControl />
-                        <Link href="/delivery/order">
-                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20 rounded-full pr-4">
-                                <ShoppingCart className="h-4 w-4 mr-1" />
-                                Nuevo
-                            </Button>
-                        </Link>
                         <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
                             <span className="font-bold text-xs text-emerald-400">
                                 {profile?.full_name?.substring(0, 2).toUpperCase() || 'OP'}
@@ -209,179 +212,134 @@ export default function DeliveryHomePage() {
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="flex gap-2 px-4 mt-4 overflow-x-auto no-scrollbar pb-1">
-                <div className="flex-1 min-w-[100px] bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                        <ChefHat className="h-4 w-4" />
-                    </div>
-                    <div>
-                        <span className="block text-lg font-bold text-white leading-none">
-                            {orders.filter(o => ['pending', 'confirmed', 'preparing'].includes(o.delivery_status || 'pending')).length}
-                        </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wide">Cocina</span>
-                    </div>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-3 gap-2 px-4 mt-4">
+                <Link href="/delivery/order">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white h-11">
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Tomar Pedido
+                    </Button>
+                </Link>
+                <Link href="/delivery/routes">
+                    <Button variant="outline" className="w-full border-slate-700 text-slate-200 h-11">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Mi Ruta
+                    </Button>
+                </Link>
+                <Link href="/delivery/orders">
+                    <Button variant="outline" className="w-full border-slate-700 text-slate-200 h-11">
+                        <Truck className="h-4 w-4 mr-2" />
+                        Entregas
+                    </Button>
+                </Link>
+            </div>
+
+            {/* KPI */}
+            <div className="grid grid-cols-2 gap-3 px-4 mt-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 uppercase">Para asignar</p>
+                    <p className="text-2xl font-bold text-blue-400">{kpis.toAssign}</p>
                 </div>
-                <div className="flex-1 min-w-[100px] bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
-                        <Truck className="h-4 w-4" />
-                    </div>
-                    <div>
-                        <span className="block text-lg font-bold text-white leading-none">
-                            {orders.filter(o => o.delivery_status === 'out_for_delivery').length}
-                        </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wide">Ruta</span>
-                    </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 uppercase">En reparto</p>
+                    <p className="text-2xl font-bold text-purple-400">{kpis.inRoute}</p>
                 </div>
-                <div className="flex-1 min-w-[100px] bg-slate-900/50 border border-slate-800 rounded-xl p-2.5 flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                        <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <div>
-                        <span className="block text-lg font-bold text-white leading-none">
-                            {orders.filter(o => o.delivery_status === 'delivered').length}
-                        </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wide">Ok</span>
-                    </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 uppercase">Entregados</p>
+                    <p className="text-2xl font-bold text-emerald-400">{kpis.delivered}</p>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-3">
+                    <p className="text-xs text-slate-500 uppercase">Con deuda</p>
+                    <p className="text-2xl font-bold text-red-400">{kpis.pendingPayment}</p>
                 </div>
             </div>
 
-            {/* Quick Access - My Route */}
-            <div className="px-4 mt-4">
-                <Link href="/delivery/routes">
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl p-4 flex items-center justify-between shadow-lg shadow-blue-900/30 hover:shadow-blue-900/50 transition-all hover:scale-[1.02]">
-                        <div className="flex items-center gap-3">
-                            <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                                <MapPin className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-white text-lg">Mi Ruta de Hoy</h3>
-                                <p className="text-xs text-blue-100">Ver clientes y realizar ventas</p>
-                            </div>
+            <div className="px-4 mt-3">
+                <Link href="/delivery/history">
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs uppercase text-slate-500">Entregas de hoy</p>
+                            <p className="text-lg font-bold text-emerald-400">{todayDelivered.count} entregas</p>
+                            <p className="text-xs text-slate-400">Total: ${todayDelivered.total.toLocaleString()}</p>
                         </div>
-                        <div className="text-white">
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </div>
+                        <span className="text-xs text-emerald-400 font-medium">Ver realizadas</span>
                     </div>
                 </Link>
             </div>
 
-            {/* Orders List (Grouped) */}
+            {/* Action Queue */}
             <div className="p-4 space-y-4">
-                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Pedidos Activos</h2>
+                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Cola Operativa</h2>
 
-                {sortedGroups.length === 0 && !loading && (
+                {actionableOrders.length === 0 && !loading && (
                     <div className="text-center py-10">
                         <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 mb-4">
                             <Package className="h-8 w-8 text-slate-600" />
                         </div>
-                        <h3 className="text-slate-200 font-medium">Sin pedidos activos</h3>
-                        <p className="text-slate-500 text-sm mt-1">Comienza registrando una nueva orden</p>
+                        <h3 className="text-slate-200 font-medium">Sin tareas pendientes</h3>
+                        <p className="text-slate-500 text-sm mt-1">La operación del día está al día</p>
                     </div>
                 )}
 
-                {sortedGroups.map((group: any) => (
-                    <div key={group.customerId} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        {/* Group Header */}
-                        <div className="p-4 bg-slate-900/50 border-b border-slate-800 flex justify-between items-start">
-                            <div className="flex items-start gap-3">
-                                <div className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
-                                    <User className="h-5 w-5" />
-                                </div>
+                {actionableOrders.map((order) => {
+                    const status = getCurrentStatus(order);
+                    return (
+                        <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                            <div className="flex items-start justify-between gap-3 mb-3">
                                 <div>
-                                    <h3 className="font-bold text-base text-white leading-tight">
-                                        {group.customerName}
-                                    </h3>
-                                    <div className="flex items-center gap-1.5 mt-1 text-slate-400 text-xs">
-                                        <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
-                                        <span>{group.customerAddress}</span>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-bold text-white">{order.customer?.name || "Cliente"}</p>
+                                        <StatusBadge status={status} />
                                     </div>
-                                    <div className="mt-1">
-                                        <Badge variant="outline" className="text-[10px] h-5 border-slate-700 text-slate-400">
-                                            {group.orders.length} pedidos
-                                        </Badge>
-                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                        <MapPin className="h-3 w-3" />
+                                        {order.customer?.address || "Sin dirección"}
+                                    </p>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                        {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}
+                                    </p>
                                 </div>
+                                <p className="font-mono text-lg font-bold text-emerald-400">
+                                    ${order.total.toLocaleString()}
+                                </p>
                             </div>
-                            <div className="text-right">
-                                <span className="block text-2xl font-mono font-bold text-emerald-400">
-                                    ${group.totalAmount.toLocaleString()}
-                                </span>
-                                <span className="text-[10px] text-slate-500 uppercase">Total Acumulado</span>
-                            </div>
-                        </div>
 
-                        {/* Orders in Group */}
-                        <div className="flex flex-col gap-2 p-2 bg-slate-950/20">
-                            {group.orders.map((order: any, index: number) => (
-                                <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors relative overflow-hidden group/item">
-                                    {/* Numbering Badge */}
-                                    <div className="absolute top-0 right-0 bg-slate-800 text-[10px] text-slate-400 px-2 py-0.5 rounded-bl-lg font-mono border-b border-l border-slate-700">
-                                        #{group.orders.length - index}
-                                    </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <Package className="h-3.5 w-3.5" />
+                                    <span>{order.order_items?.length || 0} ítems</span>
+                                    <Wallet className="h-3.5 w-3.5 ml-2" />
+                                    <span>{order.payment_status === "paid" ? "Pagado" : "Pendiente"}</span>
+                                </div>
 
-                                    <div className="flex justify-between items-start mb-2 pr-8">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`text-xs font-bold ${order.delivery_status === 'delivered' ? 'text-slate-500' : 'text-emerald-400'}`}>
-                                                    Pedido #{order.id.slice(0, 4)}
-                                                </span>
-                                                <StatusBadge status={order.delivery_status || 'pending'} />
-                                            </div>
-                                            <span className="text-[10px] text-slate-500">
-                                                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: es })}
-                                            </span>
-                                        </div>
-                                        <span className="font-mono font-medium text-white">
-                                            ${order.total.toLocaleString()}
-                                        </span>
-                                    </div>
-
-                                    {/* Item Summary */}
-                                    <div className="mb-3 text-xs text-slate-300 bg-slate-950/50 p-2 rounded border border-slate-800/50">
-                                        {getOrderSummary(order.order_items)}
-                                    </div>
-
-                                    <div className="flex items-center gap-2 justify-end">
-                                        {/* Individual Quick Actions */}
-                                        {(order.delivery_status === 'pending' || !order.delivery_status) && (
-                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-orange-500 hover:bg-orange-500/10 hover:text-orange-400" onClick={() => handleUpdateStatus(order.id, 'preparing')}>
-                                                <ChefHat className="h-3 w-3 mr-1" /> Cocina
-                                            </Button>
-                                        )}
-                                        {order.delivery_status === 'preparing' && (
-                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400" onClick={() => handleUpdateStatus(order.id, 'ready')}>
-                                                <CheckCircle2 className="h-3 w-3 mr-1" /> Listo
-                                            </Button>
-                                        )}
-                                        {order.delivery_status === 'ready' && (
-                                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-purple-500 hover:bg-purple-500/10 hover:text-purple-400" onClick={() => handleUpdateStatus(order.id, 'out_for_delivery')}>
-                                                <Truck className="h-3 w-3 mr-1" /> Enviar
-                                            </Button>
-                                        )}
-
-                                        <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-500 hover:text-white" onClick={() => handleViewDetails(order.id)}>
-                                            <Package className="h-3.5 w-3.5" />
+                                <div className="flex items-center gap-2">
+                                    {(status === "confirmed" || status === "assigned" || status === "rescheduled") && (
+                                        <Button
+                                            size="sm"
+                                            className="h-8 bg-purple-600 hover:bg-purple-500 text-white"
+                                            onClick={() => handleUpdateStatus(order.id, "in_delivery")}
+                                        >
+                                            Iniciar
                                         </Button>
-                                    </div>
+                                    )}
+                                    {status === "in_delivery" && (
+                                        <Link href={`/delivery/orders?orderId=${order.id}`}>
+                                            <Button
+                                                size="sm"
+                                                className="h-8 bg-emerald-600 hover:bg-emerald-500 text-white"
+                                            >
+                                                Entregar
+                                            </Button>
+                                        </Link>
+                                    )}
+                                    <Button size="sm" variant="outline" className="h-8 border-slate-700 text-slate-200" onClick={() => handleViewDetails(order.id)}>
+                                        Ver
+                                    </Button>
                                 </div>
-                            ))}
+                            </div>
                         </div>
-
-                        {/* Group Actions Footer */}
-                        <div className="p-3 bg-slate-950/30 border-t border-slate-800 flex gap-2">
-                            <Button
-                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white h-10"
-                                onClick={() => handleDeliverGroup(group.orders)}
-                            >
-                                <CheckCircle2 className="h-4 w-4 mr-2" />
-                                Entregar / Cobrar ({group.orders.length})
-                            </Button>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Bottom Nav */}
@@ -409,12 +367,6 @@ export default function DeliveryHomePage() {
                 orderId={selectedOrderId}
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
-            />
-
-            <DeliveryConfirmationModal
-                orders={Array.isArray(orderToDeliver) ? orderToDeliver : (orderToDeliver ? [orderToDeliver] : [])}
-                open={deliveryConfirmOpen}
-                onOpenChange={setDeliveryConfirmOpen}
                 onSuccess={fetchOrders}
             />
         </div>

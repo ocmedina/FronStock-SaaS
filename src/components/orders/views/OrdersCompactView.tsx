@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { getOrderStatus } from "@/lib/orders/filters";
 
 interface OrdersCompactViewProps {
     orders: any[];
@@ -31,7 +32,14 @@ export function OrdersCompactView({
                                 #{order.id.slice(0, 8)}
                             </p>
                         </div>
-                        {getServiceTypeBadge(order.service_type)}
+                        <div className="flex flex-col items-end gap-1">
+                            {getServiceTypeBadge(order.service_type)}
+                            {order.is_offline_pending && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                    Pendiente offline
+                                </Badge>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-2 mb-3">
@@ -44,7 +52,7 @@ export function OrdersCompactView({
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground">Estado:</span>
                             <Badge className="text-[10px]">
-                                {order.delivery_status === "delivered"
+                                {getOrderStatus(order) === "delivered"
                                     ? "Completado"
                                     : "En proceso"}
                             </Badge>

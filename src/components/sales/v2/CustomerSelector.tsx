@@ -69,12 +69,12 @@ export function CustomerSelector({
                 {/* Customer Info Badge */}
                 {selectedCustomer?.business_type && (
                     <div className="flex items-center gap-2 text-sm">
-                        {selectedCustomerBalance < 0 ? (
+                        {selectedCustomerBalance > 0 ? (
                             <Badge variant="destructive" className="gap-1">
                                 <AlertTriangle className="h-3 w-3" />
                                 Debe ${Math.abs(selectedCustomerBalance).toLocaleString()}
                             </Badge>
-                        ) : selectedCustomerBalance > 0 ? (
+                        ) : selectedCustomerBalance < 0 ? (
                             <Badge variant="secondary" className="gap-1">
                                 A favor ${selectedCustomerBalance.toLocaleString()}
                             </Badge>
@@ -132,8 +132,11 @@ export function CustomerSelector({
                         {/* Filtered Customers */}
                         {filteredCustomers.length > 0 ? (
                             filteredCustomers.map((customer) => {
-                                const hasDebt = (customer.balance || 0) < 0;
-                                const availableCredit = (customer.credit_limit || 0) + (customer.balance || 0);
+                                const hasDebt = (customer.balance || 0) > 0;
+                                const creditLimit = Number(customer.credit_limit || 0);
+                                const availableCredit = creditLimit > 0
+                                    ? creditLimit - Number(customer.balance || 0)
+                                    : null;
                                 
                                 return (
                                     <button
@@ -174,7 +177,7 @@ export function CustomerSelector({
                                                 )}
                                                 {(customer.credit_limit || 0) > 0 && (
                                                     <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded">
-                                                        💳 ${availableCredit.toLocaleString()}
+                                                        💳 ${Math.max(0, Number(availableCredit || 0)).toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>
