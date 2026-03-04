@@ -27,6 +27,7 @@ export function CustomersView({
     const { organizationId, isLoading: orgLoading } = useOrganization();
     const { canCreate, canEdit, canDelete } = usePermissions();
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [pendingOrdersDebtByCustomer, setPendingOrdersDebtByCustomer] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     // UI States
@@ -65,9 +66,90 @@ export function CustomersView({
             console.error("Error fetching customers:", error);
         } else {
             setCustomers(data || []);
+
+            const { data: pendingOrders, error: ordersError } = await supabase
+                .from('orders')
+                .select('id, customer_id, total, payment_amount, payment_status, payment_method, delivery_status, lifecycle_status')
+                .eq('organization_id', organizationId)
+                .in('payment_status', ['pending', 'partial']);
+
+            if (ordersError) {
+                console.error("Error fetching pending orders debt:", ordersError);
+                setPendingOrdersDebtByCustomer({});
+            } else {
+                const orderIds = (pendingOrders || []).map((o: any) => o.id);
+                const paidByOrder = new Map<string, number>();
+
+                if (orderIds.length > 0) {
+                    const { data: payments, error: paymentsError } = await supabase
+                        .from('order_payments')
+                        .select('order_id, amount')
+                        .eq('organization_id', organizationId)
+                        .in('order_id', orderIds);
+
+                    if (paymentsError) {
+                        console.error("Error fetching order payments:", paymentsError);
+                    } else {
+                        (payments || []).forEach((payment: any) => {
+                            paidByOrder.set(
+                                payment.order_id,
+                                (paidByOrder.get(payment.order_id) || 0) + Number(payment.amount || 0)
+                            );
+                        });
+                    }
+                }
+
+                const creditMethods = new Set(['credit', 'current_account', 'cuenta_corriente', 'fiado']);
+                const excludedDeliveryStatus = new Set(['cancelled', 'not_delivered', 'returned']);
+
+                const getNormalizedOrderStatus = (order: any) => {
+                    const lifecycle = String(order.lifecycle_status || '').toLowerCase();
+                    if (lifecycle) return lifecycle;
+
+                    const legacy = String(order.delivery_status || '').toLowerCase();
+                    if (legacy === 'out_for_delivery') return 'in_delivery';
+                    if (legacy === 'assigned_to_route') return 'assigned';
+                    if (legacy === 'cancelled') return 'not_delivered';
+                    return legacy || 'draft';
+                };
+
+                const debtMap: Record<string, number> = {};
+                (pendingOrders || []).forEach((order: any) => {
+                    if (!order.customer_id) return;
+                    const normalizedMethod = String(order.payment_method || '').toLowerCase();
+                    const normalizedDeliveryStatus = String(order.delivery_status || '').toLowerCase();
+                    const normalizedOrderStatus = getNormalizedOrderStatus(order);
+                    if (excludedDeliveryStatus.has(normalizedDeliveryStatus) || normalizedOrderStatus === 'not_delivered' || normalizedOrderStatus === 'cancelled') return;
+
+                    const isCreditOrder = creditMethods.has(normalizedMethod);
+                    const isDeliveredWithPendingPayment = normalizedOrderStatus === 'delivered';
+                    if (!isCreditOrder && !isDeliveredWithPendingPayment) return;
+
+                    const total = Number(order.total || 0);
+                    const paidFromMovements = paidByOrder.get(order.id) || 0;
+                    const paidFromOrder = Number(order.payment_amount || 0);
+                    const paid = Math.max(paidFromMovements, paidFromOrder);
+                    const pending = Math.max(0, total - paid);
+                    if (pending <= 0) return;
+                    debtMap[order.customer_id] = (debtMap[order.customer_id] || 0) + pending;
+                });
+
+                setPendingOrdersDebtByCustomer(debtMap);
+            }
         }
         setIsLoading(false);
     }, [organizationId, supabase]);
+
+    const customersWithEffectiveDebt = useMemo(() => {
+        return customers.map((customer) => {
+            const pendingOrdersDebt = pendingOrdersDebtByCustomer[customer.id] || 0;
+            const effectiveBalance = customer.balance > 0 ? customer.balance : pendingOrdersDebt;
+            return {
+                ...customer,
+                balance: effectiveBalance,
+            };
+        });
+    }, [customers, pendingOrdersDebtByCustomer]);
 
     useEffect(() => {
         if (organizationId) {
@@ -84,7 +166,7 @@ export function CustomersView({
     }, [searchQuery, showDebtorsOnly, selectedChannel]);
 
     // Filter Logic
-    const filteredCustomers = customers.filter((c) => {
+    const filteredCustomers = customersWithEffectiveDebt.filter((c) => {
         const matchesSearch =
             c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -109,11 +191,11 @@ export function CustomersView({
     // Stats Logic
     const stats = useMemo(() => {
         return {
-            totalDebt: customers.reduce((acc, c) => acc + (c.balance > 0 ? c.balance : 0), 0),
-            customersWithDebt: customers.filter((c) => c.balance > 0).length,
-            totalCustomers: customers.length
+            totalDebt: customersWithEffectiveDebt.reduce((acc, c) => acc + (c.balance > 0 ? c.balance : 0), 0),
+            customersWithDebt: customersWithEffectiveDebt.filter((c) => c.balance > 0).length,
+            totalCustomers: customersWithEffectiveDebt.length
         };
-    }, [customers]);
+    }, [customersWithEffectiveDebt]);
 
     // Actions
     const handleSave = async (formData: any) => {

@@ -2,7 +2,7 @@
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
-import { DeliveryNotePDF } from "@/components/sales/DeliveryNotePDF";
+import { OrderRemito80PDF } from "@/components/orders/OrderRemito80PDF";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface DownloadRemitoButtonProps {
@@ -14,12 +14,12 @@ interface DownloadRemitoButtonProps {
 export function DownloadRemitoButton({ order, className, compact }: DownloadRemitoButtonProps) {
     const { organization } = useOrganization();
 
-    // Map order to Sale/Items structure expected by DeliveryNotePDF
-    const saleData = {
+    const orderData = {
         id: order.id,
         created_at: order.created_at,
         customer: order.customer,
-        total: order.total
+        total: order.total,
+        payment_method: order.payment_method,
     };
 
     const itemsData = order.order_items || [];
@@ -28,8 +28,8 @@ export function DownloadRemitoButton({ order, className, compact }: DownloadRemi
         <div className={className}>
             <PDFDownloadLink
                 document={
-                    <DeliveryNotePDF
-                        sale={saleData}
+                    <OrderRemito80PDF
+                        order={orderData}
                         items={itemsData}
                         organization={organization}
                     />

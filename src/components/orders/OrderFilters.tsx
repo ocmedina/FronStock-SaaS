@@ -22,7 +22,7 @@ export function OrderFilters({
 }: OrderFiltersProps) {
     return (
         <Card className="bg-card border p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -32,7 +32,8 @@ export function OrderFilters({
                         className="pl-10"
                     />
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                    <span className="text-xs text-muted-foreground">Tipo de servicio</span>
                     <Button
                         variant={serviceTypeFilter === "all" ? "default" : "outline"}
                         size="sm"
@@ -70,8 +71,8 @@ export function OrderFilters({
                         🚚 Reparto
                     </Button>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                    <span className="w-full text-xs text-muted-foreground mb-1">Rango de fechas</span>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                    <span className="text-xs text-muted-foreground">Rango de fechas</span>
                     <Button
                         variant={dateFilter === "today" ? "default" : "outline"}
                         size="sm"

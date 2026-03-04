@@ -122,9 +122,9 @@ export function OrganizationSettingsForm() {
 
     return (
         <form onSubmit={handleSave} className="space-y-6">
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                 <div className="relative group">
-                    <div className="h-24 w-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                    <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                         {formData.logo_url ? (
                             <img src={formData.logo_url} alt="Logo" className="h-full w-full object-cover" />
                         ) : (
@@ -144,7 +144,7 @@ export function OrganizationSettingsForm() {
                 </div>
                 <div>
                     <h3 className="font-medium">Logo de la Empresa</h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                         Se mostrará en tus facturas y presupuestos. <br />
                         Recomendado: PNG o JPG cuadrarado.
                     </p>
@@ -247,7 +247,7 @@ export function OrganizationSettingsForm() {
             </div>
 
             <div className="flex justify-end pt-4 border-t">
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                     {isLoading ? 'Guardando...' : 'Guardar Datos de Empresa'}
                 </Button>

@@ -272,9 +272,9 @@ export default function ProductsPage() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h1>
           <p className="text-muted-foreground">Gestión de productos, combos y stock.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           {canCreate("products") && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <Button
                 variant="outline"
                 onClick={() => setShowImportModal(true)}
@@ -283,11 +283,19 @@ export default function ProductsPage() {
                 <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar
               </Button>
               <Button
+                variant="outline"
+                onClick={() => setShowImportModal(true)}
+                className="sm:hidden"
+                size="icon"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+              </Button>
+              <Button
                 onClick={() => {
                   setEditingProduct(null);
                   setShowModal(true);
                 }}
-                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all flex-1 md:flex-none"
               >
                 <Plus className="mr-2 h-4 w-4" /> Nuevo Producto
               </Button>

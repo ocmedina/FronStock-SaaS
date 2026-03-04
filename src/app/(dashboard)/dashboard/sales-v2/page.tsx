@@ -16,6 +16,7 @@ import {
 import { POSProductModal } from "@/components/sales/POSProductModal";
 import { useSuspendedSales } from "@/hooks/useSuspendedSales";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { ensureOpenCashSession } from "@/lib/cash-session";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPageV2() {
@@ -171,6 +172,11 @@ export default function POSPageV2() {
         setIsProcessing(true);
 
         try {
+            const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+            if (!hasOpenSession) {
+                return;
+            }
+
             const items = cart.map((item) => ({
                 product_id: item.product.id,
                 product_name: item.product.name || "Sin nombre",

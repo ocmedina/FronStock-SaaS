@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { ensureOpenCashSession } from "@/lib/cash-session";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 
@@ -65,6 +66,11 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
                 p_payment_amount: paymentAmount ? Number(paymentAmount) : null,
                 p_client_reference: clientReference,
             };
+
+            const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+            if (!hasOpenSession) {
+                return;
+            }
 
             let { data, error } = await supabase.rpc('create_order', payload);
 

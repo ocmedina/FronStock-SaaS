@@ -21,6 +21,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineSales } from "@/hooks/useOfflineSales";
 import { offlineDB } from "@/lib/offline/db";
+import { ensureOpenCashSession } from "@/lib/cash-session";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
@@ -344,6 +345,11 @@ export default function POSPage() {
       const customer = customers.find(c => c.id === selectedCustomerId);
 
       if (isOnline) {
+        const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+        if (!hasOpenSession) {
+          return;
+        }
+
         // ONLINE: Process sale via Supabase
         const { data, error } = await supabase.rpc("process_sale", {
           p_org_id: organizationId,
@@ -519,9 +525,9 @@ export default function POSPage() {
     <div className="flex flex-col min-h-[100dvh] lg:h-[100vh] -m-3 md:-m-6 bg-background">
       {/* Header */}
       <div className="h-14 md:h-16 border-b border-border bg-background px-3 md:px-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg md:text-2xl font-bold">🏪 FrontStock POS</h1>
-          <span className="text-xs md:text-sm text-muted-foreground">v2.0</span>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <h1 className="text-base sm:text-lg md:text-2xl font-bold truncate">🏪 FrontStock POS</h1>
+          <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground shrink-0">v2.0</span>
         </div>
       </div>
 
@@ -557,7 +563,7 @@ export default function POSPage() {
         </div>
 
         {/* Right Column - Payment Panel Only */}
-        <div className="w-full lg:w-[480px] flex flex-col lg:min-h-0">
+        <div className="w-full lg:w-[440px] xl:w-[480px] flex flex-col lg:min-h-0">
           <PaymentPanel
             customers={customers}
             suppliers={suppliers}

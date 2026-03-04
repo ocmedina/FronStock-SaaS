@@ -26,8 +26,8 @@ export function ProductFilters({
     onClearSelection,
 }: ProductFiltersProps) {
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card/50 p-3 rounded-xl border">
-            <div className="relative w-full max-w-md">
+        <div className="flex flex-col gap-3 bg-card/50 p-3 rounded-xl border">
+            <div className="relative w-full max-w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Buscar por nombre, SKU o código..."
@@ -37,9 +37,9 @@ export function ProductFilters({
                 />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:justify-between">
                 {selectedCount > 0 && (
-                    <div className="flex items-center gap-2 mr-2 animate-in fade-in slide-in-from-right-5 duration-200">
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-5 duration-200 flex-wrap">
                         <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">
                             {selectedCount} seleccionados
                         </span>
@@ -52,11 +52,11 @@ export function ProductFilters({
                         <Button variant="ghost" size="icon-sm" onClick={onClearSelection} title="Cancelar selección">
                             <X className="h-4 w-4" />
                         </Button>
-                        <div className="h-4 w-px bg-border mx-1" />
+                        <div className="hidden sm:block h-4 w-px bg-border mx-1" />
                     </div>
                 )}
 
-                <div className="flex items-center border rounded-lg overflow-hidden bg-background shadow-sm p-0.5">
+                <div className="flex items-center border rounded-lg overflow-hidden bg-background shadow-sm p-0.5 ml-auto">
                     <button
                         onClick={() => onViewModeChange("table")}
                         className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}

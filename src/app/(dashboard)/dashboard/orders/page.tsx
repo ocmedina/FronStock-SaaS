@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { ViewMode } from "@/lib/orders/constants";
 import { filterOrders } from "@/lib/orders/filters";
 import { getServiceTypeBadge, getStatusBadge, getUrgencyBadge } from "@/lib/orders/helpers";
@@ -23,6 +25,7 @@ import { AssignToRouteModal } from "@/components/orders/AssignToRouteModal";
 
 export default function OrdersPage() {
     const { organizationId } = useOrganization();
+    const supabase = createClient();
 
     // Filters
     const [searchTerm, setSearchTerm] = useState("");
@@ -94,6 +97,27 @@ export default function OrdersPage() {
         setAssignToRouteOpen(true);
     };
 
+    const handleChangeOrderStatus = async (orderId: string, newStatus: string) => {
+        if (!organizationId || !orderId || !newStatus) return;
+
+        try {
+            const { data, error } = await supabase.rpc("set_order_status", {
+                p_org_id: organizationId,
+                p_order_id: orderId,
+                p_new_status: newStatus,
+                p_notes: "Actualizado desde gestión de pedidos",
+            });
+
+            if (error) throw error;
+            if (data?.success === false) throw new Error(data?.error || "No se pudo actualizar estado");
+
+            toast.success("Estado actualizado correctamente");
+            refetch();
+        } catch (error: any) {
+            toast.error("Error al actualizar estado: " + error.message);
+        }
+    };
+
     const filteredOrders = filterOrders(orders, searchTerm, serviceTypeFilter);
 
     if (loading) {
@@ -105,7 +129,7 @@ export default function OrdersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background p-6 space-y-6">
+        <div className="min-h-screen bg-background p-4 md:p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
@@ -116,10 +140,10 @@ export default function OrdersPage() {
                         Administra tus pedidos con diferentes vistas
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <OrderViewSelector viewMode={viewMode} setViewMode={setViewMode} />
                     <Link href="/dashboard/orders/new">
-                        <Button className="bg-emerald-600 hover:bg-emerald-500 text-white">
+                        <Button className="bg-emerald-600 hover:bg-emerald-500 text-white w-full sm:w-auto">
                             <Plus className="h-4 w-4 mr-2" />
                             Nuevo Pedido
                         </Button>
@@ -146,6 +170,7 @@ export default function OrdersPage() {
                     orders={filteredOrders}
                     onViewDetails={handleViewDetails}
                     onAssignToRoute={handleAssignOrderToRoute}
+                    onChangeStatus={handleChangeOrderStatus}
                     getStatusBadge={getStatusBadge}
                     getServiceTypeBadge={getServiceTypeBadge}
                 />

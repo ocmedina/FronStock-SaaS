@@ -108,6 +108,7 @@ const menuSections: MenuSection[] = [
         title: 'Análisis',
         items: [
             { href: '/dashboard/reports', label: 'Reportes', icon: BarChart3 },
+            { href: '/dashboard/cash-closing', label: 'Cierre de Caja', icon: CreditCard },
         ],
     },
     {

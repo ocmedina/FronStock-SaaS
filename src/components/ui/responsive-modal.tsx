@@ -31,6 +31,7 @@ interface ResponsiveModalProps {
     open?: boolean
     onOpenChange?: (open: boolean) => void
     contentClassName?: string
+    showDefaultMobileFooter?: boolean
 }
 
 export function ResponsiveModal({
@@ -40,7 +41,8 @@ export function ResponsiveModal({
     description,
     open,
     onOpenChange,
-    contentClassName
+    contentClassName,
+    showDefaultMobileFooter = true,
 }: ResponsiveModalProps) {
     const isDesktop = useMediaQuery("(min-width: 768px)")
 
@@ -63,19 +65,22 @@ export function ResponsiveModal({
         <Drawer open={open} onOpenChange={onOpenChange}>
             <DrawerTrigger asChild>{trigger}</DrawerTrigger>
             <DrawerContent className={contentClassName}>
-                <DrawerHeader className="text-left">
-                    {title && <DrawerTitle>{title}</DrawerTitle>}
-                    {description && <DrawerDescription>{description}</DrawerDescription>}
-                </DrawerHeader>
-                {/* Wrap children in a scrollable area if needed, or let them handle it */}
-                <div className="px-4 pb-4">
+                {(title || description) && (
+                    <DrawerHeader className="text-left">
+                        {title && <DrawerTitle>{title}</DrawerTitle>}
+                        {description && <DrawerDescription>{description}</DrawerDescription>}
+                    </DrawerHeader>
+                )}
+                <div className="max-h-[85dvh] overflow-y-auto px-4 pb-4">
                     {children}
                 </div>
-                <DrawerFooter className="pt-2">
-                    <DrawerClose asChild>
-                        <Button variant="outline">Cerrar</Button>
-                    </DrawerClose>
-                </DrawerFooter>
+                {showDefaultMobileFooter && (
+                    <DrawerFooter className="pt-2">
+                        <DrawerClose asChild>
+                            <Button variant="outline">Cerrar</Button>
+                        </DrawerClose>
+                    </DrawerFooter>
+                )}
             </DrawerContent>
         </Drawer>
     )

@@ -276,10 +276,10 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto pb-10">
+        <div className="space-y-6 max-w-6xl mx-auto pb-10 px-2 sm:px-0">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
-                <p className="text-muted-foreground mt-1">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Configuración</h1>
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     Administra tus preferencias personales y de la organización.
                 </p>
             </div>
@@ -295,32 +295,35 @@ export default function SettingsPage() {
             )}
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="mb-6">
-                    <TabsTrigger value="general" className="gap-2">
+                <TabsList className="mb-6 w-full justify-start overflow-x-auto whitespace-nowrap gap-1 h-auto p-1">
+                    <TabsTrigger value="general" className="gap-2 shrink-0">
                         <Building2 className="h-4 w-4" />
-                        General
+                        <span className="hidden sm:inline">General</span>
+                        <span className="sm:hidden">Gral.</span>
                     </TabsTrigger>
-                    <TabsTrigger value="appearance" className="gap-2">
+                    <TabsTrigger value="appearance" className="gap-2 shrink-0">
                         <Palette className="h-4 w-4" />
-                        Apariencia
+                        <span className="hidden sm:inline">Apariencia</span>
+                        <span className="sm:hidden">UI</span>
                     </TabsTrigger>
-                    <TabsTrigger value="account" className="gap-2">
+                    <TabsTrigger value="account" className="gap-2 shrink-0">
                         <User className="h-4 w-4" />
                         Cuenta
                     </TabsTrigger>
-                    <TabsTrigger value="security" className="gap-2">
+                    <TabsTrigger value="security" className="gap-2 shrink-0">
                         <Shield className="h-4 w-4" />
                         Seguridad
                     </TabsTrigger>
-                    <TabsTrigger value="plans" className="gap-2">
+                    <TabsTrigger value="plans" className="gap-2 shrink-0">
                         <CreditCard className="h-4 w-4" />
                         Planes
                     </TabsTrigger>
-                    <TabsTrigger value="offline" className="gap-2">
+                    <TabsTrigger value="offline" className="gap-2 shrink-0">
                         <Database className="h-4 w-4" />
-                        Sistema Offline
+                        <span className="hidden sm:inline">Sistema Offline</span>
+                        <span className="sm:hidden">Offline</span>
                     </TabsTrigger>
-                    <TabsTrigger value="import" className="gap-2">
+                    <TabsTrigger value="import" className="gap-2 shrink-0">
                         <Database className="h-4 w-4" />
                         Importación
                     </TabsTrigger>
@@ -506,7 +509,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border p-4">
                                 <div>
                                     <p className="text-sm font-medium">Sidebar colapsado por defecto</p>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -516,6 +519,7 @@ export default function SettingsPage() {
                                 <Switch
                                     checked={sidebarDefaultCollapsed}
                                     onCheckedChange={setSidebarDefaultCollapsed}
+                                    className="self-end sm:self-auto"
                                 />
                             </div>
                         </CardContent>
@@ -564,7 +568,7 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                                 <div className="flex justify-end">
-                                    <Button type="submit" disabled={savingProfile}>
+                                    <Button type="submit" disabled={savingProfile} className="w-full sm:w-auto">
                                         {savingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                                         {savingProfile ? 'Guardando...' : 'Guardar Perfil'}
                                     </Button>
@@ -603,7 +607,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border p-4">
                                 <div>
                                     <p className="text-sm font-medium flex items-center gap-2">
                                         <BellRing className="h-4 w-4" />
@@ -616,10 +620,11 @@ export default function SettingsPage() {
                                 <Switch
                                     checked={notifyNewDevice}
                                     onCheckedChange={handleNotifyNewDeviceChange}
+                                    className="self-end sm:self-auto"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border p-4">
                                 <div>
                                     <p className="text-sm font-medium">Cerrar otras sesiones</p>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -631,6 +636,7 @@ export default function SettingsPage() {
                                     variant="outline"
                                     disabled={closingOtherSessions}
                                     onClick={handleCloseOtherSessions}
+                                    className="w-full sm:w-auto"
                                 >
                                     {closingOtherSessions ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                     Cerrar otras
@@ -655,7 +661,7 @@ export default function SettingsPage() {
                             ) : (
                                 <div className="space-y-2">
                                     {accessHistory.map((entry) => (
-                                        <div key={`${entry.at}-${entry.device}`} className="flex items-center justify-between rounded-md border border-border p-3">
+                                        <div key={`${entry.at}-${entry.device}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 rounded-md border border-border p-3">
                                             <span className="text-sm">{entry.device}</span>
                                             <span className="text-xs text-muted-foreground">
                                                 {new Date(entry.at).toLocaleString()}
@@ -678,14 +684,14 @@ export default function SettingsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-destructive/20 rounded-lg bg-destructive/5">
                                 <div>
                                     <p className="font-medium text-destructive">Cerrar Sesión</p>
                                     <p className="text-sm text-muted-foreground">
                                         Finalizar tu sesión actual en este dispositivo.
                                     </p>
                                 </div>
-                                <Button variant="destructive" onClick={handleLogout}>
+                                <Button variant="destructive" onClick={handleLogout} className="w-full sm:w-auto">
                                     <LogOut className="h-4 w-4 mr-2" />
                                     Cerrar Sesión
                                 </Button>

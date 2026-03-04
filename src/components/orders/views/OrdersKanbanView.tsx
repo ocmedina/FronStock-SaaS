@@ -69,13 +69,13 @@ export function OrdersKanbanView({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
         >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 md:overflow-visible md:pb-0">
                 {STATUS_COLUMNS.map((column) => {
                     const columnOrders = getOrdersByStatus(column.statuses);
                     const ColumnIcon = column.icon;
 
                     return (
-                        <DroppableColumn key={column.id} id={column.id} className="flex flex-col">
+                        <DroppableColumn key={column.id} id={column.id} className="flex flex-col min-w-[280px] md:min-w-0">
                             <Card
                                 className={`bg-gradient-to-br ${column.gradient} ${column.border} border-2 p-3 mb-3`}
                             >

@@ -50,7 +50,7 @@ export function ProductTable({
     return (
         <div className="rounded-lg border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-                <Table className="min-w-[800px]">
+                <Table className="min-w-[920px]">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-12">
@@ -102,8 +102,8 @@ export function ProductTable({
                                             <div className="p-2 rounded-lg bg-primary/10">
                                                 <Package className="h-4 w-4 text-primary" />
                                             </div>
-                                            <div>
-                                                <p className="font-medium">{product.name}</p>
+                                            <div className="min-w-0">
+                                                <p className="font-medium truncate max-w-[260px]">{product.name}</p>
                                                 {product.description && (
                                                     <p className="text-xs text-muted-foreground line-clamp-1">
                                                         {product.description}

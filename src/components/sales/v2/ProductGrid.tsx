@@ -58,7 +58,7 @@ export function ProductGrid({ products, onProductSelect, maxItems = 8 }: Product
                 <span>Productos Rápidos</span>
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {topProducts.map((product) => {
                     const isLowStock = product.stock < 10;
                     const emoji = getProductEmoji(product.name);
@@ -78,7 +78,7 @@ export function ProductGrid({ products, onProductSelect, maxItems = 8 }: Product
                             )}
                         >
                             {/* Emoji */}
-                            <span className="text-4xl">{emoji}</span>
+                            <span className="text-3xl sm:text-4xl">{emoji}</span>
 
                             {/* Product Name */}
                             <p className="text-xs font-semibold text-center line-clamp-2 leading-tight">

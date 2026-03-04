@@ -201,7 +201,7 @@ export function PaymentPanel({
                         {/* Payment Method */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium">Método de Pago</Label>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <Button
                                     variant={simpleMethod === 'cash' ? 'default' : 'outline'}
                                     className="h-12"
@@ -430,7 +430,7 @@ export function PaymentPanel({
                         {remaining > 0 && (
                             <div className="space-y-2 p-3 border-2 border-dashed border-border rounded-lg">
                                 <Label className="text-xs font-medium">Agregar Pago</Label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <Button
                                         variant={newPaymentMethod === 'cash' ? 'default' : 'outline'}
                                         size="sm"

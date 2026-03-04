@@ -6,7 +6,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/Protected";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportsFilters } from "@/components/reports/ReportsFilters";
 import type { ReportFilters } from "@/components/reports/types";
 import {
@@ -89,7 +89,6 @@ export default function ReportsPage() {
     paymentMethods: {} as Record<string, number>,
     previousPeriodRevenue: 0,
   });
-
   const supabase = createClient();
 
   const getDateRange = (p: Period) => {

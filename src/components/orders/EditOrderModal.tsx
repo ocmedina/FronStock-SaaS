@@ -34,6 +34,7 @@ interface EditOrderModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
+    inline?: boolean;
 }
 
 export function EditOrderModal({
@@ -41,7 +42,8 @@ export function EditOrderModal({
     orderData,
     open,
     onOpenChange,
-    onSuccess
+    onSuccess,
+    inline = false,
 }: EditOrderModalProps) {
     const [items, setItems] = useState<OrderItem[]>([]);
     const [originalItems, setOriginalItems] = useState<OrderItem[]>([]);
@@ -55,15 +57,23 @@ export function EditOrderModal({
     const supabase = createClient();
 
     useEffect(() => {
-        if (open && orderId) {
+        if (orderId) {
             fetchOrderItems();
+        }
+    }, [orderId]);
+
+    useEffect(() => {
+        if (orderData?.organization_id) {
             fetchProducts();
         }
+    }, [orderData?.organization_id]);
+
+    useEffect(() => {
         if (orderData) {
             setPaymentMethod(orderData.payment_method || "cash");
             setPaymentAmount(orderData.payment_amount || 0);
         }
-    }, [open, orderId, orderData]);
+    }, [orderData]);
 
     const fetchOrderItems = async () => {
         if (!orderId) return;
@@ -73,10 +83,17 @@ export function EditOrderModal({
             .select('*')
             .eq('order_id', orderId);
 
-        if (!error && data) {
-            setItems(data);
-            setOriginalItems(data); // Store original items
+        if (error) {
+            console.error('Error loading order items:', error);
+            toast.error('No se pudieron cargar los productos del pedido');
+            setItems([]);
+            setOriginalItems([]);
+            return;
         }
+
+        const parsedItems = data || [];
+        setItems(parsedItems);
+        setOriginalItems(parsedItems);
     };
 
     const fetchProducts = async () => {
@@ -270,28 +287,24 @@ export function EditOrderModal({
 
     if (!orderData) return null;
 
-    return (
+    const content = (
         <>
-            <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-xl">
-                            <Edit className="h-6 w-6 text-blue-500" />
-                            Editar Pedido
-                        </DialogTitle>
-                    </DialogHeader>
+            <div className="flex items-center gap-2 text-xl font-semibold">
+                <Edit className="h-6 w-6 text-blue-500" />
+                Editar Pedido
+            </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-6 py-4">
+            <div className="flex-1 overflow-y-auto space-y-6 py-4">
                         {/* Customer Info */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                            <p className="text-slate-400 text-sm mb-1">Cliente</p>
-                            <p className="text-white font-medium">{orderData.customer?.name || "Sin cliente"}</p>
+                        <div className="bg-card border border-border rounded-lg p-4">
+                            <p className="text-muted-foreground text-sm mb-1">Cliente</p>
+                            <p className="text-foreground font-medium">{orderData.customer?.name || "Sin cliente"}</p>
                         </div>
 
                         {/* Products Section */}
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <Label className="text-slate-300">Productos</Label>
+                                <Label className="text-foreground">Productos</Label>
                                 <Button
                                     size="sm"
                                     variant="outline"
@@ -306,23 +319,23 @@ export function EditOrderModal({
                             {/* Product Search */}
                             {showProductSearch && (
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Buscar producto..."
-                                        className="pl-9 bg-slate-900 border-slate-700 text-white"
+                                        className="pl-9"
                                         value={productSearch}
                                         onChange={(e) => setProductSearch(e.target.value)}
                                         autoFocus
                                     />
                                     {productSearch && filteredProducts.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg max-h-48 overflow-y-auto">
+                                        <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg max-h-48 overflow-y-auto">
                                             {filteredProducts.slice(0, 5).map(product => (
                                                 <button
                                                     key={product.id}
-                                                    className="w-full px-3 py-2 text-left hover:bg-slate-800 flex justify-between items-center"
+                                                    className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center"
                                                     onClick={() => handleAddProduct(product)}
                                                 >
-                                                    <span className="text-white">{product.name}</span>
+                                                    <span className="text-foreground">{product.name}</span>
                                                     <span className="text-emerald-400 font-mono">${product.price}</span>
                                                 </button>
                                             ))}
@@ -334,29 +347,29 @@ export function EditOrderModal({
                             {/* Items List */}
                             <div className="space-y-2">
                                 {items.length === 0 ? (
-                                    <p className="text-slate-500 text-center py-4">No hay productos</p>
+                                    <p className="text-muted-foreground text-center py-4">No hay productos</p>
                                 ) : (
                                     items.map(item => (
-                                        <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                                        <div key={item.id} className="bg-card border border-border rounded-lg p-3">
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex-1">
-                                                    <p className="text-white font-medium">{item.product_name}</p>
-                                                    <p className="text-slate-400 text-sm">${item.unit_price.toLocaleString()} c/u</p>
+                                                    <p className="text-foreground font-medium">{item.product_name}</p>
+                                                    <p className="text-muted-foreground text-sm">${item.unit_price.toLocaleString()} c/u</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 w-8 p-0 border-slate-700"
+                                                        className="h-8 w-8 p-0"
                                                         onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                                                     >
                                                         <Minus className="h-3 w-3" />
                                                     </Button>
-                                                    <span className="w-8 text-center text-white font-mono">{item.quantity}</span>
+                                                    <span className="w-8 text-center text-foreground font-mono">{item.quantity}</span>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 w-8 p-0 border-slate-700"
+                                                        className="h-8 w-8 p-0"
                                                         onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                                                     >
                                                         <Plus className="h-3 w-3" />
@@ -380,25 +393,25 @@ export function EditOrderModal({
                             </div>
 
                             {/* Totals */}
-                            <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-2">
+                            <div className="bg-card border border-border rounded-lg p-4 space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">Subtotal</span>
-                                    <span className="text-white font-mono">${calculateSubtotal().toLocaleString()}</span>
+                                    <span className="text-muted-foreground">Subtotal</span>
+                                    <span className="text-foreground font-mono">${calculateSubtotal().toLocaleString()}</span>
                                 </div>
                                 {orderData.delivery_fee > 0 && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-slate-400">Envío</span>
-                                        <span className="text-white font-mono">${orderData.delivery_fee.toLocaleString()}</span>
+                                        <span className="text-muted-foreground">Envío</span>
+                                        <span className="text-foreground font-mono">${orderData.delivery_fee.toLocaleString()}</span>
                                     </div>
                                 )}
                                 {orderData.discount > 0 && (
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-slate-400">Descuento</span>
+                                        <span className="text-muted-foreground">Descuento</span>
                                         <span className="text-red-400 font-mono">-${orderData.discount.toLocaleString()}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between pt-2 border-t border-slate-700">
-                                    <span className="text-white font-semibold">Total</span>
+                                <div className="flex justify-between pt-2 border-t border-border">
+                                    <span className="text-foreground font-semibold">Total</span>
                                     <span className="text-emerald-400 font-mono font-bold text-lg">${calculateTotal().toLocaleString()}</span>
                                 </div>
                             </div>
@@ -406,7 +419,7 @@ export function EditOrderModal({
 
                         {/* Payment Method Selection */}
                         <div className="space-y-3">
-                            <Label className="text-slate-300">Método de Pago</Label>
+                            <Label className="text-foreground">Método de Pago</Label>
                             <div className="grid grid-cols-2 gap-2">
                                 {paymentMethods.map((method) => {
                                     const Icon = method.icon;
@@ -417,12 +430,12 @@ export function EditOrderModal({
                                             onClick={() => setPaymentMethod(method.value)}
                                             className={`p-3 rounded-lg border-2 transition-all ${paymentMethod === method.value
                                                 ? 'border-blue-500 bg-blue-500/10'
-                                                : 'border-slate-700 bg-slate-900 hover:border-slate-600'
+                                                : 'border-border bg-card hover:border-primary/50'
                                                 }`}
                                         >
                                             <Icon className={`h-5 w-5 mx-auto mb-1 ${paymentMethod === method.value ? 'text-blue-400' : method.color
                                                 }`} />
-                                            <p className={`text-xs font-medium ${paymentMethod === method.value ? 'text-white' : 'text-slate-400'
+                                            <p className={`text-xs font-medium ${paymentMethod === method.value ? 'text-foreground' : 'text-muted-foreground'
                                                 }`}>
                                                 {method.label}
                                             </p>
@@ -434,15 +447,15 @@ export function EditOrderModal({
 
                         {/* Payment Amount */}
                         <div className="space-y-2">
-                            <Label htmlFor="payment-amount" className="text-slate-300">
+                            <Label htmlFor="payment-amount" className="text-foreground">
                                 Monto Pagado
                             </Label>
                             <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                                 <Input
                                     id="payment-amount"
                                     type="number"
-                                    className="pl-7 bg-slate-900 border-slate-700 text-white"
+                                    className="pl-7"
                                     value={paymentAmount}
                                     onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
                                     min="0"
@@ -460,9 +473,9 @@ export function EditOrderModal({
                                 </p>
                             )}
                         </div>
-                    </div>
+            </div>
 
-                    <DialogFooter className="gap-2 flex-col sm:flex-row border-t border-slate-800 pt-4">
+            <div className="gap-2 flex flex-col sm:flex-row border-t border-border pt-4">
                         <Button
                             variant="outline"
                             onClick={() => setShowDeleteDialog(true)}
@@ -477,7 +490,7 @@ export function EditOrderModal({
                                 variant="outline"
                                 onClick={() => onOpenChange(false)}
                                 disabled={loading}
-                                className="border-slate-700 text-slate-300 flex-1"
+                                className="flex-1"
                             >
                                 Cancelar
                             </Button>
@@ -489,20 +502,37 @@ export function EditOrderModal({
                                 {loading ? "Guardando..." : "Guardar Cambios"}
                             </Button>
                         </div>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            </div>
+        </>
+    );
+
+    return (
+        <>
+            {inline ? (
+                <div className="bg-background border border-border text-foreground rounded-xl p-4 md:p-6 max-w-4xl mx-auto">
+                    {content}
+                </div>
+            ) : (
+                <Dialog open={open} onOpenChange={onOpenChange}>
+                    <DialogContent className="bg-background border-border text-foreground max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <DialogHeader>
+                            <DialogTitle className="sr-only">Editar Pedido</DialogTitle>
+                        </DialogHeader>
+                        {content}
+                    </DialogContent>
+                </Dialog>
+            )}
 
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent className="bg-slate-950 border-slate-800 text-white">
+                <AlertDialogContent className="bg-background border-border text-foreground">
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Eliminar pedido?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-slate-400">
+                        <AlertDialogDescription className="text-muted-foreground">
                             Esta acción no se puede deshacer. El pedido y todos sus items serán eliminados permanentemente.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-slate-900 border-slate-700 text-white hover:bg-slate-800">
+                        <AlertDialogCancel>
                             Cancelar
                         </AlertDialogCancel>
                         <AlertDialogAction
