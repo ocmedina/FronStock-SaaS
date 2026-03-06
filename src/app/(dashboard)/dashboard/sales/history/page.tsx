@@ -578,6 +578,11 @@ export default function SalesHistoryPage() {
                                         onClick={async () => {
                                             setPdfLoading('invoice');
                                             try {
+                                                const currentInvoice = selectedSale.invoices?.[0];
+                                                if (!currentInvoice) {
+                                                    return;
+                                                }
+
                                                 const logoBase64 = await fetchLogoBase64(organization?.logo_url);
                                                 const pdfBlob = await pdf(
                                                     <InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={organization} logoBase64={logoBase64} />
@@ -585,7 +590,7 @@ export default function SalesHistoryPage() {
                                                 const url = URL.createObjectURL(pdfBlob);
                                                 const a = document.createElement('a');
                                                 a.href = url;
-                                                a.download = `factura-${selectedSale.invoices[0].type}-${selectedSale.invoices[0].invoice_number}.pdf`;
+                                                a.download = `factura-${currentInvoice.type}-${currentInvoice.invoice_number}.pdf`;
                                                 a.click();
                                                 URL.revokeObjectURL(url);
                                             } catch (error) {
