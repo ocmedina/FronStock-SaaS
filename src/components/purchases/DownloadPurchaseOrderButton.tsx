@@ -1,12 +1,12 @@
 "use client";
 
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
 import { PurchaseOrderPDF } from "./PurchaseOrderPDF";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useImageToBase64 } from "@/hooks/useImageToBase64";
-import { useMemo } from "react";
+import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
+import { useState, useCallback } from "react";
 
 interface DownloadPurchaseOrderButtonProps {
     order: any;
@@ -22,39 +22,44 @@ export function DownloadPurchaseOrderButton({
     className 
 }: DownloadPurchaseOrderButtonProps) {
     const { organization } = useOrganization();
-    const { base64: logoBase64, loading: logoLoading } = useImageToBase64(organization?.logo_url);
+    const [loading, setLoading] = useState(false);
 
-    // Crear una copia de organization con el logo en base64
-    const orgWithBase64Logo = useMemo(() => {
-        if (!organization) return null;
-        return {
-            ...organization,
-            logo_url: logoBase64 || organization.logo_url
-        };
-    }, [organization, logoBase64]);
+    const handleDownload = useCallback(async () => {
+        setLoading(true);
+        try {
+            const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+            const blob = await pdf(
+                <PurchaseOrderPDF order={order} organization={organization} logoBase64={logoBase64} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `orden-compra-${order.order_number || order.id.slice(0, 8)}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [order, organization]);
 
     return (
-        <PDFDownloadLink
-            document={<PurchaseOrderPDF order={order} organization={orgWithBase64Logo} />}
-            fileName={`orden-compra-${order.order_number || order.id.slice(0, 8)}.pdf`}
+        <Button
+            variant={variant}
+            size={size}
+            className={className}
+            disabled={loading}
+            title="Descargar PDF"
+            onClick={handleDownload}
         >
-            {({ loading }) => (
-                <Button
-                    variant={variant}
-                    size={size}
-                    className={className}
-                    disabled={loading || logoLoading}
-                    title="Descargar PDF"
-                >
-                    {(loading || logoLoading) ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <FileText className="h-4 w-4" />
-                    )}
-                    {size !== "icon" && !loading && !logoLoading && <span className="ml-2">PDF</span>}
-                    {size !== "icon" && (loading || logoLoading) && <span className="ml-2">Generando...</span>}
-                </Button>
+            {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+                <FileText className="h-4 w-4" />
             )}
-        </PDFDownloadLink>
+            {size !== "icon" && !loading && <span className="ml-2">PDF</span>}
+            {size !== "icon" && loading && <span className="ml-2">Generando...</span>}
+        </Button>
     );
 }

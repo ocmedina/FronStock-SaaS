@@ -9,9 +9,10 @@ interface PlanCardProps {
     currentPlanId?: string;
     onSelect?: (planId: PlanType) => Promise<void>;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
-export function PlanCard({ plan, currentPlanId, onSelect, isLoading }: PlanCardProps) {
+export function PlanCard({ plan, currentPlanId, onSelect, isLoading, disabled = false }: PlanCardProps) {
     const isCurrent = currentPlanId === plan.id;
     const isFree = plan.price === 0;
 
@@ -32,9 +33,17 @@ export function PlanCard({ plan, currentPlanId, onSelect, isLoading }: PlanCardP
             <CardContent className="flex-1 space-y-4">
                 <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold">
-                        {isFree && plan.id !== 'enterprise' ? 'Gratis' : `$${plan.price}`}
+                        {isFree && plan.id !== 'enterprise'
+                            ? 'Gratis'
+                            : plan.priceArs
+                                ? `$${plan.priceArs.toLocaleString('es-AR')}`
+                                : `$${plan.price}`}
                     </span>
-                    {plan.price > 0 && <span className="text-muted-foreground">/mes</span>}
+                    {(plan.price > 0 || plan.priceArs) && (
+                        <span className="text-muted-foreground">
+                            {plan.priceArs ? 'ARS/mes' : '/mes'}
+                        </span>
+                    )}
                 </div>
 
                 <div className="space-y-2 text-sm">
@@ -50,15 +59,17 @@ export function PlanCard({ plan, currentPlanId, onSelect, isLoading }: PlanCardP
                 <Button
                     className="w-full"
                     variant={isCurrent ? "outline" : (plan.recommended ? "default" : "secondary")}
-                    disabled={isCurrent || isLoading}
+                    disabled={isCurrent || isLoading || disabled}
                     onClick={() => onSelect && onSelect(plan.id)}
                 >
                     {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" />Procesando...</>
                     ) : isCurrent ? (
                         "Plan Actual"
+                    ) : disabled ? (
+                        "Sin permisos"
                     ) : (
-                        plan.id === 'enterprise' ? "Contactar Ventas" : "Elegir Plan"
+                        "Elegir Plan"
                     )}
                 </Button>
             </CardFooter>

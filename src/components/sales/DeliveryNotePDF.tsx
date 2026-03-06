@@ -22,6 +22,7 @@ interface DeliveryNotePDFProps {
     sale: Sale;
     items: SaleItem[];
     organization?: Organization | null;
+    logoBase64?: string | null;
 }
 
 const styles = StyleSheet.create({
@@ -145,23 +146,23 @@ const styles = StyleSheet.create({
     }
 });
 
-export const DeliveryNotePDF = ({ sale, items, organization }: DeliveryNotePDFProps) => {
+export const DeliveryNotePDF = ({ sale, items, organization, logoBase64 }: DeliveryNotePDFProps) => {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        {organization?.logo_url ? (
+                        {logoBase64 ? (
                             <View>
-                                <Image src={organization.logo_url} style={styles.logo} cache={false} />
-                                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization.name}</Text>
+                                <Image src={logoBase64} style={styles.logo} />
+                                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization?.name}</Text>
                             </View>
                         ) : (
                             <Text style={styles.logoPlaceholder}>{organization?.name || "EMPRESA"}</Text>
                         )}
                         <Text style={styles.label}>{organization?.address || "Dirección de la empresa"}</Text>
-                        <Text style={styles.label}>Buenos Aires, Argentina</Text>
+                        {organization?.city && <Text style={styles.label}>{organization.city}</Text>}
                     </View>
 
                     <View style={styles.headerCenter}>
@@ -237,6 +238,7 @@ export const DeliveryNotePDF = ({ sale, items, organization }: DeliveryNotePDFPr
                         <Text style={{ fontSize: 8, color: '#9CA3AF', marginTop: 5 }}>Firma y Aclaración</Text>
                     </View>
                 </View>
+                <Text style={{ fontSize: 6, color: '#C0C0C0', textAlign: 'center', marginTop: 10 }}>Este documento fue generado por Frontio Web Solutions</Text>
             </Page>
         </Document>
     );

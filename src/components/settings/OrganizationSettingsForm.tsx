@@ -25,6 +25,7 @@ export function OrganizationSettingsForm() {
     const [formData, setFormData] = useState({
         name: '',
         address: '',
+        city: '',
         cuit: '',
         tax_condition: 'Responsable Inscripto',
         gross_income_number: '',
@@ -39,6 +40,7 @@ export function OrganizationSettingsForm() {
             setFormData({
                 name: organization.name || '',
                 address: organization.address || '',
+                city: organization.city || '',
                 cuit: organization.cuit || '',
                 tax_condition: organization.tax_condition || 'Responsable Inscripto',
                 gross_income_number: organization.gross_income_number || '',
@@ -98,6 +100,7 @@ export function OrganizationSettingsForm() {
                 .update({
                     name: formData.name,
                     address: formData.address,
+                    city: formData.city || null,
                     cuit: formData.cuit,
                     tax_condition: formData.tax_condition,
                     gross_income_number: formData.gross_income_number,
@@ -182,7 +185,7 @@ export function OrganizationSettingsForm() {
                 </div>
 
                 {/* Dirección */}
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                     <Label htmlFor="address" className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
                         Dirección Comercial
@@ -191,7 +194,21 @@ export function OrganizationSettingsForm() {
                         id="address"
                         value={formData.address}
                         onChange={(e) => handleChange('address', e.target.value)}
-                        placeholder="Av. Corrientes 1234, CABA"
+                        placeholder="Av. Corrientes 1234"
+                    />
+                </div>
+
+                {/* Ciudad */}
+                <div className="space-y-2">
+                    <Label htmlFor="city" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        Ciudad / Localidad
+                    </Label>
+                    <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => handleChange('city', e.target.value)}
+                        placeholder="Ej: Mendoza, Argentina"
                     />
                 </div>
 

@@ -5,10 +5,12 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FileText, Printer, Download } from "lucide-react";
+import { FileText, Printer, Download, Loader2 } from "lucide-react";
 import { Invoice } from "./types";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./InvoicePDF";
+import { useState } from "react";
+import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
 
 import { Organization } from "@/types/database.types";
 
@@ -23,7 +25,30 @@ export function InvoiceDetailModal({
     onClose,
     organization,
 }: InvoiceDetailModalProps) {
+    const [pdfLoading, setPdfLoading] = useState(false);
+
     if (!invoice) return null;
+
+    const handleDownloadPDF = async () => {
+        if (!invoice) return;
+        setPdfLoading(true);
+        try {
+            const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+            const blob = await pdf(
+                <InvoicePDF invoice={invoice} organization={organization} logoBase64={logoBase64} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `factura-${invoice.type}-${invoice.invoice_number}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+        } finally {
+            setPdfLoading(false);
+        }
+    };
 
     return (
         <Dialog open={!!invoice} onOpenChange={onClose}>
@@ -49,7 +74,7 @@ export function InvoiceDetailModal({
                             <h2 className="text-2xl font-bold">{organization?.name || "Organización"}</h2>
                             <div className="text-gray-500 space-y-1">
                                 <p>{organization?.address || "Dirección de la empresa"}</p>
-                                <p>Buenos Aires, Argentina</p>
+                                {organization?.city && <p>{organization.city}</p>}
                                 <p>{organization?.tax_condition || "Condición IVA: Responsable Inscripto"}</p>
                                 <div className="flex flex-wrap gap-4 text-xs mt-2 font-mono">
                                     <span>CUIT: {organization?.cuit || "30-00000000-0"}</span>
@@ -160,17 +185,10 @@ export function InvoiceDetailModal({
                         <Printer className="mr-2 h-4 w-4" />
                         Imprimir
                     </Button>
-                    <PDFDownloadLink
-                        document={<InvoicePDF invoice={invoice} organization={organization} />}
-                        fileName={`factura-${invoice.type}-${invoice.invoice_number}.pdf`}
-                    >
-                        {({ blob, url, loading, error }) => (
-                            <Button disabled={loading}>
-                                <Download className="mr-2 h-4 w-4" />
-                                {loading ? "Generando..." : "Descargar PDF"}
-                            </Button>
-                        )}
-                    </PDFDownloadLink>
+                    <Button onClick={handleDownloadPDF} disabled={pdfLoading}>
+                        {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                        {pdfLoading ? "Generando..." : "Descargar PDF"}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

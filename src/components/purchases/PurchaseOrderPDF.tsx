@@ -173,9 +173,10 @@ const styles = StyleSheet.create({
 interface PurchaseOrderPDFProps {
     order: any;
     organization?: any;
+    logoBase64?: string | null;
 }
 
-export const PurchaseOrderPDF = ({ order, organization }: PurchaseOrderPDFProps) => {
+export const PurchaseOrderPDF = ({ order, organization, logoBase64 }: PurchaseOrderPDFProps) => {
     const getStatusStyle = (status: string) => {
         switch (status) {
             case 'pending': return styles.statusPending;
@@ -202,9 +203,11 @@ export const PurchaseOrderPDF = ({ order, organization }: PurchaseOrderPDFProps)
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        {organization?.logo_url && (
+                        {logoBase64 ? (
+                            <Image src={logoBase64} style={styles.logo} />
+                        ) : organization?.logo_url ? (
                             <Image src={organization.logo_url} style={styles.logo} cache={false} />
-                        )}
+                        ) : null}
                         <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 5 }}>
                             {organization?.name || "Mi Empresa"}
                         </Text>
@@ -329,6 +332,7 @@ export const PurchaseOrderPDF = ({ order, organization }: PurchaseOrderPDFProps)
                         Generado el {new Date().toLocaleDateString("es-AR")} a las {new Date().toLocaleTimeString("es-AR")}
                     </Text>
                 </View>
+                <Text style={{ fontSize: 6, color: '#C0C0C0', textAlign: 'center', marginTop: 10 }}>Este documento fue generado por Frontio Web Solutions</Text>
             </Page>
         </Document>
     );

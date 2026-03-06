@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportsFilters } from "@/components/reports/ReportsFilters";
 import type { ReportFilters } from "@/components/reports/types";
+import { getPlanDetails } from "@/config/plans";
 import {
   Table,
   TableBody,
@@ -125,6 +126,21 @@ export default function ReportsPage() {
     let startDate: string;
     let endDate: string | undefined;
 
+    let planStartDate: string | null = null;
+    const { data: orgPlanData } = await supabase
+      .from("organizations")
+      .select("plan_type")
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    const planType = String(orgPlanData?.plan_type || "free");
+    const planMonths = getPlanDetails(planType).limits.salesHistoryMonths;
+    if (Number.isFinite(planMonths)) {
+      const minDate = new Date();
+      minDate.setMonth(minDate.getMonth() - Number(planMonths));
+      planStartDate = minDate.toISOString();
+    }
+
     if (filters.startDate || filters.endDate) {
       // Custom date range
       startDate = filters.startDate
@@ -136,6 +152,10 @@ export default function ReportsPage() {
     } else {
       // Quick period
       startDate = getDateRange(period);
+    }
+
+    if (planStartDate && new Date(startDate) < new Date(planStartDate)) {
+      startDate = planStartDate;
     }
 
     // Build query with filters

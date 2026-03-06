@@ -165,25 +165,26 @@ const styles = StyleSheet.create({
 interface InvoicePDFProps {
     invoice: Invoice;
     organization?: Organization | null;
+    logoBase64?: string | null;
 }
 
-export const InvoicePDF = ({ invoice, organization }: InvoicePDFProps) => {
+export const InvoicePDF = ({ invoice, organization, logoBase64 }: InvoicePDFProps) => {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
-                        {organization?.logo_url ? (
+                        {logoBase64 ? (
                             <View>
-                                <Image src={organization.logo_url} style={styles.logo} cache={false} />
-                                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization.name}</Text>
+                                <Image src={logoBase64} style={styles.logo} />
+                                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization?.name}</Text>
                             </View>
                         ) : (
                             <Text style={styles.logoPlaceholder}>{organization?.name || "EMPRESA"}</Text>
                         )}
                         <Text style={styles.label}>{organization?.address || "Dirección de la empresa"}</Text>
-                        <Text style={styles.label}>Buenos Aires, Argentina</Text>
+                        {organization?.city && <Text style={styles.label}>{organization.city}</Text>}
                         <Text style={styles.label}>{organization?.tax_condition || "Condición IVA: Responsable Inscripto"}</Text>
                     </View>
 
@@ -333,6 +334,7 @@ export const InvoicePDF = ({ invoice, organization }: InvoicePDFProps) => {
                         </View>
                     )}
                 </View>
+                <Text style={{ fontSize: 6, color: '#C0C0C0', textAlign: 'center', marginTop: 10 }}>Este documento fue generado por Frontio Web Solutions</Text>
             </Page>
         </Document>
     );

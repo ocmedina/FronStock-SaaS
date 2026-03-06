@@ -11,6 +11,7 @@ export interface Plan {
     name: string;
     price: number;
     currency: string;
+    priceArs?: number;
     description: string;
     limits: PlanLimits;
     features: string[];
@@ -23,77 +24,76 @@ export const PLANS: Record<PlanType, Plan> = {
         name: 'Gratuito',
         price: 0,
         currency: 'USD',
-        description: 'Ideal para probar el sistema o negocios muy pequeños.',
+        description: 'Ideal para empezar: hasta 1 usuario, 50 productos y 1 mes de historial de ventas.',
         limits: {
             maxUsers: 1,
             maxProducts: 50,
             salesHistoryMonths: 1,
         },
         features: [
-            'Punto de Venta (POS) Básico',
-            'Control de Stock Simple',
-            'Historial de ventas (30 días)',
-            '1 Usuario',
-            'Hasta 50 Productos'
+            'Hasta 1 usuario (límite enforzado)',
+            'Hasta 50 productos (límite enforzado)',
+            'Historial visible: último mes',
+            'Punto de venta y stock básico',
+            'Operación esencial para validar el negocio'
         ]
     },
     entrepreneur: {
         id: 'entrepreneur',
         name: 'Emprendedor',
-        price: 10,
-        currency: 'USD',
-        description: 'Para profesionales independientes y startups en crecimiento.',
+        price: 25000,
+        currency: 'ARS',
+        description: 'Para equipos pequeños: hasta 2 usuarios, 500 productos y 6 meses de historial de ventas.',
         limits: {
             maxUsers: 2,
             maxProducts: 500,
             salesHistoryMonths: 6,
         },
         features: [
-            'Reportes Básicos',
-            'Logo personalizado en tickets',
-            'Historial de ventas (6 meses)',
-            'Hasta 2 Usuarios',
-            'Hasta 500 Productos'
+            'Hasta 2 usuarios (límite enforzado)',
+            'Hasta 500 productos (límite enforzado)',
+            'Historial visible: últimos 6 meses',
+            'Reportes operativos básicos',
+            'Logo en comprobantes y tickets'
         ],
         recommended: true
     },
     business: {
         id: 'business',
         name: 'Negocio',
-        price: 25,
-        currency: 'USD',
-        description: 'Para PyMEs establecidas que necesitan control total.',
+        price: 50000,
+        currency: 'ARS',
+        description: 'Para operación consolidada: hasta 10 usuarios, productos ilimitados e historial ilimitado.',
         limits: {
             maxUsers: 10,
             maxProducts: Infinity,
             salesHistoryMonths: Infinity, // Unlimited
         },
         features: [
-            'Reportes Avanzados',
-            'Cuentas Corrientes (Fiados)',
-            'Exportación a Excel/PDF',
-            'Productos Ilimitados',
-            'Historial Ilimitado',
-            'Hasta 10 Usuarios'
+            'Hasta 10 usuarios (límite enforzado)',
+            'Productos sin límite por plan',
+            'Historial sin límite por plan',
+            'Reportes avanzados de ventas y caja',
+            'Cuentas corrientes y exportaciones'
         ]
     },
     enterprise: {
         id: 'enterprise',
         name: 'Empresarial',
-        price: 0, // Custom pricing usually handled differently, but kept number for type safety
-        currency: 'USD',
-        description: 'Soluciones a medida para grandes volúmenes.',
+        price: 90000,
+        currency: 'ARS',
+        description: 'Plan sin límites de usuarios, productos e historial, con implementación y soporte prioritario.',
         limits: {
             maxUsers: Infinity,
             maxProducts: Infinity,
             salesHistoryMonths: Infinity,
         },
         features: [
-            'Módulo de Reparto/Logística',
-            'Acceso a API',
-            'Soporte Prioritario 24/7',
-            'Usuarios Ilimitados',
-            'Personalización a medida'
+            'Usuarios sin límite por plan',
+            'Productos sin límite por plan',
+            'Historial sin límite por plan',
+            'Implementación y parametrización asistida',
+            'Integraciones/API y soporte prioritario'
         ]
     }
 };
@@ -101,3 +101,16 @@ export const PLANS: Record<PlanType, Plan> = {
 export const getPlanDetails = (planId: string): Plan => {
     return PLANS[planId as PlanType] || PLANS['free'];
 };
+
+export function getPlansWithArsFromEnv(): Record<PlanType, Plan> {
+    const entrepreneurArs = Number(process.env.MP_PLAN_PRICE_ENTREPRENEUR_ARS) || undefined;
+    const businessArs = Number(process.env.MP_PLAN_PRICE_BUSINESS_ARS) || undefined;
+    const enterpriseArs = Number(process.env.MP_PLAN_PRICE_ENTERPRISE_ARS) || undefined;
+
+    return {
+        ...PLANS,
+        entrepreneur: { ...PLANS.entrepreneur, priceArs: entrepreneurArs },
+        business: { ...PLANS.business, priceArs: businessArs },
+        enterprise: { ...PLANS.enterprise, priceArs: enterpriseArs },
+    };
+}

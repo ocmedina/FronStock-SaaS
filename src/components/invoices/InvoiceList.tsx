@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, FileText, Download } from "lucide-react";
+import { Eye, FileText, Download, Loader2 } from "lucide-react";
 import { Invoice } from "./types";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./InvoicePDF";
+import { useState, useCallback } from "react";
+import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
 
 interface InvoiceListProps {
     invoices: Invoice[];
@@ -20,6 +22,28 @@ interface InvoiceListProps {
 }
 
 export function InvoiceList({ invoices, onView, organization }: InvoiceListProps) {
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+    const handleDownloadPDF = useCallback(async (invoice: Invoice) => {
+        setDownloadingId(invoice.id);
+        try {
+            const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+            const blob = await pdf(
+                <InvoicePDF invoice={invoice} organization={organization} logoBase64={logoBase64} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `factura-${invoice.type}-${invoice.invoice_number}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+        } finally {
+            setDownloadingId(null);
+        }
+    }, [organization]);
+
     return (
         <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
             <Table>
@@ -79,16 +103,15 @@ export function InvoiceList({ invoices, onView, organization }: InvoiceListProps
                                         <Button variant="ghost" size="icon" onClick={() => onView(invoice)} title="Ver detalle">
                                             <Eye className="h-4 w-4" />
                                         </Button>
-                                        <PDFDownloadLink
-                                            document={<InvoicePDF invoice={invoice} organization={organization} />}
-                                            fileName={`factura-${invoice.type}-${invoice.invoice_number}.pdf`}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={downloadingId === invoice.id}
+                                            title="Descargar PDF"
+                                            onClick={() => handleDownloadPDF(invoice)}
                                         >
-                                            {({ loading }) => (
-                                                <Button variant="ghost" size="icon" disabled={loading} title="Descargar PDF">
-                                                    <Download className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </PDFDownloadLink>
+                                            {downloadingId === invoice.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                                        </Button>
                                     </div>
                                 </TableCell>
                             </TableRow>

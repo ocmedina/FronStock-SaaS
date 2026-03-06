@@ -703,6 +703,7 @@ export default function SettingsPage() {
                 <TabsContent value="plans" className="space-y-4">
                     <PlansClientWrapper
                         currentPlanId={organization?.plan_type as any || 'free'}
+                        canManage={['owner', 'admin'].includes(String(profile?.role || ''))}
                     />
                 </TabsContent>
 

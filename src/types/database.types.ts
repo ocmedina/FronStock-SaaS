@@ -7,6 +7,7 @@ export interface Organization {
   plan_type: string;
   created_at: string;
   address?: string | null;
+  city?: string | null;
   cuit?: string | null;
   logo_url?: string | null;
   tax_condition?: string | null;

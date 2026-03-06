@@ -382,6 +382,7 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
                 <View style={styles.footer}>
                     <Text>Documento generado automáticamente - {new Date().toLocaleString('es-AR')}</Text>
                 </View>
+                <Text style={{ fontSize: 6, color: '#C0C0C0', textAlign: 'center', marginTop: 10 }}>Este documento fue generado por Frontio Web Solutions</Text>
             </Page>
         </Document>
     );

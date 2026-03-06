@@ -26,6 +26,7 @@ interface TicketPDFProps {
     sale: Sale;
     items: SaleItem[];
     organization?: Organization | null;
+    logoBase64?: string | null;
 }
 
 const styles = StyleSheet.create({
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     }
 });
 
-export const TicketPDF = ({ sale, items, organization }: TicketPDFProps) => {
+export const TicketPDF = ({ sale, items, organization, logoBase64 }: TicketPDFProps) => {
     const formattedDate = new Date(sale.created_at).toLocaleString("es-AR", {
         day: "2-digit",
         month: "2-digit",
@@ -137,14 +138,16 @@ export const TicketPDF = ({ sale, items, organization }: TicketPDFProps) => {
             <Page size={{ width: TICKET_WIDTH, height: 1200 }} style={styles.page}>
                 {/* Header / Logo */}
                 <View style={[styles.section, styles.center]}>
-                    {organization?.logo_url && (
-                        <Image src={organization.logo_url} style={styles.logo} />
+                    {logoBase64 && (
+                        <Image src={logoBase64} style={styles.logo} />
                     )}
                     <Text style={styles.companyName}>{organization?.name || "EMPRESA"}</Text>
                     {organization?.address && (
                         <Text style={styles.text}>{organization.address}</Text>
                     )}
-                    <Text style={styles.text}>Buenos Aires, Argentina</Text>
+                    {organization?.city && (
+                        <Text style={styles.text}>{organization.city}</Text>
+                    )}
                     {organization?.cuit && (
                         <Text style={styles.text}>CUIT: {organization.cuit}</Text>
                     )}
@@ -204,6 +207,7 @@ export const TicketPDF = ({ sale, items, organization }: TicketPDFProps) => {
                 <View style={styles.finalMessage}>
                     <Text>*** Gracias por su compra ***</Text>
                     <Text style={{ marginTop: 4 }}>Documento no válido como factura</Text>
+                    <Text style={{ fontSize: 5, color: '#C0C0C0', marginTop: 6 }}>Este documento fue generado por Frontio Web Solutions</Text>
                 </View>
             </Page>
         </Document>

@@ -139,7 +139,7 @@ export const OrderRemito80PDF = ({ order, items, organization }: OrderRemito80PD
           {organization?.logo_url && <Image src={organization.logo_url} style={styles.logo} cache={false} />}
           <Text style={styles.companyName}>{organization?.name || "EMPRESA"}</Text>
           {organization?.address && <Text style={styles.text}>{organization.address}</Text>}
-          <Text style={styles.text}>Buenos Aires, Argentina</Text>
+          {organization?.city && <Text style={styles.text}>{organization.city}</Text>}
           {organization?.cuit && <Text style={styles.text}>CUIT: {organization.cuit}</Text>}
         </View>
 
@@ -196,6 +196,7 @@ export const OrderRemito80PDF = ({ order, items, organization }: OrderRemito80PD
 
         <View style={styles.finalMessage}>
           <Text>Documento no válido como factura</Text>
+          <Text style={{ fontSize: 5, color: '#C0C0C0', marginTop: 6 }}>Este documento fue generado por Frontio Web Solutions</Text>
         </View>
       </Page>
     </Document>

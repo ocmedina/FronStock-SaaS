@@ -12,35 +12,44 @@ export function useImageToBase64(imageUrl: string | null | undefined) {
 
         setLoading(true);
 
-        // Convertir la imagen a base64
-        fetch(imageUrl)
+        // Use server-side proxy to avoid CORS issues with Supabase Storage
+        fetch(`/api/logo-base64?url=${encodeURIComponent(imageUrl)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return response.blob();
+                return response.json();
             })
-            .then(blob => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setBase64(reader.result as string);
-                    setLoading(false);
-                    console.log('✅ Logo convertido a base64 para PDF');
-                };
-                reader.onerror = () => {
-                    console.error('❌ Error convirtiendo imagen a base64');
+            .then(data => {
+                if (data.base64) {
+                    setBase64(data.base64);
+                } else {
                     setBase64(null);
-                    setLoading(false);
-                };
-                reader.readAsDataURL(blob);
+                }
+                setLoading(false);
             })
             .catch(error => {
-                console.error('❌ Error cargando imagen para PDF:', error);
-                console.log('URL de la imagen:', imageUrl);
+                console.error('Error cargando imagen para PDF:', error);
                 setBase64(null);
                 setLoading(false);
             });
     }, [imageUrl]);
 
     return { base64, loading };
+}
+
+/**
+ * Fetch logo as base64 on-demand (for use in click handlers).
+ * Uses the server-side proxy to avoid CORS.
+ */
+export async function fetchLogoBase64(url: string | null | undefined): Promise<string | null> {
+    if (!url) return null;
+    try {
+        const res = await fetch(`/api/logo-base64?url=${encodeURIComponent(url)}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.base64 || null;
+    } catch {
+        return null;
+    }
 }

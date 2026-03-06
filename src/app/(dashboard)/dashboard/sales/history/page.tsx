@@ -43,10 +43,12 @@ import {
     Loader2,
     ScrollText
 } from "lucide-react";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { DeliveryNotePDF } from "@/components/sales/DeliveryNotePDF";
 import { TicketPDF } from "@/components/sales/TicketPDF";
 import { InvoicePDF } from "@/components/invoices/InvoicePDF";
+import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
+import { getPlanDetails } from "@/config/plans";
 
 interface Sale {
     id: string;
@@ -74,6 +76,7 @@ export default function SalesHistoryPage() {
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
     const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [pdfLoading, setPdfLoading] = useState<string | null>(null);
 
     // Filtros
     const [dateFilter, setDateFilter] = useState<"today" | "week" | "month" | "all">("today");
@@ -100,6 +103,20 @@ export default function SalesHistoryPage() {
             .select("*, customer:customers(name)")
             .eq("organization_id", organizationId)
             .order("created_at", { ascending: false });
+
+        const { data: orgPlanData } = await supabase
+            .from("organizations")
+            .select("plan_type")
+            .eq("id", organizationId)
+            .maybeSingle();
+
+        const planType = String(orgPlanData?.plan_type || "free");
+        const planMonths = getPlanDetails(planType).limits.salesHistoryMonths;
+        if (Number.isFinite(planMonths)) {
+            const minDate = new Date();
+            minDate.setMonth(minDate.getMonth() - Number(planMonths));
+            query = query.gte("created_at", minDate.toISOString());
+        }
 
         // Apply date filter (Backend filtering for Date)
         const now = new Date();
@@ -488,34 +505,62 @@ export default function SalesHistoryPage() {
                                 {/* Ticket Thermal Button */}
                                 {saleItems.length > 0 ? (
                                     <div className="flex gap-2">
-                                        <PDFDownloadLink
-                                            document={<TicketPDF sale={selectedSale} items={saleItems} organization={organization} />}
-                                            fileName={`ticket-${selectedSale.id.slice(0, 8)}.pdf`}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={pdfLoading === 'ticket'}
+                                            title="Formato Ticket 80mm"
+                                            onClick={async () => {
+                                                setPdfLoading('ticket');
+                                                try {
+                                                    const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+                                                    const blob = await pdf(
+                                                        <TicketPDF sale={selectedSale} items={saleItems} organization={organization} logoBase64={logoBase64} />
+                                                    ).toBlob();
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `ticket-${selectedSale.id.slice(0, 8)}.pdf`;
+                                                    a.click();
+                                                    URL.revokeObjectURL(url);
+                                                } catch (error) {
+                                                    console.error('Error generando ticket PDF:', error);
+                                                } finally {
+                                                    setPdfLoading(null);
+                                                }
+                                            }}
                                         >
-                                            {({ loading, error }) => (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={loading || !!error}
-                                                    title={error ? `Error: ${error}` : "Formato Ticket 80mm"}
-                                                    className={error ? "border-red-500 text-red-500" : ""}
-                                                >
-                                                    <ScrollText className="h-4 w-4 mr-2" />
-                                                    {loading ? "Generando..." : error ? "Error" : "Ticket"}
-                                                </Button>
-                                            )}
-                                        </PDFDownloadLink>
+                                            <ScrollText className="h-4 w-4 mr-2" />
+                                            {pdfLoading === 'ticket' ? "Generando..." : "Ticket"}
+                                        </Button>
 
-                                        <PDFDownloadLink
-                                            document={<DeliveryNotePDF sale={selectedSale} items={saleItems} organization={organization} />}
-                                            fileName={`remito-${selectedSale.id.slice(0, 8)}.pdf`}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={pdfLoading === 'remito'}
+                                            title="Formato A4"
+                                            onClick={async () => {
+                                                setPdfLoading('remito');
+                                                try {
+                                                    const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+                                                    const blob = await pdf(
+                                                        <DeliveryNotePDF sale={selectedSale} items={saleItems} organization={organization} logoBase64={logoBase64} />
+                                                    ).toBlob();
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `remito-${selectedSale.id.slice(0, 8)}.pdf`;
+                                                    a.click();
+                                                    URL.revokeObjectURL(url);
+                                                } catch (error) {
+                                                    console.error('Error generando remito PDF:', error);
+                                                } finally {
+                                                    setPdfLoading(null);
+                                                }
+                                            }}
                                         >
-                                            {({ loading }) => (
-                                                <Button variant="ghost" size="icon" disabled={loading} title="Formato A4">
-                                                    <FileText className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </PDFDownloadLink>
+                                            {pdfLoading === 'remito' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                                        </Button>
                                     </div>
                                 ) : (
                                     <Button variant="outline" size="sm" disabled>
@@ -526,17 +571,33 @@ export default function SalesHistoryPage() {
 
                                 {/* Invoice Button */}
                                 {selectedSale.invoices && selectedSale.invoices.length > 0 ? (
-                                    <PDFDownloadLink
-                                        document={<InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={organization} />}
-                                        fileName={`factura-${selectedSale.invoices[0].type}-${selectedSale.invoices[0].invoice_number}.pdf`}
+                                    <Button
+                                        size="sm"
+                                        disabled={pdfLoading === 'invoice'}
+                                        className="bg-emerald-600 hover:bg-emerald-700"
+                                        onClick={async () => {
+                                            setPdfLoading('invoice');
+                                            try {
+                                                const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+                                                const pdfBlob = await pdf(
+                                                    <InvoicePDF invoice={getInvoiceForPDF(selectedSale)!} organization={organization} logoBase64={logoBase64} />
+                                                ).toBlob();
+                                                const url = URL.createObjectURL(pdfBlob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `factura-${selectedSale.invoices[0].type}-${selectedSale.invoices[0].invoice_number}.pdf`;
+                                                a.click();
+                                                URL.revokeObjectURL(url);
+                                            } catch (error) {
+                                                console.error('Error generando PDF:', error);
+                                            } finally {
+                                                setPdfLoading(null);
+                                            }
+                                        }}
                                     >
-                                        {({ loading }) => (
-                                            <Button size="sm" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
-                                                <Receipt className="h-4 w-4 mr-2" />
-                                                {loading ? "..." : "Fiscal"}
-                                            </Button>
-                                        )}
-                                    </PDFDownloadLink>
+                                        <Receipt className="h-4 w-4 mr-2" />
+                                        {pdfLoading === 'invoice' ? "..." : "Fiscal"}
+                                    </Button>
                                 ) : (
                                     <Button size="sm" variant="secondary" className="opacity-50 cursor-not-allowed">
                                         <Receipt className="h-4 w-4 mr-2" />
