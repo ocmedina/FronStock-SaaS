@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import {
     SearchBar,
@@ -297,7 +297,7 @@ export default function POSPageV2() {
             {/* Header */}
             <div className="h-16 border-b border-border bg-background px-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold">🏪 FrontStock POS</h1>
+                    <h1 className="text-2xl font-bold"><Store className="h-6 w-6 inline mr-1" />FrontStock POS</h1>
                     <span className="text-sm text-muted-foreground">v2.0</span>
                 </div>
             </div>

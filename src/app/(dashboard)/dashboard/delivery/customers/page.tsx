@@ -41,6 +41,7 @@ import {
   Loader2,
   Edit,
   Trash2,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Customer } from "@/types/database.types";
@@ -411,8 +412,8 @@ export default function CustomersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="business">🏢 Negocios</SelectItem>
-                <SelectItem value="person">👤 Personas</SelectItem>
+                <SelectItem value="business"><Building2 className="h-4 w-4 inline mr-1" />Negocios</SelectItem>
+                <SelectItem value="person"><User className="h-4 w-4 inline mr-1" />Personas</SelectItem>
               </SelectContent>
             </Select>
 
@@ -422,8 +423,8 @@ export default function CustomersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="debt">⚠️ Con Deuda</SelectItem>
-                <SelectItem value="ok">✅ Al Día</SelectItem>
+                <SelectItem value="debt"><AlertTriangle className="h-4 w-4 inline mr-1" />Con Deuda</SelectItem>
+                <SelectItem value="ok"><CheckCircle className="h-4 w-4 inline mr-1" />Al Día</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -489,7 +490,7 @@ export default function CustomersPage() {
 
                   <TableCell>
                     <div className="text-sm">
-                      {customer.phone && <div>📱 {customer.phone}</div>}
+                      {customer.phone && <div><Smartphone className="h-3 w-3 inline mr-1" />{customer.phone}</div>}
                       {customer.email && (
                         <div className="text-muted-foreground">{customer.email}</div>
                       )}

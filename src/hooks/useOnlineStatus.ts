@@ -61,20 +61,20 @@ export function useOnlineStatus() {
     checkSupabaseHealth();
 
     const handleOnline = async () => {
-      console.log('🟢 Network: ONLINE - Reconnected!');
+      console.log('[NET] Network: ONLINE - Reconnected!');
       setBrowserOnline(true);
       setWasOffline(true);
       await checkSupabaseHealth();
       
       // Reset wasOffline after 8 seconds (increased for better stability)
       setTimeout(() => {
-        console.log('⏰ Resetting wasOffline flag');
+        console.log('[TIMER] Resetting wasOffline flag');
         setWasOffline(false);
       }, 8000);
     };
 
     const handleOffline = () => {
-      console.log('🔴 Network: OFFLINE');
+      console.log('[NET] Network: OFFLINE');
       setBrowserOnline(false);
       setIsSupabaseReachable(false);
       setNetworkStatus('offline');

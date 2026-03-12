@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Building2, User, MapPin, CreditCard, Calendar } from "lucide-react";
+import { Loader2, Building2, User, MapPin, CreditCard, Calendar, Store, Truck, Lightbulb } from "lucide-react";
 import type { Customer } from "@/types/database.types";
 import { saveDeliveryCustomer } from "@/actions/delivery";
 
@@ -418,7 +418,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-1">🏪</div>
+                      <Store className="h-7 w-7 mx-auto mb-1" />
                       <div className="font-semibold">Solo Mostrador</div>
                       <div className="text-xs text-muted-foreground">Viene al local</div>
                     </div>
@@ -433,7 +433,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-1">🚚</div>
+                      <Truck className="h-7 w-7 mx-auto mb-1" />
                       <div className="font-semibold">Solo Reparto</div>
                       <div className="text-xs text-muted-foreground">Visita en ruta</div>
                     </div>
@@ -448,7 +448,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     }`}
                   >
                     <div className="text-center">
-                      <div className="text-2xl mb-1">🏪🚚</div>
+                      <div className="flex justify-center gap-1 mb-1"><Store className="h-6 w-6" /><Truck className="h-6 w-6" /></div>
                       <div className="font-semibold">Ambos</div>
                       <div className="text-xs text-muted-foreground">Flexible</div>
                     </div>
@@ -529,7 +529,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
 
               {(formData.service_type === "delivery" || formData.service_type === "both") && (
               <p className="text-sm text-muted-foreground mt-4">
-                💡 El día y orden determinan en qué momento el preventista visitará este
+                <Lightbulb className="h-4 w-4 inline mr-1" />El día y orden determinan en qué momento el preventista visitará este
                 cliente durante su recorrido.
               </p>
               )}

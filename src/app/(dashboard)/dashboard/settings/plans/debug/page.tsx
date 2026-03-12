@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle, XCircle } from "lucide-react";
 
 export default async function PlansDebugPage() {
     const supabase = await createClient();
@@ -140,11 +141,11 @@ export default async function PlansDebugPage() {
                 <CardContent>
                     {adminViewOrg?.plan_type === userViewOrg?.plan_type ? (
                         <div className="p-4 bg-green-100 text-green-800 rounded flex items-center gap-2">
-                            ✅ Match: User and Admin see the same plan.
+                            <CheckCircle className="h-5 w-5" /> Match: User and Admin see the same plan.
                         </div>
                     ) : (
                         <div className="p-4 bg-red-100 text-red-800 rounded flex items-center gap-2">
-                            ❌ mismatch: There is an RLS or Sync issue!
+                            <XCircle className="h-5 w-5" /> mismatch: There is an RLS or Sync issue!
                         </div>
                     )}
                 </CardContent>

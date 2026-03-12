@@ -39,7 +39,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   const isSyncingRef = useRef(false);
   const cancelSyncRef = useRef(false);
 
-  console.log('🔍 useOfflineSales - isOnline:', isOnline, 'wasOffline:', wasOffline, 'pendingSalesCount:', pendingSalesCount);
+  console.log('[DEBUG] useOfflineSales - isOnline:', isOnline, 'wasOffline:', wasOffline, 'pendingSalesCount:', pendingSalesCount);
 
   // Load pending sales count
   const loadPendingCount = useCallback(async () => {
@@ -111,7 +111,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   // Cache products from Supabase
   const cacheProducts = useCallback(async () => {
     if (!organizationId || !isOnline) {
-      console.log('⏸️ Skipping cache: organizationId or offline');
+      console.log('[SKIP] Skipping cache: organizationId or offline');
       return;
     }
 
@@ -141,7 +141,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
 
         await offlineDB.products.bulkAdd(productsWithSync);
         
-        console.log(`✅ Cached ${products.length} products offline`);
+        console.log(`[OK] Cached ${products.length} products offline`);
       } else {
         console.warn('No products found to cache');
       }
@@ -162,7 +162,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   // Cache customers from Supabase
   const cacheCustomers = useCallback(async () => {
     if (!organizationId || !isOnline) {
-      console.log('⏸️ Skipping cache: organizationId or offline');
+      console.log('[SKIP] Skipping cache: organizationId or offline');
       return;
     }
 
@@ -191,7 +191,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
 
         await offlineDB.customers.bulkAdd(customersWithSync);
         
-        console.log(`✅ Cached ${customers.length} customers offline`);
+        console.log(`[OK] Cached ${customers.length} customers offline`);
       } else {
         console.warn('No customers found to cache');
       }
@@ -209,7 +209,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   // Cache invoices from Supabase
   const cacheInvoices = useCallback(async () => {
     if (!organizationId || !isOnline) {
-      console.log('⏸️ Skipping invoice cache: organizationId or offline');
+      console.log('[SKIP] Skipping invoice cache: organizationId or offline');
       return;
     }
 
@@ -239,7 +239,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
 
         await offlineDB.invoices.bulkAdd(invoicesWithSync);
         
-        console.log(`✅ Cached ${invoices.length} invoices offline`);
+        console.log(`[OK] Cached ${invoices.length} invoices offline`);
       } else {
         console.warn('No invoices found to cache');
       }
@@ -296,7 +296,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   // Sync pending sales to Supabase
   const syncPendingSales = useCallback(async () => {
     if (!organizationId || isSyncingRef.current) {
-      console.log('⏸️ Sync skipped:', { organizationId, isSyncing: isSyncingRef.current });
+      console.log('[SKIP] Sync skipped:', { organizationId, isSyncing: isSyncingRef.current });
       return;
     }
 
@@ -314,7 +314,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
       return;
     }
 
-    console.log('🚀 Starting sync process...');
+    console.log('[SYNC] Starting sync process...');
     cancelSyncRef.current = false;
     isSyncingRef.current = true;
     setIsSyncing(true);
@@ -328,7 +328,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
         .and(sale => sale.status === 'pending_sync' || sale.status === 'error')
         .toArray();
 
-      console.log(`📦 Found ${pending.length} pending sales`);
+      console.log(`[SYNC] Found ${pending.length} pending sales`);
 
       if (pending.length === 0) {
         setLastSyncTime(new Date());
@@ -336,8 +336,8 @@ export function useOfflineSales(organizationId: string | null | undefined) {
         return;
       }
 
-      console.log(`🔄 Syncing ${pending.length} pending sales...`);
-      console.log('📋 Pending sales:', pending.map(s => ({ id: s.local_id, status: s.status, total: s.total })));
+      console.log(`[SYNC] Syncing ${pending.length} pending sales...`);
+      console.log('[SYNC] Pending sales:', pending.map(s => ({ id: s.local_id, status: s.status, total: s.total })));
 
       let successCount = 0;
       let errorCount = 0;
@@ -350,7 +350,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
         }
 
         try {
-          console.log(`⏳ Syncing sale ${sale.local_id}...`);
+          console.log(`[SYNC] Syncing sale ${sale.local_id}...`);
           // Update status to syncing
           await offlineDB.pendingSales.update(sale.local_id, { status: 'syncing' });
 
@@ -360,7 +360,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
             amount: sale.total
           }];
 
-          console.log(`📤 Calling process_sale for ${sale.local_id} with:`, {
+          console.log(`[RPC] Calling process_sale for ${sale.local_id} with:`, {
             p_org_id: organizationId,
             p_customer_id: sale.customer_id || null,
             items_count: sale.items.length,
@@ -381,7 +381,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
             }
 
             try {
-              console.log(`🔄 Attempt ${attempt}/${maxAttempts} for sale ${sale.local_id}...`);
+              console.log(`[RETRY] Attempt ${attempt}/${maxAttempts} for sale ${sale.local_id}...`);
               
               // Create fresh Supabase client for each attempt
               const freshSupabase = createClient();
@@ -443,7 +443,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
                 }
               }
 
-              console.log(`✅ Sale ${sale.local_id} synced successfully to Supabase`, data);
+              console.log(`[OK] Sale ${sale.local_id} synced successfully to Supabase`, data);
               lastError = null;
               break; // Success, exit retry loop
             } catch (err: any) {
@@ -456,7 +456,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
                 const waitTime = exponentialDelay + jitter;
 
                 const normalizedAttemptError = normalizeErrorMessage(err);
-                console.warn(`⚠️ Sync attempt failed: ${normalizedAttemptError}, retrying in ${(waitTime / 1000).toFixed(1)}s... (${maxAttempts - attempt} attempts left)`);
+                console.warn(`[WARN] Sync attempt failed: ${normalizedAttemptError}, retrying in ${(waitTime / 1000).toFixed(1)}s... (${maxAttempts - attempt} attempts left)`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
               } else {
                 console.warn(`All retry attempts exhausted for sale ${sale.local_id}`);
@@ -518,7 +518,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
         setSyncError('Sincronización cancelada por el usuario.');
       }
 
-      console.log(`✅ Sync complete: ${successCount} success, ${errorCount} errors`);
+      console.log(`[OK] Sync complete: ${successCount} success, ${errorCount} errors`);
       
       setLastSyncTime(new Date());
       
@@ -531,7 +531,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
       setPendingSalesCount(newCount);
 
       if (successCount > 0) {
-        console.log(`🎉 ${successCount} ventas sincronizadas exitosamente!`);
+        console.log(`[OK] ${successCount} ventas sincronizadas exitosamente!`);
       }
 
       if (errorCount > 0) {
@@ -567,14 +567,14 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   useEffect(() => {
     if (!organizationId || !isOnline) return;
 
-    console.log('🔄 Auto-sync check:', { organizationId, isOnline, wasOffline, isSyncing: isSyncingRef.current });
+    console.log('[SYNC] Auto-sync check:', { organizationId, isOnline, wasOffline, isSyncing: isSyncingRef.current });
 
     // Trigger sync when we detect reconnection
     if (wasOffline && !isSyncingRef.current) {
-      console.log('🌐 Connection restored! Waiting 5 seconds for network to stabilize...');
+      console.log('[NET] Connection restored! Waiting 5 seconds for network to stabilize...');
       // Wait longer for browser/Supabase to be ready (5 seconds)
       const timer = setTimeout(() => {
-        console.log('⚡ Network should be stable now, starting sync...');
+        console.log('[NET] Network should be stable now, starting sync...');
         syncPendingSales();
       }, 5000);
       
@@ -586,18 +586,18 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   useEffect(() => {
     if (!organizationId || !isOnline) return;
 
-    console.log('📥 Mounting useOfflineSales - will cache in 2 seconds...');
+    console.log('[INIT] Mounting useOfflineSales - will cache in 2 seconds...');
 
     // Wait a bit after mount to ensure Supabase client is ready
     const timer = setTimeout(() => {
-      console.log('🔄 Starting initial cache load...');
+      console.log('[CACHE] Starting initial cache load...');
       cacheProducts();
       cacheCustomers();
       cacheInvoices();
     }, 2000);
 
     return () => {
-      console.log('🧹 Cleaning up initial cache timer');
+      console.log('[CLEANUP] Cleaning up initial cache timer');
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -605,7 +605,7 @@ export function useOfflineSales(organizationId: string | null | undefined) {
 
   // Load pending count on mount and when org changes
   useEffect(() => {
-    console.log('📊 Loading pending count for org:', organizationId);
+    console.log('[INIT] Loading pending count for org:', organizationId);
     loadPendingCount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
@@ -614,17 +614,17 @@ export function useOfflineSales(organizationId: string | null | undefined) {
   useEffect(() => {
     if (!organizationId || !isOnline) return;
 
-    console.log('⏰ Setting up periodic cache refresh (every 5 minutes)');
+    console.log('[TIMER] Setting up periodic cache refresh (every 5 minutes)');
 
     const interval = setInterval(() => {
-      console.log('🔄 Periodic cache refresh triggered');
+      console.log('[CACHE] Periodic cache refresh triggered');
       cacheProducts();
       cacheCustomers();
       cacheInvoices();
     }, 5 * 60 * 1000);
 
     return () => {
-      console.log('🧹 Cleaning up periodic refresh');
+      console.log('[CLEANUP] Cleaning up periodic refresh');
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { differenceInMinutes } from "date-fns";
 import React from "react";
+import { Truck, Store } from "lucide-react";
 
 export const getUrgencyBadge = (createdAt: string, status: string): React.ReactElement | null => {
     const minutesAgo = differenceInMinutes(new Date(), new Date(createdAt));
@@ -40,13 +41,13 @@ export const getServiceTypeBadge = (serviceType: string): React.ReactElement => 
     if (serviceType === "delivery") {
         return (
             <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 text-[10px]">
-                🚚 Reparto
+                <Truck className="h-3 w-3 inline mr-0.5" /> Reparto
             </Badge>
         );
     }
     return (
         <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 text-[10px]">
-            🏪 Mostrador
+            <Store className="h-3 w-3 inline mr-0.5" /> Mostrador
         </Badge>
     );
 };

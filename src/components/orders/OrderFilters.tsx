@@ -1,22 +1,37 @@
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Store, Truck } from "lucide-react";
 
 interface OrderFiltersProps {
     searchTerm: string;
     setSearchTerm: (value: string) => void;
     serviceTypeFilter: string;
     setServiceTypeFilter: (value: string) => void;
+    statusFilter: string;
+    setStatusFilter: (value: string) => void;
     dateFilter: string;
     setDateFilter: (value: string) => void;
 }
+
+const STATUS_OPTIONS = [
+    { value: "all", label: "Todos" },
+    { value: "pending", label: "Nuevos" },
+    { value: "confirmed", label: "Confirmados" },
+    { value: "preparing", label: "Preparando" },
+    { value: "ready", label: "Listos" },
+    { value: "shipping", label: "En camino" },
+    { value: "delivered", label: "Completados" },
+    { value: "not_delivered", label: "No entregados" },
+];
 
 export function OrderFilters({
     searchTerm,
     setSearchTerm,
     serviceTypeFilter,
     setServiceTypeFilter,
+    statusFilter,
+    setStatusFilter,
     dateFilter,
     setDateFilter,
 }: OrderFiltersProps) {
@@ -56,7 +71,7 @@ export function OrderFilters({
                                 : ""
                         }
                     >
-                        🏪 Mostrador
+                        <Store className="h-4 w-4 inline mr-1" />Mostrador
                     </Button>
                     <Button
                         variant={serviceTypeFilter === "delivery" ? "default" : "outline"}
@@ -68,8 +83,26 @@ export function OrderFilters({
                                 : ""
                         }
                     >
-                        🚚 Reparto
+                        <Truck className="h-4 w-4 inline mr-1" />Reparto
                     </Button>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                    <span className="text-xs text-muted-foreground">Estado</span>
+                    {STATUS_OPTIONS.map((option) => (
+                        <Button
+                            key={option.value}
+                            variant={statusFilter === option.value ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setStatusFilter(option.value)}
+                            className={
+                                statusFilter === option.value
+                                    ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                                    : ""
+                            }
+                        >
+                            {option.label}
+                        </Button>
+                    ))}
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                     <span className="text-xs text-muted-foreground">Rango de fechas</span>

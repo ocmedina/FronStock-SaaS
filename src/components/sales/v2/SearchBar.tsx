@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, Barcode } from 'lucide-react';
+import { Search, Barcode, Package } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import type { Product } from '../types';
 import { cn } from '@/lib/utils';
@@ -90,7 +90,7 @@ export function SearchBar({ products, onProductSelect, autoFocus = true }: Searc
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onFocus={() => query && setShowResults(true)}
-                    placeholder="🔍 Buscar por nombre, código o escanear..."
+                    placeholder="Buscar por nombre, código o escanear..."
                     className="h-11 md:h-14 pl-11 md:pl-12 pr-11 md:pr-12 text-base md:text-lg rounded-xl border-2 focus:border-primary"
                 />
                 <Barcode className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -110,7 +110,7 @@ export function SearchBar({ products, onProductSelect, autoFocus = true }: Searc
                             )}
                         >
                             <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                <span className="text-2xl">📦</span>
+                                <Package className="h-6 w-6 text-primary" />
                             </div>
                             <div className="flex-1 text-left min-w-0">
                                 <p className="font-semibold truncate">{product.name}</p>

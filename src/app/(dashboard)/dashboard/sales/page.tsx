@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Loader2 } from "lucide-react";
+import { Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import {
   SearchBar,
@@ -77,18 +77,18 @@ export default function POSPage() {
 
   // Debug: Log online status changes
   useEffect(() => {
-    console.log(`🌐 Sales Page: isOnline = ${isOnline}, wasOffline = ${wasOffline}`);
+    console.log(`[NET] Sales Page: isOnline = ${isOnline}, wasOffline = ${wasOffline}`);
   }, [isOnline, wasOffline]);
 
   // Fetch Data (only once on mount)
   const fetchData = useCallback(async () => {
     if (!organizationId) {
-      console.log('⏸️ fetchData: No organizationId');
+      console.log('[SKIP] fetchData: No organizationId');
       return;
     }
     
     setIsLoading(true);
-    console.log(`🔄 fetchData: Starting (isOnline: ${isOnline})`);
+    console.log(`[SYNC] fetchData: Starting (isOnline: ${isOnline})`);
 
     try {
       // Always try cache first for immediate UI
@@ -106,17 +106,17 @@ export default function POSPage() {
       if (cachedProducts.length > 0) {
         const availableCachedProducts = cachedProducts.filter((product) => Number(product.stock) > 0);
         setProducts(availableCachedProducts as any);
-        console.log(`📦 Initial: Loaded ${availableCachedProducts.length} available products from cache`);
+        console.log(`[CACHE] Initial: Loaded ${availableCachedProducts.length} available products from cache`);
       }
       
       if (cachedCustomers.length > 0) {
         setCustomers(cachedCustomers as any);
-        console.log(`📦 Initial: Loaded ${cachedCustomers.length} customers from cache`);
+        console.log(`[CACHE] Initial: Loaded ${cachedCustomers.length} customers from cache`);
       }
 
       if (isOnline) {
         // Then try Supabase for fresh data
-        console.log('📡 Fetching from Supabase...');
+        console.log('[NET] Fetching from Supabase...');
         
         // Add timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => 
@@ -154,28 +154,28 @@ export default function POSPage() {
         if (customersRes.error) throw customersRes.error;
         if (suppliersRes?.error) throw suppliersRes.error;
 
-        console.log(`✅ Loaded fresh data: ${productsRes.data?.length || 0} products`);
+        console.log(`[OK] Loaded fresh data: ${productsRes.data?.length || 0} products`);
         
         if (productsRes.data) setProducts(productsRes.data as Product[]);
         if (customersRes.data) setCustomers(customersRes.data);
         if (suppliersRes?.data) setSuppliers(suppliersRes.data);
       }
     } catch (error: any) {
-      console.error('❌ Error fetching data:', error);
+      console.error('[ERROR] Error fetching data:', error);
       // Cache was already loaded at start, so just show warning if no data
       if (products.length === 0) {
          toast.error('Error al cargar datos');
       }
     } finally {
       setIsLoading(false);
-      console.log('✅ fetchData: Complete');
+      console.log('[OK] fetchData: Complete');
     }
   }, [organizationId, isOnline, supabase]);
 
   // Load data on mount and when online status changes
   useEffect(() => {
     if (organizationId) {
-      console.log('⚡ Triggering fetchData from useEffect');
+      console.log('[INIT] Triggering fetchData from useEffect');
       fetchData();
     }
   }, [organizationId, fetchData]);
@@ -183,9 +183,9 @@ export default function POSPage() {
   // Reload data when connection is restored (with delay)
   useEffect(() => {
     if (organizationId && isOnline && wasOffline) {
-      console.log('🔄 Connection restored detected! Reloading data in 6 seconds...');
+      console.log('[SYNC] Connection restored detected! Reloading data in 6 seconds...');
       const timer = setTimeout(() => {
-        console.log('📡 Executing deferred data reload...');
+        console.log('[NET] Executing deferred data reload...');
         fetchData();
       }, 6000);
       
@@ -526,7 +526,7 @@ export default function POSPage() {
       {/* Header */}
       <div className="h-14 md:h-16 border-b border-border bg-background px-3 md:px-6 flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <h1 className="text-base sm:text-lg md:text-2xl font-bold truncate">🏪 FrontStock POS</h1>
+          <h1 className="text-base sm:text-lg md:text-2xl font-bold truncate"><Store className="h-5 w-5 inline mr-1" />FrontStock POS</h1>
           <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground shrink-0">v2.0</span>
         </div>
       </div>

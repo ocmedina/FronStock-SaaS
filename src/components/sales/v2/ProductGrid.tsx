@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, AlertTriangle } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Coffee, Droplets, Package, GlassWater, Wheat, Candy, CupSoda, Cookie } from 'lucide-react';
 import type { Product } from '../types';
 import { cn } from '@/lib/utils';
+import { type LucideIcon } from 'lucide-react';
 
 interface ProductGridProps {
     products: Product[];
@@ -11,24 +12,24 @@ interface ProductGridProps {
     maxItems?: number;
 }
 
-const PRODUCT_EMOJIS: Record<string, string> = {
-    bebida: '🥤',
-    pan: '🍞',
-    leche: '🥛',
-    chocolate: '🍫',
-    jugo: '🧃',
-    galleta: '🍪',
-    cafe: '☕',
-    agua: '💧',
-    default: '📦',
+const PRODUCT_ICONS: Record<string, LucideIcon> = {
+    bebida: GlassWater,
+    pan: Wheat,
+    leche: GlassWater,
+    chocolate: Candy,
+    jugo: CupSoda,
+    galleta: Cookie,
+    cafe: Coffee,
+    agua: Droplets,
+    default: Package,
 };
 
-function getProductEmoji(productName: string): string {
+function getProductIcon(productName: string): LucideIcon {
     const name = productName.toLowerCase();
-    for (const [key, emoji] of Object.entries(PRODUCT_EMOJIS)) {
-        if (name.includes(key)) return emoji;
+    for (const [key, icon] of Object.entries(PRODUCT_ICONS)) {
+        if (name.includes(key)) return icon;
     }
-    return PRODUCT_EMOJIS.default;
+    return PRODUCT_ICONS.default;
 }
 
 export function ProductGrid({ products, onProductSelect, maxItems = 8 }: ProductGridProps) {
@@ -61,7 +62,7 @@ export function ProductGrid({ products, onProductSelect, maxItems = 8 }: Product
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                 {topProducts.map((product) => {
                     const isLowStock = product.stock < 10;
-                    const emoji = getProductEmoji(product.name);
+                    const Icon = getProductIcon(product.name);
 
                     return (
                         <button
@@ -77,8 +78,8 @@ export function ProductGrid({ products, onProductSelect, maxItems = 8 }: Product
                                 'relative group'
                             )}
                         >
-                            {/* Emoji */}
-                            <span className="text-3xl sm:text-4xl">{emoji}</span>
+                            {/* Icon */}
+                            <Icon className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
 
                             {/* Product Name */}
                             <p className="text-xs font-semibold text-center line-clamp-2 leading-tight">

@@ -63,7 +63,7 @@ export default function InvoicesPage() {
                 .order("created_at", { ascending: false });
 
             if (error) {
-                console.error("❌ Error fetching invoices from Supabase:", error);
+                console.error("[ERROR] Error fetching invoices from Supabase:", error);
                 throw error;
             }
 
@@ -78,7 +78,7 @@ export default function InvoicesPage() {
                 }
             }
         } catch (error) {
-            console.error("❌ Fetch failed, loading from cache:", error);
+            console.error("[ERROR] Fetch failed, loading from cache:", error);
             
             // Fallback to cached invoices
             try {
@@ -89,15 +89,15 @@ export default function InvoicesPage() {
                     .sortBy('created_at');
                 
                 if (cachedInvoices && cachedInvoices.length > 0) {
-                    console.log(`📦 Loaded ${cachedInvoices.length} invoices from cache`);
+                    console.log(`[CACHE] Loaded ${cachedInvoices.length} invoices from cache`);
                     const invoicesData = cachedInvoices as unknown as Invoice[];
                     setInvoices(invoicesData);
                     setFilteredInvoices(invoicesData);
                 } else {
-                    console.warn('⚠️ No cached invoices available');
+                    console.warn('[WARN] No cached invoices available');
                 }
             } catch (cacheError) {
-                console.error('❌ Error loading from cache:', cacheError);
+                console.error('[ERROR] Error loading from cache:', cacheError);
             }
         } finally {
             setLoading(false);
@@ -182,7 +182,7 @@ export default function InvoicesPage() {
                     <Button
                         variant="destructive"
                         onClick={async () => {
-                            if (window.confirm("⚠️ ¿ESTÁS SEGURO? \n\nEsto borrará TODAS las facturas de la organización y reiniciará la numeración a 0001-00000001. \n\nLas ventas volverán a estado 'pendiente de facturar'. \n\nEsta acción NO se puede deshacer.")) {
+                            if (window.confirm("¿ESTÁS SEGURO? \n\nEsto borrará TODAS las facturas de la organización y reiniciará la numeración a 0001-00000001. \n\nLas ventas volverán a estado 'pendiente de facturar'. \n\nEsta acción NO se puede deshacer.")) {
                                 if (window.prompt("Escribe 'BORRAR' para confirmar") !== "BORRAR") return;
 
                                 setLoading(true);
@@ -192,7 +192,7 @@ export default function InvoicesPage() {
                                 if (result.error) {
                                     alert("Error al borrar facturas: " + result.error);
                                 } else {
-                                    alert("✅ Facturas borradas correctamente. La numeración se ha reiniciado.");
+                                    alert("Facturas borradas correctamente. La numeración se ha reiniciado.");
                                     fetchInvoices();
                                 }
                                 setLoading(false);

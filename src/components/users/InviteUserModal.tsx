@@ -13,7 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, UserPlus, Mail, Shield, Eye } from "lucide-react";
+import { Loader2, UserPlus, Mail, Shield, Eye, Lightbulb } from "lucide-react";
 import { roleLabels, Role } from "@/lib/permissions";
 import { ROLE_ICONS } from "./types";
 
@@ -91,7 +91,7 @@ export function InviteUserModal({
                     </div>
 
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-300">
-                        <p className="font-medium mb-1">💡 Cómo funciona:</p>
+                        <p className="font-medium mb-1"><Lightbulb className="h-4 w-4 inline mr-1" />Cómo funciona:</p>
                         <p className="text-blue-600 dark:text-blue-400">
                             El usuario debe registrarse con este email. Al registrarse, se
                             unirá automáticamente a la organización con el rol asignado.

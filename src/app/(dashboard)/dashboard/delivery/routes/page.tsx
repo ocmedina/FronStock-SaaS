@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -44,6 +44,11 @@ import {
   Route,
   Copy,
   Send,
+  ChevronDown,
+  ChevronRight,
+  Phone,
+  Filter,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -59,7 +64,11 @@ export default function RoutesManagementPage() {
   const [loading, setLoading] = useState(true);
   const [sendingOrdersRouteId, setSendingOrdersRouteId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingRoute, setEditingRoute] = useState<any | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
+  const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
+  const [routeStatusFilter, setRouteStatusFilter] = useState<string>("active");
+  const [routeDateFilter, setRouteDateFilter] = useState<string>("all");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -90,7 +99,7 @@ export default function RoutesManagementPage() {
         .select(`
           *,
           driver:profiles!routes_driver_id_fkey(id, full_name),
-          route_stops(id, visit_status, customer_id, order_id)
+          route_stops(id, visit_status, customer_id, order_id, stop_order, address_snapshot, customer:customers(id, name, phone, address))
         `)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false }),
@@ -131,6 +140,83 @@ export default function RoutesManagementPage() {
   useEffect(() => {
     fetchData();
   }, [organizationId]);
+
+  // Filtered routes
+  const filteredRoutes = useMemo(() => {
+    let filtered = [...routes];
+
+    if (routeStatusFilter !== "all") {
+      if (routeStatusFilter === "active") {
+        filtered = filtered.filter((r) => ["planned", "in_progress"].includes(r.status));
+      } else {
+        filtered = filtered.filter((r) => r.status === routeStatusFilter);
+      }
+    }
+
+    if (routeDateFilter !== "all") {
+      const now = new Date();
+      let cutoff: Date;
+      if (routeDateFilter === "today") {
+        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      } else if (routeDateFilter === "week") {
+        cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - 7);
+      } else {
+        cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - 30);
+      }
+      filtered = filtered.filter((r) => new Date(r.created_at) >= cutoff);
+    }
+
+    return filtered;
+  }, [routes, routeStatusFilter, routeDateFilter]);
+
+  const handleEditRoute = (route: any) => {
+    setEditingRoute(route);
+    setFormData({
+      name: route.name || "",
+      zone: route.zone || "",
+      visit_day: route.visit_day?.toString() || "",
+      driver_id: route.driver_id || "",
+      notes: route.notes || "",
+    });
+    setShowModal(true);
+  };
+
+  const handleSaveEditRoute = async () => {
+    if (!canEdit("delivery") || !editingRoute || !organizationId) return;
+
+    if (!formData.name || !formData.visit_day) {
+      toast.error("Completa los campos obligatorios");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("routes")
+        .update({
+          name: formData.name,
+          zone: formData.zone || null,
+          visit_day: parseInt(formData.visit_day),
+          driver_id: formData.driver_id && formData.driver_id !== "none" ? formData.driver_id : null,
+          notes: formData.notes || null,
+        })
+        .eq("id", editingRoute.id)
+        .eq("organization_id", organizationId);
+
+      if (error) throw error;
+
+      toast.success("Ruta actualizada");
+      setShowModal(false);
+      resetForm();
+      fetchData();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCreateRoute = async () => {
     if (!canCreate("delivery")) {
@@ -322,6 +408,7 @@ export default function RoutesManagementPage() {
       notes: "",
     });
     setSelectedRoute(null);
+    setEditingRoute(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -367,7 +454,7 @@ export default function RoutesManagementPage() {
     };
   };
 
-  // Stats
+  // Stats (from all routes, not filtered)
   const stats = {
     total: routes.length,
     active: routes.filter((r) => r.status === "in_progress").length,
@@ -440,6 +527,56 @@ export default function RoutesManagementPage() {
         </Card>
       </div>
 
+      {/* Filters */}
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Filter className="h-3 w-3" /> Estado
+            </span>
+            {[
+              { value: "all", label: "Todas" },
+              { value: "active", label: "Activas" },
+              { value: "planned", label: "Planificadas" },
+              { value: "in_progress", label: "En progreso" },
+              { value: "completed", label: "Completadas" },
+            ].map((opt) => (
+              <Button
+                key={opt.value}
+                variant={routeStatusFilter === opt.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setRouteStatusFilter(opt.value)}
+                className={routeStatusFilter === opt.value ? "bg-emerald-600 hover:bg-emerald-500 text-white" : ""}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <span className="text-xs text-muted-foreground">Fecha</span>
+            {[
+              { value: "all", label: "Todo" },
+              { value: "today", label: "Hoy" },
+              { value: "week", label: "7 días" },
+              { value: "month", label: "30 días" },
+            ].map((opt) => (
+              <Button
+                key={opt.value}
+                variant={routeDateFilter === opt.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setRouteDateFilter(opt.value)}
+                className={routeDateFilter === opt.value ? "bg-emerald-600 hover:bg-emerald-500 text-white" : ""}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+          <div className="text-sm text-muted-foreground ml-auto">
+            {filteredRoutes.length} de {routes.length} rutas
+          </div>
+        </div>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Cómo funciona Rutas</CardTitle>
@@ -481,6 +618,7 @@ export default function RoutesManagementPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8"></TableHead>
               <TableHead>Ruta</TableHead>
               <TableHead>Repartidor</TableHead>
               <TableHead>Día</TableHead>
@@ -494,18 +632,18 @@ export default function RoutesManagementPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={9} className="h-24 text-center">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
-            ) : routes.length === 0 ? (
+            ) : filteredRoutes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  No hay rutas creadas. Crea tu primera ruta para comenzar.
+                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                  {routes.length === 0 ? "No hay rutas creadas. Crea tu primera ruta para comenzar." : "No hay rutas que coincidan con los filtros."}
                 </TableCell>
               </TableRow>
             ) : (
-              routes.map((route) => {
+              filteredRoutes.map((route) => {
                 const completedStops = route.route_stops?.filter(
                   (s: any) => s.visit_status === "visited"
                 ).length || 0;
@@ -520,8 +658,15 @@ export default function RoutesManagementPage() {
                 const progressPct = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0;
                 const assignableOrderCount = getAssignableOrderIdsForRoute(route).length;
 
+                const isExpanded = expandedRouteId === route.id;
+                const sortedStops = [...(route.route_stops || [])].sort((a: any, b: any) => (a.stop_order || 0) - (b.stop_order || 0));
+
                 return (
-                  <TableRow key={route.id}>
+                  <React.Fragment key={route.id}>
+                  <TableRow className="cursor-pointer" onClick={() => setExpandedRouteId(isExpanded ? null : route.id)}>
+                    <TableCell className="w-8 px-2">
+                      {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{route.name}</div>
@@ -614,8 +759,19 @@ export default function RoutesManagementPage() {
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-2 flex-wrap">
+                        {canEdit("delivery") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditRoute(route)}
+                            title="Editar ruta"
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                        )}
                         {canEdit("delivery") && (
                           <Button
                             size="sm"
@@ -675,6 +831,77 @@ export default function RoutesManagementPage() {
                       </div>
                     </TableCell>
                   </TableRow>
+
+                  {/* Expanded detail row */}
+                  {isExpanded && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="bg-muted/30 p-0">
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">
+                              Paradas de la ruta ({sortedStops.length})
+                            </h4>
+                            {route.notes && (
+                              <span className="text-xs text-muted-foreground">
+                                Notas: {route.notes}
+                              </span>
+                            )}
+                          </div>
+                          {sortedStops.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              Esta ruta no tiene paradas asignadas.
+                            </p>
+                          ) : (
+                            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                              {sortedStops.map((stop: any, idx: number) => {
+                                const customer = stop.customer;
+                                const visitStatusLabels: Record<string, { label: string; className: string }> = {
+                                  pending: { label: "Pendiente", className: "bg-yellow-500/10 text-yellow-600" },
+                                  visited: { label: "Visitado", className: "bg-green-500/10 text-green-600" },
+                                  not_home: { label: "No estaba", className: "bg-orange-500/10 text-orange-600" },
+                                  closed: { label: "Cerrado", className: "bg-red-500/10 text-red-600" },
+                                  skipped: { label: "Saltado", className: "bg-gray-500/10 text-gray-600" },
+                                };
+                                const vs = visitStatusLabels[stop.visit_status] || visitStatusLabels.pending;
+
+                                return (
+                                  <div key={stop.id} className="rounded-lg border bg-card p-3 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-medium text-muted-foreground">
+                                        #{idx + 1}
+                                      </span>
+                                      <Badge variant="outline" className={vs.className + " text-[10px]"}>
+                                        {vs.label}
+                                      </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                      <span className="text-sm font-medium truncate">
+                                        {customer?.name || "Sin cliente"}
+                                      </span>
+                                    </div>
+                                    {(customer?.address || stop.address_snapshot) && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <MapPin className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">{customer?.address || stop.address_snapshot}</span>
+                                      </div>
+                                    )}
+                                    {customer?.phone && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <Phone className="h-3 w-3 shrink-0" />
+                                        <span>{customer.phone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  </React.Fragment>
                 );
               })
             )}
@@ -682,11 +909,11 @@ export default function RoutesManagementPage() {
         </Table>
       </Card>
 
-      {/* Create Route Dialog */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
+      {/* Create/Edit Route Dialog */}
+      <Dialog open={showModal} onOpenChange={(open) => { if (!open) { setShowModal(false); resetForm(); } else setShowModal(true); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Nueva Ruta</DialogTitle>
+            <DialogTitle>{editingRoute ? "Editar Ruta" : "Nueva Ruta"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -765,13 +992,15 @@ export default function RoutesManagementPage() {
               />
             </div>
 
+            {!editingRoute && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-sm">
               <p className="text-blue-700 dark:text-blue-300">
-                💡 <strong>Nota:</strong> Esta ruta se creará automáticamente con todos los clientes
+                <Lightbulb className="h-4 w-4 inline mr-1" /><strong>Nota:</strong> Esta ruta se creará automáticamente con todos los clientes
                 que coincidan con la zona y día seleccionados. Puedes editarla después para
                 agregar o quitar paradas.
               </p>
             </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -784,10 +1013,17 @@ export default function RoutesManagementPage() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleCreateRoute} disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Crear Ruta
-            </Button>
+            {editingRoute ? (
+              <Button onClick={handleSaveEditRoute} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Guardar Cambios
+              </Button>
+            ) : (
+              <Button onClick={handleCreateRoute} disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Crear Ruta
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

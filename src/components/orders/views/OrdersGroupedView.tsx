@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User } from "lucide-react";
+import { User, Check } from "lucide-react";
 import { getOrderStatus } from "@/lib/orders/filters";
 
 interface OrdersGroupedViewProps {
@@ -61,7 +61,7 @@ export function OrdersGroupedView({ orders, onViewDetails }: OrdersGroupedViewPr
                                     <div className="flex items-center gap-2">
                                         <Badge className="text-xs">
                                             {getOrderStatus(order) === "delivered"
-                                                ? "✓ Completado"
+                                                ? <><Check className="h-3 w-3 inline mr-0.5" />Completado</>
                                                 : "En proceso"}
                                         </Badge>
                                         {order.is_offline_pending && (

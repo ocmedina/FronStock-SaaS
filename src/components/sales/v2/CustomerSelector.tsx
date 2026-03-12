@@ -177,7 +177,7 @@ export function CustomerSelector({
                                                 )}
                                                 {(customer.credit_limit || 0) > 0 && (
                                                     <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded">
-                                                        💳 ${Math.max(0, Number(availableCredit || 0)).toLocaleString()}
+                                                        <CreditCard className="h-3 w-3 inline mr-0.5" />${Math.max(0, Number(availableCredit || 0)).toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>

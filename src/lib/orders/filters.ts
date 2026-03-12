@@ -1,7 +1,8 @@
 export const filterOrders = (
     orders: any[],
     searchTerm: string,
-    serviceTypeFilter: string
+    serviceTypeFilter: string,
+    statusFilter: string = "all"
 ) => {
     let filtered = [...orders];
 
@@ -17,6 +18,20 @@ export const filterOrders = (
 
     if (serviceTypeFilter !== "all") {
         filtered = filtered.filter((o) => o.service_type === serviceTypeFilter);
+    }
+
+    if (statusFilter !== "all") {
+        const statusMap: Record<string, string[]> = {
+            pending: ["pending", "draft"],
+            confirmed: ["confirmed"],
+            preparing: ["preparing", "packed"],
+            ready: ["ready", "assigned_to_route", "assigned"],
+            shipping: ["out_for_delivery", "in_delivery"],
+            delivered: ["delivered"],
+            not_delivered: ["not_delivered", "cancelled"],
+        };
+        const allowedStatuses = statusMap[statusFilter] || [statusFilter];
+        filtered = filtered.filter((o) => allowedStatuses.includes(getOrderStatus(o)));
     }
 
     return filtered;

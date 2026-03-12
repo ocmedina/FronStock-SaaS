@@ -332,7 +332,7 @@ export const PurchaseOrderPDF: React.FC<PurchaseOrderPDFProps> = ({
                 {/* Alerta de Anticipo */}
                 {supplier.requires_advance && advanceAmount > 0 && (
                     <View style={styles.alert}>
-                        <Text style={styles.alertTitle}>⚠️ ANTICIPO REQUERIDO</Text>
+                        <Text style={styles.alertTitle}>ANTICIPO REQUERIDO</Text>
                         <Text style={styles.alertText}>
                             Este proveedor requiere un anticipo del {supplier.advance_percentage}%
                             (${advanceAmount.toLocaleString('es-AR', { minimumFractionDigits: 2 })})

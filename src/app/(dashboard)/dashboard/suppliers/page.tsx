@@ -25,7 +25,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Loader2, DollarSign, Eye, Pencil, Trash2, Star, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Plus, Search, Loader2, DollarSign, Eye, Pencil, Trash2, Star, AlertCircle, ShoppingCart, Package } from 'lucide-react';
 import { SupplierCard, PaymentRegistrationModal, SupplierHistoryModal } from '@/components/suppliers';
 import { CreatePurchaseOrderModal } from '@/components/purchases';
 
@@ -518,7 +518,7 @@ export default function SuppliersPage() {
                                                         )}
                                                         {supplier.lead_time_days && supplier.lead_time_days > 0 && (
                                                             <Badge variant="secondary" className="text-xs">
-                                                                📦 {supplier.lead_time_days}d entrega
+                                                                <Package className="h-3 w-3 inline mr-1" />{supplier.lead_time_days}d entrega
                                                             </Badge>
                                                         )}
                                                     </div>

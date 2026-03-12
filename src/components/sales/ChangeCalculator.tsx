@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { DollarSign, Calculator } from 'lucide-react';
+import { DollarSign, Calculator, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChangeCalculatorProps {
@@ -116,7 +116,7 @@ export function ChangeCalculator({ total, onAmountChange }: ChangeCalculatorProp
 
                     {change < 0 && (
                         <p className="text-xs text-destructive">
-                            ⚠️ Falta: ${Math.abs(change).toLocaleString('es-AR')}
+                            <AlertTriangle className="h-3 w-3 inline mr-1" />Falta: ${Math.abs(change).toLocaleString('es-AR')}
                         </p>
                     )}
 

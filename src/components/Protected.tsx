@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
+import { Lock } from 'lucide-react';
 
 interface ProtectedProps {
     children: ReactNode;
@@ -74,7 +75,7 @@ export function AccessDenied({ message = 'No tienes permiso para acceder a esta 
     return (
         <div className="flex items-center justify-center h-64">
             <div className="text-center">
-                <div className="text-6xl mb-4">🔒</div>
+                <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <h2 className="text-xl font-semibold text-slate-800 mb-2">Acceso Restringido</h2>
                 <p className="text-slate-500">{message}</p>
             </div>

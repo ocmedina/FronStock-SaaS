@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Navigation, Phone, CheckCircle, XCircle, Clock, Package, AlertTriangle } from "lucide-react";
+import { ArrowLeft, MapPin, Navigation, Phone, CheckCircle, XCircle, Clock, Package, AlertTriangle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -399,7 +399,7 @@ export default function RoutesPage() {
 
                                 {stop.visit_status === 'visited' && stop.sale_id && (
                                     <div className="mt-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
-                                        <span className="text-sm text-green-400">✓ Venta realizada</span>
+                                        <span className="text-sm text-green-400"><Check className="h-4 w-4 inline mr-1" />Venta realizada</span>
                                     </div>
                                 )}
                             </div>

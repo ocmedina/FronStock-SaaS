@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, Package, ArrowDownLeft, ArrowUpRight, Loader2 } from "lucide-react";
+import { Activity, Package, ArrowDownLeft, ArrowUpRight, Loader2, ClipboardList, AlertTriangle, XCircle, Undo2, Pencil, FileText } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -160,14 +160,14 @@ export function StockMovementModal({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="adjustment">
-                                    📋 Ajuste de inventario
+                                    <ClipboardList className="h-4 w-4 inline mr-1" />Ajuste de inventario
                                 </SelectItem>
-                                <SelectItem value="damaged">⚠️ Producto dañado</SelectItem>
-                                <SelectItem value="lost">❌ Pérdida</SelectItem>
-                                <SelectItem value="returned">↩️ Devolución</SelectItem>
-                                <SelectItem value="correction">✏️ Corrección</SelectItem>
-                                <SelectItem value="initial">📦 Stock inicial</SelectItem>
-                                <SelectItem value="other">📝 Otro</SelectItem>
+                                <SelectItem value="damaged"><AlertTriangle className="h-4 w-4 inline mr-1" />Producto dañado</SelectItem>
+                                <SelectItem value="lost"><XCircle className="h-4 w-4 inline mr-1" />Pérdida</SelectItem>
+                                <SelectItem value="returned"><Undo2 className="h-4 w-4 inline mr-1" />Devolución</SelectItem>
+                                <SelectItem value="correction"><Pencil className="h-4 w-4 inline mr-1" />Corrección</SelectItem>
+                                <SelectItem value="initial"><Package className="h-4 w-4 inline mr-1" />Stock inicial</SelectItem>
+                                <SelectItem value="other"><FileText className="h-4 w-4 inline mr-1" />Otro</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

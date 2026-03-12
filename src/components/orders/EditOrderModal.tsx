@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { Edit, DollarSign, CreditCard, Smartphone, Wallet, Trash2, Plus, Minus, X, Search } from "lucide-react";
+import { Edit, DollarSign, CreditCard, Smartphone, Wallet, Trash2, Plus, Minus, X, Search, AlertTriangle, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -464,12 +464,12 @@ export function EditOrderModal({
                             </div>
                             {paymentAmount < calculateTotal() && paymentAmount > 0 && (
                                 <p className="text-amber-400 text-xs">
-                                    ⚠️ Pago parcial - Pendiente: ${(calculateTotal() - paymentAmount).toLocaleString()}
+                                    <AlertTriangle className="h-3 w-3 inline mr-1" />Pago parcial - Pendiente: ${(calculateTotal() - paymentAmount).toLocaleString()}
                                 </p>
                             )}
                             {paymentAmount >= calculateTotal() && (
                                 <p className="text-emerald-400 text-xs">
-                                    ✓ Pedido pagado completamente
+                                    <Check className="h-3 w-3 inline mr-1" />Pedido pagado completamente
                                 </p>
                             )}
                         </div>

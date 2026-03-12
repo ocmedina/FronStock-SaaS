@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createOrganizationSchema, type CreateOrganizationInput } from '@/lib/validations';
+import { Building2 } from 'lucide-react';
 
 export default function OnboardingPage() {
     const [formData, setFormData] = useState<CreateOrganizationInput>({
@@ -118,7 +119,7 @@ export default function OnboardingPage() {
                 <div className="backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8">
                     <div className="text-center mb-8">
                         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <span className="text-3xl">🏢</span>
+                            <Building2 className="h-8 w-8 text-white" />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2">
                             Configura tu negocio

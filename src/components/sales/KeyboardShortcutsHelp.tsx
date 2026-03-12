@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, Lightbulb } from 'lucide-react';
 
 interface KeyboardShortcutsHelpProps {
     open: boolean;
@@ -74,7 +74,7 @@ export function KeyboardShortcutsHelp({
 
                 <div className="pt-4 border-t">
                     <p className="text-xs text-muted-foreground">
-                        💡 Tip: Los atajos no funcionan cuando estás escribiendo en un campo de texto
+                        <Lightbulb className="h-3 w-3 inline mr-1" />Tip: Los atajos no funcionan cuando estás escribiendo en un campo de texto
                     </p>
                 </div>
             </DialogContent>

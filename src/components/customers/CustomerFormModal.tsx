@@ -10,6 +10,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Customer } from "./types";
 import { useEffect, useState } from "react";
+import { Store, Truck } from "lucide-react";
 
 interface CustomerFormModalProps {
     open: boolean;
@@ -176,7 +177,7 @@ export function CustomerFormModal({
                                             : "bg-background border-input hover:bg-muted"
                                     }`}
                                 >
-                                    🏪 Mostrador
+                                    <Store className="h-3 w-3 inline mr-1" />Mostrador
                                 </button>
                                 <button
                                     type="button"
@@ -187,7 +188,7 @@ export function CustomerFormModal({
                                             : "bg-background border-input hover:bg-muted"
                                     }`}
                                 >
-                                    🚚 Reparto
+                                    <Truck className="h-3 w-3 inline mr-1" />Reparto
                                 </button>
                                 <button
                                     type="button"
@@ -198,7 +199,7 @@ export function CustomerFormModal({
                                             : "bg-background border-input hover:bg-muted"
                                     }`}
                                 >
-                                    🏪🚚 Ambos
+                                    <Store className="h-3 w-3 inline mr-1" /><Truck className="h-3 w-3 inline mr-1" />Ambos
                                 </button>
                             </div>
                         </div>

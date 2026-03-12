@@ -92,7 +92,7 @@ export function CreateInvoiceModal({
     };
 
     const fetchData = async () => {
-        console.log("🔍 CreateInvoiceModal: Fetching data...", { organizationId, open });
+        console.log("[FETCH] CreateInvoiceModal: Fetching data...", { organizationId, open });
 
         try {
             // Fetch sales
@@ -104,11 +104,11 @@ export function CreateInvoiceModal({
                 .order("created_at", { ascending: false })
                 .limit(50);
 
-            console.log("📊 Sales data:", salesData);
-            console.log("📊 First sale example:", salesData?.[0]);
+            console.log("[DATA] Sales data:", salesData);
+            console.log("[DATA] First sale example:", salesData?.[0]);
 
             if (salesError) {
-                console.error("❌ Error fetching sales:", salesError);
+                console.error("[ERROR] Error fetching sales:", salesError);
             }
 
             // Filter out sales that already have an invoice
@@ -117,17 +117,17 @@ export function CreateInvoiceModal({
                 .select("sale_id")
                 .eq("organization_id", organizationId);
 
-            console.log("📄 Invoices data:", { invoices, invoicesError, count: invoices?.length });
+            console.log("[DATA] Invoices data:", { invoices, invoicesError, count: invoices?.length });
 
             if (invoicesError) {
-                console.error("❌ Error fetching invoices:", invoicesError);
+                console.error("[ERROR] Error fetching invoices:", invoicesError);
             }
 
             const invoicedSaleIds = new Set(invoices?.map((i) => i.sale_id) || []);
 
             if (salesData) {
                 const pending = salesData.filter((s) => !invoicedSaleIds.has(s.id));
-                console.log("✅ Pending sales (not invoiced):", pending.length);
+                console.log("[OK] Pending sales (not invoiced):", pending.length);
                 setSales(pending);
             }
 
@@ -141,14 +141,14 @@ export function CreateInvoiceModal({
 
 
             if (customersError) {
-                console.error("❌ Error fetching customers:", customersError);
+                console.error("[ERROR] Error fetching customers:", customersError);
             }
 
             if (customersData) {
                 setCustomers(customersData);
             }
         } catch (error) {
-            console.error("❌ Error in fetchData:", error);
+            console.error("[ERROR] Error in fetchData:", error);
         }
     };
 
@@ -252,7 +252,7 @@ export function CreateInvoiceModal({
                 throw new Error(result.error);
             }
 
-            alert(`✅ Factura creada exitosamente. ${withArca ? '(Con CAE Simulado)' : ''}`);
+            alert(`Factura creada exitosamente. ${withArca ? '(Con CAE Simulado)' : ''}`);
             onSuccess();
             onOpenChange(false);
 
@@ -263,7 +263,7 @@ export function CreateInvoiceModal({
             setCuit("");
             setCuitError("");
         } catch (error: any) {
-            console.error("❌ Error creating invoice:", error);
+            console.error("Error creating invoice:", error);
             alert(`Error al crear la factura: ${error.message || "Error desconocido"}`);
         } finally {
             setLoading(false);

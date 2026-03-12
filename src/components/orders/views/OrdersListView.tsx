@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Eye, Edit, MapPin } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User, Eye, Edit, MapPin, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -13,6 +15,8 @@ interface OrdersListViewProps {
     onViewDetails: (id: string) => void;
     onAssignToRoute: (order: any) => void;
     onChangeStatus: (orderId: string, status: string) => void;
+    onBulkChangeStatus?: (orderIds: string[], status: string) => void;
+    onBulkAssignToRoute?: (orderIds: string[]) => void;
     getStatusBadge: (status: string) => React.ReactElement;
     getServiceTypeBadge: (type: string) => React.ReactElement;
 }
@@ -22,9 +26,45 @@ export function OrdersListView({
     onViewDetails,
     onAssignToRoute,
     onChangeStatus,
+    onBulkChangeStatus,
+    onBulkAssignToRoute,
     getStatusBadge,
     getServiceTypeBadge,
 }: OrdersListViewProps) {
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const toggleAll = () => {
+        if (selectedIds.size === orders.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(orders.map((o) => o.id)));
+        }
+    };
+
+    const clearSelection = () => setSelectedIds(new Set());
+
+    const handleBulkStatus = (status: string) => {
+        if (onBulkChangeStatus && selectedIds.size > 0) {
+            onBulkChangeStatus(Array.from(selectedIds), status);
+            clearSelection();
+        }
+    };
+
+    const handleBulkAssign = () => {
+        if (onBulkAssignToRoute && selectedIds.size > 0) {
+            onBulkAssignToRoute(Array.from(selectedIds));
+            clearSelection();
+        }
+    };
     const statusOptions = [
         { value: "assigned", label: "Asignado" },
         { value: "in_delivery", label: "En reparto" },
@@ -60,6 +100,33 @@ export function OrdersListView({
 
     return (
         <Card className="bg-card border">
+            {/* Bulk actions toolbar */}
+            {selectedIds.size > 0 && (
+                <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border-b flex-wrap">
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                        {selectedIds.size} seleccionado{selectedIds.size > 1 ? "s" : ""}
+                    </span>
+                    <Select onValueChange={handleBulkStatus}>
+                        <SelectTrigger className="h-8 w-[180px] text-xs">
+                            <SelectValue placeholder="Cambiar estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {statusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm" onClick={handleBulkAssign} className="h-8">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        Asignar a ruta
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8 ml-auto">
+                        Deseleccionar
+                    </Button>
+                </div>
+            )}
             <div className="md:hidden divide-y">
                 {orders.length === 0 && (
                     <div className="p-8 text-center text-sm text-muted-foreground">
@@ -72,7 +139,12 @@ export function OrdersListView({
                     return (
                     <div key={order.id} className="p-4 space-y-3">
                         <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Checkbox
+                                    checked={selectedIds.has(order.id)}
+                                    onCheckedChange={() => toggleSelect(order.id)}
+                                />
+                                <div className="min-w-0">
                                 <div className="flex items-center gap-2">
                                     <User className="h-4 w-4 text-muted-foreground" />
                                     <div className="font-medium text-sm truncate">
@@ -86,6 +158,7 @@ export function OrdersListView({
                                             Pendiente offline
                                         </span>
                                     )}
+                                </div>
                                 </div>
                             </div>
                             <div className="font-mono font-semibold text-emerald-600 dark:text-emerald-400 text-sm shrink-0">
@@ -168,6 +241,12 @@ export function OrdersListView({
                 <table className="w-full">
                     <thead className="bg-muted/50 border-b">
                         <tr>
+                            <th className="p-3 w-10">
+                                <Checkbox
+                                    checked={selectedIds.size === orders.length && orders.length > 0}
+                                    onCheckedChange={toggleAll}
+                                />
+                            </th>
                             <th className="text-left p-3 text-sm font-medium">Cliente</th>
                             <th className="text-left p-3 text-sm font-medium">Estado</th>
                             <th className="text-left p-3 text-sm font-medium">Pago</th>
@@ -185,8 +264,14 @@ export function OrdersListView({
                                 return (
                             <tr
                                 key={order.id}
-                                className="border-b hover:bg-muted/30 transition-colors"
+                                className={`border-b hover:bg-muted/30 transition-colors ${selectedIds.has(order.id) ? "bg-emerald-500/5" : ""}`}
                             >
+                                <td className="p-3">
+                                    <Checkbox
+                                        checked={selectedIds.has(order.id)}
+                                        onCheckedChange={() => toggleSelect(order.id)}
+                                    />
+                                </td>
                                 <td className="p-3">
                                     <div className="flex items-center gap-2">
                                         <User className="h-4 w-4 text-muted-foreground" />

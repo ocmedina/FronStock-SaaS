@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { DollarSign, CreditCard, Wallet, Calculator, Plus, X, ArrowLeftRight } from 'lucide-react';
+import { DollarSign, CreditCard, Wallet, Calculator, Plus, X, ArrowLeftRight, AlertTriangle, Lightbulb, Loader2, Banknote } from 'lucide-react';
 import type { Customer, PaymentMethod } from '../types';
 import { cn } from '@/lib/utils';
 import { CustomerSelector } from './CustomerSelector';
@@ -163,7 +163,7 @@ export function PaymentPanel({
         <div className="flex flex-col h-full bg-background">
             {/* Header */}
             <div className="p-3 md:p-4 border-b border-border bg-muted/20">
-                <h2 className="text-lg md:text-xl font-bold">💳 Panel de Pago</h2>
+                <h2 className="text-lg md:text-xl font-bold"><CreditCard className="h-5 w-5 inline mr-1" />Panel de Pago</h2>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
@@ -361,7 +361,7 @@ export function PaymentPanel({
 
                                         {change < 0 && (
                                             <p className="text-xs text-destructive">
-                                                ⚠️ Falta: ${Math.abs(change).toLocaleString('es-AR')}
+                                                <AlertTriangle className="h-3 w-3 inline mr-1" />Falta: ${Math.abs(change).toLocaleString('es-AR')}
                                             </p>
                                         )}
 
@@ -369,7 +369,7 @@ export function PaymentPanel({
                                         {change > 0 && billBreakdown.length > 0 && (
                                             <div className="mt-3 pt-3 border-t border-emerald-500/20">
                                                 <p className="text-xs text-muted-foreground mb-2">
-                                                    💡 Sugerencia de billetes:
+                                                    <Lightbulb className="h-3 w-3 inline mr-1" />Sugerencia de billetes:
                                                 </p>
                                                 <div className="flex flex-wrap gap-1">
                                                     {billBreakdown.map(({ bill, count }) => (
@@ -597,7 +597,7 @@ export function PaymentPanel({
                         'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                 >
-                    {processing ? '⏳ Procesando...' : '💰 COBRAR'}
+                    {processing ? <><Loader2 className="h-5 w-5 inline mr-1 animate-spin" />Procesando...</> : <><Banknote className="h-5 w-5 inline mr-1" />COBRAR</>}
                 </Button>
             </div>
         </div>

@@ -246,7 +246,7 @@ export function CreatePurchaseOrderModal({
         // Si excede el límite, pedir confirmación
         if (creditValidation?.exceeded) {
             const confirmed = window.confirm(
-                '⚠️ ADVERTENCIA: Esta orden excede el límite de crédito del proveedor.\n\n' +
+                'ADVERTENCIA: Esta orden excede el límite de crédito del proveedor.\n\n' +
                 creditValidation.message + '\n\n' +
                 '¿Deseas crear la orden de todas formas?'
             );

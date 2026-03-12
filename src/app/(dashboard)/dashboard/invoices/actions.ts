@@ -51,7 +51,7 @@ export async function generateInvoiceAction(
                 // For now, even if credentials exist, we might want to be careful until fully tested.
                 // But let's assume if they exist, we try. 
                 // Since we don't have them, we fall back to Mock.
-                console.log("⚠️ Real AFIP credentials found but logic disabled in this MVP step.");
+                console.log("[WARN] Real AFIP credentials found but logic disabled in this MVP step.");
 
                 // Mock success for now
                 cae = "74163548956321"; // Mock CAE for real creds? Or should we just fail?
@@ -60,7 +60,7 @@ export async function generateInvoiceAction(
                 afipStatus = "authorised";
             } else {
                 // SIMULATION MODE
-                console.log("ℹ️ No AFIP credentials found. Using Simulation Mode.");
+                console.log("[INFO] No AFIP credentials found. Using Simulation Mode.");
                 // Simulate a delay
                 await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -100,7 +100,7 @@ export async function generateInvoiceAction(
         return { success: true, invoice: newInvoice };
 
     } catch (error: any) {
-        console.error("❌ generateInvoiceAction Error:", error);
+        console.error("[ERROR] generateInvoiceAction Error:", error);
         return { success: false, error: error.message };
     }
 }

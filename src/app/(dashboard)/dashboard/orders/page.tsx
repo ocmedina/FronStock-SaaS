@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ViewMode } from "@/lib/orders/constants";
@@ -27,9 +27,13 @@ export default function OrdersPage() {
     const { organizationId } = useOrganization();
     const supabase = createClient();
 
+    const ORDERS_PER_PAGE = 50;
+
     // Filters
     const [searchTerm, setSearchTerm] = useState("");
     const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("all");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [currentPage, setCurrentPage] = useState(1);
     const [dateFilter, setDateFilter] = useState<string>(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('orders-date-filter') || "all";
@@ -118,7 +122,76 @@ export default function OrdersPage() {
         }
     };
 
-    const filteredOrders = filterOrders(orders, searchTerm, serviceTypeFilter);
+    const handleBulkChangeStatus = async (orderIds: string[], newStatus: string) => {
+        if (!organizationId || orderIds.length === 0) return;
+        let successCount = 0;
+        for (const orderId of orderIds) {
+            try {
+                const { data, error } = await supabase.rpc("set_order_status", {
+                    p_org_id: organizationId,
+                    p_order_id: orderId,
+                    p_new_status: newStatus,
+                    p_notes: "Actualizado en lote desde gestión de pedidos",
+                });
+                if (!error && data?.success !== false) successCount++;
+            } catch { /* skip */ }
+        }
+        if (successCount > 0) {
+            toast.success(`${successCount} pedido${successCount > 1 ? "s" : ""} actualizado${successCount > 1 ? "s" : ""}`);
+            refetch();
+        } else {
+            toast.error("No se pudo actualizar ningún pedido");
+        }
+    };
+
+    const handleBulkAssignToRoute = (orderIds: string[]) => {
+        setSelectedOrders(orderIds);
+        setAssignToRouteOpen(true);
+    };
+
+    const allFilteredOrders = useMemo(
+        () => filterOrders(orders, searchTerm, serviceTypeFilter, statusFilter),
+        [orders, searchTerm, serviceTypeFilter, statusFilter]
+    );
+    const totalPages = Math.max(1, Math.ceil(allFilteredOrders.length / ORDERS_PER_PAGE));
+    const filteredOrders = useMemo(
+        () => allFilteredOrders.slice((currentPage - 1) * ORDERS_PER_PAGE, currentPage * ORDERS_PER_PAGE),
+        [allFilteredOrders, currentPage]
+    );
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, serviceTypeFilter, statusFilter, dateFilter]);
+
+    const handleExportCSV = () => {
+        if (allFilteredOrders.length === 0) {
+            toast.error("No hay pedidos para exportar");
+            return;
+        }
+        const headers = ["ID", "Cliente", "Teléfono", "Estado", "Tipo", "Método Pago", "Estado Pago", "Items", "Total", "Fecha"];
+        const rows = allFilteredOrders.map((o: any) => [
+            o.id,
+            o.customer?.name || "Sin cliente",
+            o.customer?.phone || "",
+            o.ui_status || o.lifecycle_status || o.delivery_status || "",
+            o.service_type || "",
+            o.payment_method || "",
+            o.payment_status || "",
+            o.order_items?.length || 0,
+            o.total || 0,
+            o.created_at ? new Date(o.created_at).toLocaleDateString("es-AR") : "",
+        ]);
+        const csvContent = [headers, ...rows].map((r) => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success(`${allFilteredOrders.length} pedidos exportados`);
+    };
 
     if (loading) {
         return (
@@ -141,6 +214,15 @@ export default function OrdersPage() {
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportCSV}
+                        title="Exportar pedidos filtrados a CSV"
+                    >
+                        <Download className="h-4 w-4 mr-2" />
+                        CSV
+                    </Button>
                     <OrderViewSelector viewMode={viewMode} setViewMode={setViewMode} />
                     <Link href="/dashboard/orders/new">
                         <Button className="bg-emerald-600 hover:bg-emerald-500 text-white w-full sm:w-auto">
@@ -160,6 +242,8 @@ export default function OrdersPage() {
                 setSearchTerm={setSearchTerm}
                 serviceTypeFilter={serviceTypeFilter}
                 setServiceTypeFilter={setServiceTypeFilter}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
                 dateFilter={dateFilter}
                 setDateFilter={setDateFilter}
             />
@@ -171,6 +255,8 @@ export default function OrdersPage() {
                     onViewDetails={handleViewDetails}
                     onAssignToRoute={handleAssignOrderToRoute}
                     onChangeStatus={handleChangeOrderStatus}
+                    onBulkChangeStatus={handleBulkChangeStatus}
+                    onBulkAssignToRoute={handleBulkAssignToRoute}
                     getStatusBadge={getStatusBadge}
                     getServiceTypeBadge={getServiceTypeBadge}
                 />
@@ -237,6 +323,36 @@ export default function OrdersPage() {
                     setSelectedOrders([]);
                 }}
             />
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t pt-4">
+                    <p className="text-sm text-muted-foreground">
+                        Mostrando {(currentPage - 1) * ORDERS_PER_PAGE + 1}-{Math.min(currentPage * ORDERS_PER_PAGE, allFilteredOrders.length)} de {allFilteredOrders.length} pedidos
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage <= 1}
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium">
+                            {currentPage} / {totalPages}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={currentPage >= totalPages}
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

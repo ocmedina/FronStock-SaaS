@@ -309,7 +309,7 @@ export default function DashboardPage() {
             <span className="text-sm opacity-90">Panel de Control</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-            ¡Hola, {profile?.full_name?.split(" ")[0] || "Usuario"}! 👋
+            ¡Hola, {profile?.full_name?.split(" ")[0] || "Usuario"}!
           </h1>
           <p className="opacity-90 text-sm sm:text-base md:text-lg">
             {organization?.name} •{" "}

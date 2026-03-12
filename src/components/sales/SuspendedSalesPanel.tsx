@@ -101,7 +101,7 @@ export function SuspendedSalesPanel({
 
                                 {sale.note && (
                                     <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
-                                        📝 {sale.note}
+                                        <FileText className="h-3 w-3 inline mr-1" />{sale.note}
                                     </p>
                                 )}
 
