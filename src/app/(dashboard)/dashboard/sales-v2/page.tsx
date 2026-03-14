@@ -16,11 +16,11 @@ import {
 import { POSProductModal } from "@/components/sales/POSProductModal";
 import { useSuspendedSales } from "@/hooks/useSuspendedSales";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { ensureOpenCashSession } from "@/lib/cash-session";
+import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPageV2() {
-    const { organizationId, isLoading: orgLoading } = useOrganization();
+    const { organizationId, organization, profile, isLoading: orgLoading } = useOrganization();
     const [products, setProducts] = useState<Product[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -172,9 +172,17 @@ export default function POSPageV2() {
         setIsProcessing(true);
 
         try {
-            const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
-            if (!hasOpenSession) {
-                return;
+            const requiresOpenSession = shouldRequireOpenCashSession({
+                organization,
+                profile,
+                paymentMethods: ["cash"],
+            });
+
+            if (requiresOpenSession) {
+                const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+                if (!hasOpenSession) {
+                    return;
+                }
             }
 
             const items = cart.map((item) => ({

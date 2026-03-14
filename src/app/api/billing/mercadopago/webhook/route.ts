@@ -4,6 +4,7 @@ import { PlanType } from '@/config/plans';
 import { getPaymentById, getSubscription, verifyWebhookSignature } from '@/lib/billing/mercadopago';
 
 export const runtime = 'nodejs';
+const MERCADOPAGO_ENABLED = process.env.ENABLE_MERCADOPAGO === 'true';
 
 const ALLOWED_PAID_PLANS: PlanType[] = ['entrepreneur', 'business', 'enterprise'];
 
@@ -76,21 +77,36 @@ async function handleSubscriptionWebhook(subscriptionId: string) {
             })
             .eq('id', parsed.organizationId);
 
+        console.info(`[MP Webhook] Subscription ${subscriptionId} authorized → org ${parsed.organizationId} activated plan ${parsed.planId}`);
         return { activated: true };
     }
 
     if (subscription.status === 'cancelled') {
-        // Downgrade to free when subscription is cancelled
-        await supabaseAdmin
+        // Only downgrade if the cancelled subscription matches the org's current subscription
+        // This prevents a stale cancellation webhook from downgrading a newer subscription
+        const { data: org } = await supabaseAdmin
             .from('organizations')
-            .update({
-                plan_type: 'free',
-                mp_subscription_status: 'cancelled',
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', parsed.organizationId);
+            .select('mp_subscription_id, plan_type')
+            .eq('id', parsed.organizationId)
+            .single();
 
-        return { cancelled: true };
+        if (org?.mp_subscription_id === subscriptionId) {
+            await supabaseAdmin
+                .from('organizations')
+                .update({
+                    plan_type: 'free',
+                    mp_subscription_status: 'cancelled',
+                    plan_expires_at: null,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', parsed.organizationId);
+
+            console.info(`[MP Webhook] Subscription ${subscriptionId} cancelled → org ${parsed.organizationId} downgraded to free`);
+            return { cancelled: true };
+        }
+
+        console.info(`[MP Webhook] Ignoring cancellation for old subscription ${subscriptionId} (org has ${org?.mp_subscription_id})`);
+        return { ignored: true, reason: 'subscription-id-mismatch' };
     }
 
     if (subscription.status === 'paused') {
@@ -102,6 +118,7 @@ async function handleSubscriptionWebhook(subscriptionId: string) {
             })
             .eq('id', parsed.organizationId);
 
+        console.info(`[MP Webhook] Subscription ${subscriptionId} paused → org ${parsed.organizationId}`);
         return { paused: true };
     }
 
@@ -119,6 +136,10 @@ async function handleSubscriptionWebhook(subscriptionId: string) {
 
 export async function POST(req: NextRequest) {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return NextResponse.json({ received: true, ignored: true, reason: 'mercadopago-disabled' }, { status: 200 });
+        }
+
         const search = req.nextUrl.searchParams;
         const body = await req.json().catch(() => ({} as Record<string, unknown>));
 
@@ -137,8 +158,15 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ received: true, ignored: true }, { status: 200 });
         }
 
-        // Verify webhook signature if secret is configured
+        // Verify webhook signature
         const webhookSecret = process.env.MP_WEBHOOK_SECRET;
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        if (!webhookSecret && isProduction) {
+            console.error('Webhook MP: MP_WEBHOOK_SECRET no configurado en producción. Rechazando request.');
+            return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
+        }
+
         if (webhookSecret) {
             const xSignature = req.headers.get('x-signature') || '';
             const xRequestId = req.headers.get('x-request-id') || '';
@@ -148,11 +176,13 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Missing signature headers' }, { status: 401 });
             }
 
-            const isValid = verifyWebhookSignature(xSignature, xRequestId, dataId, webhookSecret);
+            const isValid = await verifyWebhookSignature(xSignature, xRequestId, dataId, webhookSecret);
             if (!isValid) {
                 console.warn('Webhook MP: firma inválida', { dataId });
                 return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
             }
+        } else {
+            console.warn('Webhook MP: MP_WEBHOOK_SECRET no configurado, omitiendo validación de firma (solo desarrollo)');
         }
 
         // Handle subscription events

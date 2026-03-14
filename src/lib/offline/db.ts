@@ -184,3 +184,27 @@ export class OfflineDB extends Dexie {
 
 // Singleton instance
 export const offlineDB = new OfflineDB();
+
+export async function clearOfflineOrganizationData(organizationId: string): Promise<void> {
+  if (!organizationId) return;
+
+  await offlineDB.transaction(
+    'rw',
+    offlineDB.products,
+    offlineDB.customers,
+    offlineDB.pendingSales,
+    offlineDB.invoices,
+    offlineDB.orders,
+    offlineDB.pendingOrders,
+    async () => {
+      await Promise.all([
+        offlineDB.products.where('organization_id').equals(organizationId).delete(),
+        offlineDB.customers.where('organization_id').equals(organizationId).delete(),
+        offlineDB.pendingSales.where('organization_id').equals(organizationId).delete(),
+        offlineDB.invoices.where('organization_id').equals(organizationId).delete(),
+        offlineDB.orders.where('organization_id').equals(organizationId).delete(),
+        offlineDB.pendingOrders.where('organization_id').equals(organizationId).delete(),
+      ]);
+    }
+  );
+}

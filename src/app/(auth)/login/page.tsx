@@ -6,6 +6,22 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 
+function sanitizeRedirectPath(value: string | null): string {
+    if (!value) return '/dashboard';
+
+    // Only allow internal absolute paths, reject protocol-relative or external URLs.
+    if (!value.startsWith('/') || value.startsWith('//')) {
+        return '/dashboard';
+    }
+
+    // Avoid edge-cases with backslashes that can be interpreted as external paths.
+    if (value.includes('\\')) {
+        return '/dashboard';
+    }
+
+    return value;
+}
+
 function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,7 +30,7 @@ function LoginForm() {
 
     const router = useRouter();
     const searchParams = useSearchParams();
-    const redirectTo = searchParams.get('redirect') || '/dashboard';
+    const redirectTo = sanitizeRedirectPath(searchParams.get('redirect'));
 
     const supabase = createClient();
 

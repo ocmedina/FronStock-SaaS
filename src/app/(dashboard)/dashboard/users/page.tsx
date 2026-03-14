@@ -61,6 +61,7 @@ export default function UsersPage() {
 
   const supabase = createClient();
   const currentRole = profile?.role as Role;
+  const canDeleteUsers = canDelete("users") || currentRole === "owner" || currentRole === "admin";
 
   const fetchData = useCallback(async () => {
     if (!organizationId) return;
@@ -148,21 +149,11 @@ export default function UsersPage() {
   };
 
   const handleCancelInvitation = async (invitationId: string) => {
-    // For simple cancellations without destructive consequences, simple confirm is sometimes ok, 
-    // but user asked for NO alerts. So let's delete directly or use another dialog.
-    // For simplicity, I'll assume direct action or I should add another state.
-    // Let's rely on standard UI patterns: usually an 'X' button implies action.
-    // Given request "no se muestren las alertas", I will remove the confirm here or add a toast.
-    // I'll execute immediately with Undo toast possibility (advanced) or just Toast result.
-    // But destructiveness suggests confirmation. I'll modify handleRemoveUser to use the custom Dialog,
-    // and for invitations I'll just do it for now to avoid multiple dialog states unless needed.
-
-    // Actually, let's keep it safe. Use simple toast logic? 
-    // Wait, the prompt specifically said "no se muestren las alertas de google".
-    // I entered a Delete User state. I can reuse it or create a new one.
-    // Let's just delete for now and toast success.
-
-    await supabase.from("invitations").delete().eq("id", invitationId);
+    const { error } = await supabase.from("invitations").delete().eq("id", invitationId);
+    if (error) {
+      toast.error("No se pudo cancelar la invitación: " + error.message);
+      return;
+    }
     toast.success("Invitación cancelada");
     fetchData();
   };
@@ -245,7 +236,7 @@ export default function UsersPage() {
       {/* Pending Invitations */}
       <PendingInvitations
         invitations={invitations}
-        canDeleteUsers={canDelete("users")}
+        canDeleteUsers={canDeleteUsers}
         onCancel={handleCancelInvitation}
       />
 
@@ -256,7 +247,7 @@ export default function UsersPage() {
         currentRole={currentRole}
         loading={isLoading}
         canEdit={canEdit("users")}
-        canDelete={canDelete("users")}
+        canDelete={canDeleteUsers}
         onEditRole={handleEditRole}
         onRemoveUser={handleRemoveUserClick}
       />

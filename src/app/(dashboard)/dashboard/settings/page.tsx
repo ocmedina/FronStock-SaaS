@@ -38,6 +38,28 @@ import { OrganizationSettingsForm } from '@/components/settings/OrganizationSett
 import { OfflineDebugPanel } from '@/components/OfflineDebugPanel';
 import { LegacyImportPanel } from '@/components/settings/LegacyImportPanel';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { clearOfflineOrganizationData } from '@/lib/offline/db';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+type CashSessionPolicy = 'always' | 'cash_only' | 'off';
+type CashSessionScope = 'all_users' | 'assigned_users';
+
+interface SecurityUserOption {
+    id: string;
+    full_name: string | null;
+    role: string | null;
+}
 
 export default function SettingsPage() {
     const { organization, profile, refetch } = useOrganization();
@@ -66,6 +88,16 @@ export default function SettingsPage() {
     const [closingOtherSessions, setClosingOtherSessions] = useState(false);
     const [notifyNewDevice, setNotifyNewDevice] = useState(false);
     const [accessHistory, setAccessHistory] = useState<Array<{ at: string; device: string }>>([]);
+    const [askOpenCashOnLogin, setAskOpenCashOnLogin] = useState(true);
+    const [cashSessionPolicy, setCashSessionPolicy] = useState<CashSessionPolicy>('cash_only');
+    const [cashSessionScope, setCashSessionScope] = useState<CashSessionScope>('all_users');
+    const [cashSessionAssignedUserIds, setCashSessionAssignedUserIds] = useState<string[]>([]);
+    const [securityUsers, setSecurityUsers] = useState<SecurityUserOption[]>([]);
+    const [savingCashSessionPolicy, setSavingCashSessionPolicy] = useState(false);
+    const [showResetOrgDialog, setShowResetOrgDialog] = useState(false);
+    const [resetOrgConfirmText, setResetOrgConfirmText] = useState('');
+    const [resettingOrgData, setResettingOrgData] = useState(false);
+    const [showResetOrgSuccessModal, setShowResetOrgSuccessModal] = useState(false);
 
     const saveSecurityPreferences = async (payload: {
         sessionTimeoutMinutes: number;
@@ -102,6 +134,13 @@ export default function SettingsPage() {
         if (organization?.name) {
             setOrgName(organization.name);
         }
+        setCashSessionPolicy((organization?.cash_session_policy as CashSessionPolicy) || 'cash_only');
+        setCashSessionScope((organization?.cash_session_scope as CashSessionScope) || 'all_users');
+        setCashSessionAssignedUserIds(
+            Array.isArray(organization?.cash_session_assigned_user_ids)
+                ? organization.cash_session_assigned_user_ids
+                : []
+        );
         if (profile?.full_name) {
             setProfileName(profile.full_name);
         }
@@ -156,6 +195,11 @@ export default function SettingsPage() {
             localStorage.setItem('security-session-timeout-minutes', String(dbTimeout));
             localStorage.setItem('security-notify-new-device', String(dbNotify));
             localStorage.setItem('security-access-history', JSON.stringify(nextHistory));
+
+            const cashPromptRaw = localStorage.getItem(`cash-session-startup-prompt-enabled:${profile.organization_id}`);
+            const cashPromptEnabled = cashPromptRaw === null ? true : cashPromptRaw === 'true';
+            setAskOpenCashOnLogin(cashPromptEnabled);
+
             window.dispatchEvent(new Event('security-timeout-changed'));
 
             if (!data || shouldAppendCurrent) {
@@ -172,6 +216,33 @@ export default function SettingsPage() {
             setMessage({ type: 'error', text: `No se pudo sincronizar seguridad: ${message}` });
         });
     }, [organization, profile]);
+
+    useEffect(() => {
+        const loadOrganizationUsers = async () => {
+            if (!profile?.organization_id) {
+                setSecurityUsers([]);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, role')
+                .eq('organization_id', profile.organization_id)
+                .order('full_name', { ascending: true });
+
+            if (error) {
+                setMessage({ type: 'error', text: `No se pudo cargar usuarios para política de caja: ${error.message}` });
+                return;
+            }
+
+            setSecurityUsers((data || []) as SecurityUserOption[]);
+        };
+
+        loadOrganizationUsers().catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            setMessage({ type: 'error', text: `No se pudo cargar usuarios para política de caja: ${msg}` });
+        });
+    }, [profile?.organization_id]);
 
     const handleSessionTimeoutChange = async (minutes: number) => {
         setSessionTimeoutMinutes(minutes);
@@ -224,6 +295,100 @@ export default function SettingsPage() {
         }
 
         setClosingOtherSessions(false);
+    };
+
+    const handleAskOpenCashOnLoginChange = (enabled: boolean) => {
+        setAskOpenCashOnLogin(enabled);
+
+        if (profile?.organization_id) {
+            localStorage.setItem(`cash-session-startup-prompt-enabled:${profile.organization_id}`, String(enabled));
+        }
+
+        setMessage({
+            type: 'success',
+            text: enabled
+                ? 'Se activó la sugerencia para abrir caja al iniciar sesión'
+                : 'Se desactivó la sugerencia para abrir caja al iniciar sesión',
+        });
+    };
+
+    const handleToggleCashSessionAssignedUser = (userId: string, checked: boolean) => {
+        setCashSessionAssignedUserIds((prev) => {
+            if (checked) {
+                if (prev.includes(userId)) return prev;
+                return [...prev, userId];
+            }
+            return prev.filter((id) => id !== userId);
+        });
+    };
+
+    const handleSaveCashSessionPolicy = async () => {
+        if (!organization?.id) return;
+
+        setSavingCashSessionPolicy(true);
+        setMessage(null);
+
+        try {
+            const { error } = await supabase
+                .from('organizations')
+                .update({
+                    cash_session_policy: cashSessionPolicy,
+                    cash_session_scope: cashSessionScope,
+                    cash_session_assigned_user_ids:
+                        cashSessionScope === 'assigned_users' ? cashSessionAssignedUserIds : [],
+                })
+                .eq('id', organization.id);
+
+            if (error) throw error;
+
+            setMessage({ type: 'success', text: 'Política de caja guardada correctamente' });
+            await refetch();
+        } catch (error: any) {
+            setMessage({
+                type: 'error',
+                text: error?.message || 'No se pudo guardar la política de caja',
+            });
+        } finally {
+            setSavingCashSessionPolicy(false);
+        }
+    };
+
+    const handleResetOrganizationData = async () => {
+        if (!organization?.name) return;
+
+        setResettingOrgData(true);
+        setMessage(null);
+
+        try {
+            const { resetOrganizationData } = await import('@/actions/organization');
+            const result = await resetOrganizationData(resetOrgConfirmText);
+
+            if (result.error) {
+                setMessage({ type: 'error', text: result.error });
+                return;
+            }
+
+            if (profile?.organization_id) {
+                await clearOfflineOrganizationData(profile.organization_id);
+            }
+
+            setMessage({
+                type: 'success',
+                text: 'Datos operativos y caché offline eliminados. Tu organización quedó lista para empezar desde cero.',
+            });
+
+            setShowResetOrgDialog(false);
+            setShowResetOrgSuccessModal(true);
+            setResetOrgConfirmText('');
+            refetch();
+        } catch (error: any) {
+            setMessage({
+                type: 'error',
+                text: error?.message || 'No se pudieron borrar los datos de la organización',
+            });
+        } finally {
+            setResettingOrgData(false);
+        }
     };
 
     const handleSaveOrg = async (e: React.FormEvent) => {
@@ -626,6 +791,115 @@ export default function SettingsPage() {
 
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border p-4">
                                 <div>
+                                    <p className="text-sm font-medium">Sugerir abrir caja al iniciar sesión</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Muestra un aviso al entrar al sistema cuando no hay caja abierta.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={askOpenCashOnLogin}
+                                    onCheckedChange={handleAskOpenCashOnLoginChange}
+                                    className="self-end sm:self-auto"
+                                />
+                            </div>
+
+                            {(profile?.role === 'owner' || profile?.role === 'admin') && (
+                                <div className="rounded-lg border border-border p-4 space-y-4">
+                                    <div>
+                                        <p className="text-sm font-medium">Política de apertura de caja</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Define cuándo se exige caja abierta y a qué usuarios aplica.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={cashSessionPolicy === 'always' ? 'default' : 'outline'}
+                                            onClick={() => setCashSessionPolicy('always')}
+                                        >
+                                            Exigir siempre
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={cashSessionPolicy === 'cash_only' ? 'default' : 'outline'}
+                                            onClick={() => setCashSessionPolicy('cash_only')}
+                                        >
+                                            Solo pagos en efectivo
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={cashSessionPolicy === 'off' ? 'default' : 'outline'}
+                                            onClick={() => setCashSessionPolicy('off')}
+                                        >
+                                            Desactivada
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={cashSessionScope === 'all_users' ? 'default' : 'outline'}
+                                            onClick={() => setCashSessionScope('all_users')}
+                                        >
+                                            Aplicar a todos
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={cashSessionScope === 'assigned_users' ? 'default' : 'outline'}
+                                            onClick={() => setCashSessionScope('assigned_users')}
+                                        >
+                                            Solo empleados asignados
+                                        </Button>
+                                    </div>
+
+                                    {cashSessionScope === 'assigned_users' && (
+                                        <div className="space-y-2 rounded-md border border-border p-3 max-h-48 overflow-auto">
+                                            {securityUsers.length === 0 ? (
+                                                <p className="text-xs text-muted-foreground">No hay usuarios para asignar.</p>
+                                            ) : (
+                                                securityUsers.map((user) => {
+                                                    const checked = cashSessionAssignedUserIds.includes(user.id);
+                                                    return (
+                                                        <label
+                                                            key={user.id}
+                                                            className="flex items-center justify-between gap-3 py-1"
+                                                        >
+                                                            <span className="text-sm">
+                                                                {user.full_name || 'Sin nombre'}
+                                                                <span className="text-xs text-muted-foreground ml-2 capitalize">
+                                                                    {user.role || 'usuario'}
+                                                                </span>
+                                                            </span>
+                                                            <Checkbox
+                                                                checked={checked}
+                                                                onCheckedChange={(value) =>
+                                                                    handleToggleCashSessionAssignedUser(user.id, Boolean(value))
+                                                                }
+                                                            />
+                                                        </label>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end">
+                                        <Button
+                                            type="button"
+                                            onClick={handleSaveCashSessionPolicy}
+                                            disabled={savingCashSessionPolicy}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            {savingCashSessionPolicy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                            Guardar política de caja
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border p-4">
+                                <div>
                                     <p className="text-sm font-medium">Cerrar otras sesiones</p>
                                     <p className="text-xs text-muted-foreground mt-1">
                                         Cierra sesiones activas en otros dispositivos y deja solo esta abierta.
@@ -684,6 +958,25 @@ export default function SettingsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {(profile?.role === 'owner' || profile?.role === 'admin') && (
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                                    <div>
+                                        <p className="font-medium text-destructive">Borrar datos de la organización</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Elimina ventas, compras, pedidos, clientes, productos y demás datos operativos para comenzar desde cero.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="destructive"
+                                        className="w-full sm:w-auto"
+                                        onClick={() => setShowResetOrgDialog(true)}
+                                    >
+                                        <Database className="h-4 w-4 mr-2" />
+                                        Borrar todo
+                                    </Button>
+                                </div>
+                            )}
+
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border border-destructive/20 rounded-lg bg-destructive/5">
                                 <div>
                                     <p className="font-medium text-destructive">Cerrar Sesión</p>
@@ -717,6 +1010,60 @@ export default function SettingsPage() {
                     <LegacyImportPanel />
                 </TabsContent>
             </Tabs>
+
+            <AlertDialog open={showResetOrgDialog} onOpenChange={setShowResetOrgDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Borrar todos los datos de la organización?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción es irreversible. Se eliminarán datos operativos como pedidos, ventas, compras, clientes, productos y movimientos.
+                            <br />
+                            Para confirmar, escribe el nombre exacto de la organización: <span className="font-semibold text-foreground">{organization?.name || '-'}</span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Nombre de la organización</label>
+                        <Input
+                            value={resetOrgConfirmText}
+                            onChange={(e) => setResetOrgConfirmText(e.target.value)}
+                            placeholder={organization?.name || 'Nombre de organización'}
+                            disabled={resettingOrgData}
+                        />
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={resettingOrgData}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleResetOrganizationData();
+                            }}
+                            disabled={resettingOrgData || !organization?.name || resetOrgConfirmText.trim().toLowerCase() !== organization.name.trim().toLowerCase()}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {resettingOrgData ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Confirmar borrado total
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <Dialog open={showResetOrgSuccessModal} onOpenChange={setShowResetOrgSuccessModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>¡Reseteo completado con éxito!</DialogTitle>
+                        <DialogDescription>
+                            Se eliminaron todos los datos operativos de la organización y también la información offline local de este dispositivo.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button onClick={() => setShowResetOrgSuccessModal(false)}>
+                            Entendido
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

@@ -26,13 +26,12 @@ export async function proxy(request: NextRequest) {
     // Rutas protegidas: requieren autenticación
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding') || pathname.startsWith('/delivery')) {
         if (!user) {
-            if (authErrorType === 'network' && hasSupabaseAuthCookie) {
-                return supabaseResponse;
-            }
-
             // Guardar la URL original para redirigir después del login
             const redirectUrl = new URL('/login', request.url);
             redirectUrl.searchParams.set('redirect', pathname);
+            if (authErrorType !== 'none') {
+                redirectUrl.searchParams.set('auth_error', authErrorType);
+            }
             return Response.redirect(redirectUrl);
         }
 

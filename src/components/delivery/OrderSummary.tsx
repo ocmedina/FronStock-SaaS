@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { ensureOpenCashSession } from "@/lib/cash-session";
+import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 
@@ -20,7 +20,7 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: OrderSummaryProps) {
-    const { organizationId } = useOrganization();
+    const { organizationId, organization, profile } = useOrganization();
     const [loading, setLoading] = useState(false);
 
     // Checkout State
@@ -67,9 +67,17 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
                 p_client_reference: clientReference,
             };
 
-            const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
-            if (!hasOpenSession) {
-                return;
+            const requiresOpenSession = shouldRequireOpenCashSession({
+                organization,
+                profile,
+                paymentMethods: [paymentMethod],
+            });
+
+            if (requiresOpenSession) {
+                const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+                if (!hasOpenSession) {
+                    return;
+                }
             }
 
             let { data, error } = await supabase.rpc('create_order', payload);

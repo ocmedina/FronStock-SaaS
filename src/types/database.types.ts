@@ -6,6 +6,10 @@ export interface Organization {
   name: string;
   plan_type: string;
   created_at: string;
+  cash_session_policy?: 'always' | 'cash_only' | 'off' | null;
+  cash_session_scope?: 'all_users' | 'assigned_users' | null;
+  cash_session_assigned_user_ids?: string[] | null;
+  delivery_without_route_mode?: boolean | null;
   address?: string | null;
   city?: string | null;
   cuit?: string | null;

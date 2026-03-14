@@ -5,18 +5,110 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Wallet, User, Clock, CheckCircle2, AlertCircle, Truck } from "lucide-react";
+import { toast } from "sonner";
+
+type CashSessionPolicy = "always" | "cash_only" | "off";
+type CashSessionScope = "all_users" | "assigned_users";
+
+interface SecurityUserOption {
+    id: string;
+    full_name: string | null;
+    role: string | null;
+}
 
 export default function AdminShiftsPage() {
-    const { organization } = useOrganization();
+    const { organization, organizationId, profile, refetch } = useOrganization();
     const [shifts, setShifts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
+    const [cashSessionPolicy, setCashSessionPolicy] = useState<CashSessionPolicy>("cash_only");
+    const [cashSessionScope, setCashSessionScope] = useState<CashSessionScope>("all_users");
+    const [cashSessionAssignedUserIds, setCashSessionAssignedUserIds] = useState<string[]>([]);
+    const [securityUsers, setSecurityUsers] = useState<SecurityUserOption[]>([]);
+    const [deliveryWithoutRouteMode, setDeliveryWithoutRouteMode] = useState(true);
+    const [savingPolicies, setSavingPolicies] = useState(false);
     const supabase = createClient();
+    const canConfigurePolicies = profile?.role === "owner" || profile?.role === "admin";
+
+    useEffect(() => {
+        setCashSessionPolicy((organization?.cash_session_policy as CashSessionPolicy) || "cash_only");
+        setCashSessionScope((organization?.cash_session_scope as CashSessionScope) || "all_users");
+        setCashSessionAssignedUserIds(
+            Array.isArray(organization?.cash_session_assigned_user_ids)
+                ? organization.cash_session_assigned_user_ids
+                : []
+        );
+        setDeliveryWithoutRouteMode(organization?.delivery_without_route_mode !== false);
+    }, [organization]);
+
+    useEffect(() => {
+        const loadOrganizationUsers = async () => {
+            if (!organizationId || !canConfigurePolicies) {
+                setSecurityUsers([]);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id, full_name, role")
+                .eq("organization_id", organizationId)
+                .order("full_name", { ascending: true });
+
+            if (error) {
+                toast.error(`No se pudieron cargar usuarios: ${error.message}`);
+                return;
+            }
+
+            setSecurityUsers((data || []) as SecurityUserOption[]);
+        };
+
+        loadOrganizationUsers().catch((error: any) => {
+            toast.error(error?.message || "No se pudieron cargar usuarios");
+        });
+    }, [organizationId, canConfigurePolicies, supabase]);
+
+    const handleToggleCashSessionAssignedUser = (userId: string, checked: boolean) => {
+        setCashSessionAssignedUserIds((prev) => {
+            if (checked) {
+                if (prev.includes(userId)) return prev;
+                return [...prev, userId];
+            }
+            return prev.filter((id) => id !== userId);
+        });
+    };
+
+    const handleSavePolicies = async () => {
+        if (!organizationId || !canConfigurePolicies || savingPolicies) return;
+
+        setSavingPolicies(true);
+        try {
+            const { error } = await supabase
+                .from("organizations")
+                .update({
+                    cash_session_policy: cashSessionPolicy,
+                    cash_session_scope: cashSessionScope,
+                    cash_session_assigned_user_ids:
+                        cashSessionScope === "assigned_users" ? cashSessionAssignedUserIds : [],
+                    delivery_without_route_mode: deliveryWithoutRouteMode,
+                })
+                .eq("id", organizationId);
+
+            if (error) throw error;
+
+            toast.success("Configuración de caja/recorrido guardada");
+            await refetch();
+        } catch (e: any) {
+            toast.error(e?.message || "No se pudo guardar la configuración");
+        } finally {
+            setSavingPolicies(false);
+        }
+    };
 
     const fetchShifts = async () => {
         setLoading(true);
@@ -27,7 +119,7 @@ export default function AdminShiftsPage() {
                     *,
                     driver:profiles(full_name)
                 `)
-                .eq('organization_id', organization?.id)
+                .eq('organization_id', organizationId)
                 .order('start_time', { ascending: false });
 
             if (filter !== 'all') {
@@ -45,10 +137,10 @@ export default function AdminShiftsPage() {
     };
 
     useEffect(() => {
-        if (organization?.id) {
+        if (organizationId) {
             fetchShifts();
         }
-    }, [organization?.id, filter]);
+    }, [organizationId, filter]);
 
     return (
         <div className="p-8 space-y-6">
@@ -202,6 +294,138 @@ export default function AdminShiftsPage() {
                     </TableBody>
                 </Table>
             </Card>
+
+            {canConfigurePolicies ? (
+                <section className="space-y-3 border-t pt-6">
+                    <div className="space-y-1">
+                        <h2 className="text-lg font-semibold tracking-tight">Configuración de Caja / Recorrido</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Esta sección impacta la operación de pedidos y reparto.
+                        </p>
+                    </div>
+
+                    <Card className="border-primary/20">
+                        <CardHeader>
+                            <CardTitle className="text-base md:text-lg">Política de apertura de caja</CardTitle>
+                            <CardDescription>
+                                Define cuándo exigir caja abierta y si aplica a todos o solo a empleados seleccionados.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-2 md:grid-cols-3">
+                                <Button
+                                    type="button"
+                                    variant={cashSessionPolicy === "always" ? "default" : "outline"}
+                                    onClick={() => setCashSessionPolicy("always")}
+                                >
+                                    Exigir siempre
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={cashSessionPolicy === "cash_only" ? "default" : "outline"}
+                                    onClick={() => setCashSessionPolicy("cash_only")}
+                                >
+                                    Solo pagos en efectivo
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={cashSessionPolicy === "off" ? "default" : "outline"}
+                                    onClick={() => setCashSessionPolicy("off")}
+                                >
+                                    Desactivada
+                                </Button>
+                            </div>
+
+                            <div className="grid gap-2 md:grid-cols-2">
+                                <Button
+                                    type="button"
+                                    variant={cashSessionScope === "all_users" ? "default" : "outline"}
+                                    onClick={() => setCashSessionScope("all_users")}
+                                >
+                                    Aplicar a todos
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={cashSessionScope === "assigned_users" ? "default" : "outline"}
+                                    onClick={() => setCashSessionScope("assigned_users")}
+                                >
+                                    Solo empleados asignados
+                                </Button>
+                            </div>
+
+                            {cashSessionScope === "assigned_users" ? (
+                                <div className="space-y-2 rounded-md border p-3 max-h-48 overflow-auto">
+                                    {securityUsers.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground">No hay usuarios para asignar.</p>
+                                    ) : (
+                                        securityUsers.map((user) => {
+                                            const checked = cashSessionAssignedUserIds.includes(user.id);
+                                            return (
+                                                <label
+                                                    key={user.id}
+                                                    className="flex items-center justify-between gap-3 py-1"
+                                                >
+                                                    <span className="text-sm">
+                                                        {user.full_name || "Sin nombre"}
+                                                        <span className="text-xs text-muted-foreground ml-2 capitalize">
+                                                            {user.role || "usuario"}
+                                                        </span>
+                                                    </span>
+                                                    <Checkbox
+                                                        checked={checked}
+                                                        onCheckedChange={(value) => handleToggleCashSessionAssignedUser(user.id, Boolean(value))}
+                                                    />
+                                                </label>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            ) : null}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-primary/20">
+                        <CardHeader>
+                            <CardTitle className="text-base md:text-lg">Política de recorrido en pedidos</CardTitle>
+                            <CardDescription>
+                                Controla si el repartidor puede operar pedidos sin tener una ruta activa asignada.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="grid gap-2 md:grid-cols-2">
+                                <Button
+                                    type="button"
+                                    variant={deliveryWithoutRouteMode ? "default" : "outline"}
+                                    onClick={() => setDeliveryWithoutRouteMode(true)}
+                                >
+                                    Permitir modo sin ruta
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={!deliveryWithoutRouteMode ? "default" : "outline"}
+                                    onClick={() => setDeliveryWithoutRouteMode(false)}
+                                >
+                                    Exigir ruta activa
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Si se exige ruta activa, la app de entregas no mostrará pedidos hasta que el chofer tenga una ruta en estado planificada o en curso.
+                            </p>
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    onClick={handleSavePolicies}
+                                    disabled={savingPolicies}
+                                    className="w-full md:w-auto"
+                                >
+                                    {savingPolicies ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Guardar configuración
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
+            ) : null}
         </div>
     );
 }

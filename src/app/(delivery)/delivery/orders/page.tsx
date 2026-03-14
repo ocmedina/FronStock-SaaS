@@ -33,12 +33,33 @@ export default function DeliveryOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState<any[]>([]);
     const [activeRoute, setActiveRoute] = useState<any>(null);
+    const [withoutRouteMode, setWithoutRouteMode] = useState(false);
+    const [allowWithoutRouteMode, setAllowWithoutRouteMode] = useState(true);
+    const [routeModeBlocked, setRouteModeBlocked] = useState(false);
     const [deliveryOrder, setDeliveryOrder] = useState<any | null>(null);
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [paymentMethod, setPaymentMethod] = useState<string>("cash");
     const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
     const [submittingDelivery, setSubmittingDelivery] = useState(false);
     const targetOrderId = searchParams.get("orderId");
+    const deliveryFlow = [
+        {
+            title: "1) Revisar pendientes",
+            description: "Trabaja la lista Pendientes por entregar de arriba hacia abajo.",
+        },
+        {
+            title: "2) Si no estaba el cliente",
+            description: "Usa No estaba para registrar la incidencia y seguir con el siguiente pedido.",
+        },
+        {
+            title: "3) Si entregaste",
+            description: "Usa Entregar + Cobrar, confirma método, monto y luego marca la entrega.",
+        },
+        {
+            title: "4) Verificación final",
+            description: "El pedido pasa a Entregas realizadas y se actualiza el estado/pago en el sistema.",
+        },
+    ];
 
     useEffect(() => {
         if (profile?.id && organizationId) {
@@ -70,6 +91,19 @@ export default function DeliveryOrdersPage() {
     const fetchMyOrders = async () => {
         setLoading(true);
         try {
+            const { data: orgSettings, error: orgSettingsError } = await supabase
+                .from("organizations")
+                .select("delivery_without_route_mode")
+                .eq("id", organizationId)
+                .maybeSingle();
+
+            if (orgSettingsError) {
+                console.warn("Could not load delivery route policy, fallback to enabled mode", orgSettingsError);
+            }
+
+            const canUseWithoutRouteMode = orgSettings?.delivery_without_route_mode !== false;
+            setAllowWithoutRouteMode(canUseWithoutRouteMode);
+
             // Primero, buscar mi ruta activa
             const { data: routeData, error: routeError } = await supabase
                 .from("routes")
@@ -82,41 +116,314 @@ export default function DeliveryOrdersPage() {
             if (routeError && routeError.code !== "PGRST116") throw routeError;
 
             setActiveRoute(routeData);
+            setWithoutRouteMode(false);
+            setRouteModeBlocked(false);
 
             if (!routeData) {
-                setOrders([]);
+                if (!canUseWithoutRouteMode) {
+                    setOrders([]);
+                    setRouteModeBlocked(true);
+                    setLoading(false);
+                    return;
+                }
+
+                // Modo sin rutas: cargar pedidos del repartidor o pedidos operables de delivery
+                const runSafeQuery = async (queryPromise: Promise<any>) => {
+                    try {
+                        const res = await queryPromise;
+                        if (!res || typeof res !== "object") {
+                            return {
+                                data: null,
+                                error: { message: "Respuesta invalida de Supabase" },
+                            };
+                        }
+                        return {
+                            data: "data" in res ? res.data : null,
+                            error: "error" in res ? res.error : null,
+                        };
+                    } catch (queryError: any) {
+                        return {
+                            data: null,
+                            error: queryError || { message: "Error desconocido en consulta" },
+                        };
+                    }
+                };
+
+                let fallbackRows: any[] = [];
+
+                const assignedToDriverQuery = await runSafeQuery(
+                    supabase
+                        .from("orders")
+                        .select(`
+                            *,
+                            customer:customers(name, phone, address, zone),
+                            order_items(
+                                id,
+                                product_name,
+                                quantity,
+                                unit_price,
+                                total
+                            ),
+                            order_payments(
+                                id,
+                                amount,
+                                method
+                            )
+                        `)
+                        .eq("organization_id", organizationId)
+                        .eq("assigned_to", profile?.id)
+                        .not("delivery_status", "eq", "delivered")
+                        .order("created_at", { ascending: true })
+                );
+
+                if (!assignedToDriverQuery.error) {
+                    fallbackRows = Array.isArray(assignedToDriverQuery.data) ? assignedToDriverQuery.data : [];
+                }
+
+                if (assignedToDriverQuery.error || fallbackRows.length === 0) {
+                    const lifecycleFallbackQuery = await runSafeQuery(
+                        supabase
+                            .from("orders")
+                            .select(`
+                                *,
+                                customer:customers(name, phone, address, zone),
+                                order_items(
+                                    id,
+                                    product_name,
+                                    quantity,
+                                    unit_price,
+                                    total
+                                ),
+                                order_payments(
+                                    id,
+                                    amount,
+                                    method
+                                )
+                            `)
+                            .eq("organization_id", organizationId)
+                            .in("lifecycle_status", ["assigned", "in_delivery", "rescheduled", "confirmed"])
+                            .order("created_at", { ascending: true })
+                    );
+
+                    if (!lifecycleFallbackQuery.error) {
+                        fallbackRows = Array.isArray(lifecycleFallbackQuery.data) ? lifecycleFallbackQuery.data : [];
+                    }
+                }
+
+                if (fallbackRows.length === 0) {
+                    const legacyFallbackQuery = await runSafeQuery(
+                        supabase
+                            .from("orders")
+                            .select(`
+                                *,
+                                customer:customers(name, phone, address, zone),
+                                order_items(
+                                    id,
+                                    product_name,
+                                    quantity,
+                                    unit_price,
+                                    total
+                                ),
+                                order_payments(
+                                    id,
+                                    amount,
+                                    method
+                                )
+                            `)
+                            .eq("organization_id", organizationId)
+                            .in("delivery_status", ["assigned_to_route", "out_for_delivery", "in_delivery", "ready", "confirmed"])
+                            .order("created_at", { ascending: true })
+                    );
+
+                    if (legacyFallbackQuery.error) {
+                        throw legacyFallbackQuery.error;
+                    }
+
+                    fallbackRows = Array.isArray(legacyFallbackQuery.data) ? legacyFallbackQuery.data : [];
+                }
+
+                setWithoutRouteMode(true);
+                setOrders(fallbackRows);
                 setLoading(false);
                 return;
             }
 
-            // Traer pedidos de mi ruta
-            const { data: ordersData, error: ordersError } = await supabase
-                .from("orders")
-                .select(`
-                    *,
-                    customer:customers(name, phone, address, zone),
-                    order_items(
-                        id,
-                        product_name,
-                        quantity,
-                        unit_price,
-                        total
-                    ),
-                    order_payments(
-                        id,
-                        amount,
-                        payment_method
-                    ),
-                    route_stops(id, stop_order, visit_status)
-                `)
-                .eq("assigned_route_id", routeData.id)
-                .order("created_at", { ascending: true });
+            // Traer pedidos de mi ruta con fallback progresivo para esquemas legacy
+            let ordersData: any[] | null = null;
+            let ordersError: any = null;
 
-            if (ordersError) throw ordersError;
+            const runSafeQuery = async (queryPromise: Promise<any>) => {
+                try {
+                    const res = await queryPromise;
+                    if (!res || typeof res !== "object") {
+                        return {
+                            data: null,
+                            error: { message: "Respuesta invalida de Supabase" },
+                        };
+                    }
+                    return {
+                        data: "data" in res ? res.data : null,
+                        error: "error" in res ? res.error : null,
+                    };
+                } catch (queryError: any) {
+                    return {
+                        data: null,
+                        error: queryError || { message: "Error desconocido en consulta" },
+                    };
+                }
+            };
+
+            const fullQuery = await runSafeQuery(
+                supabase
+                    .from("orders")
+                    .select(`
+                        *,
+                        customer:customers(name, phone, address, zone),
+                        order_items(
+                            id,
+                            product_name,
+                            quantity,
+                            unit_price,
+                            total
+                        ),
+                        order_payments(
+                            id,
+                            amount,
+                            method
+                        )
+                    `)
+                    .eq("assigned_route_id", routeData.id)
+                    .order("created_at", { ascending: true })
+            );
+
+            ordersData = fullQuery.data;
+            ordersError = fullQuery.error;
+
+            if (ordersError) {
+                console.warn("Full delivery orders query failed, trying fallback without route_stops", {
+                    message: ordersError?.message || null,
+                    code: ordersError?.code || null,
+                    details: ordersError?.details || null,
+                    hint: ordersError?.hint || null,
+                });
+
+                const relationFallbackQuery = await runSafeQuery(
+                    supabase
+                        .from("orders")
+                        .select(`
+                            *,
+                            customer:customers(name, phone, address, zone),
+                            order_items(
+                                id,
+                                product_name,
+                                quantity,
+                                unit_price,
+                                total
+                            )
+                        `)
+                        .eq("assigned_route_id", routeData.id)
+                        .order("created_at", { ascending: true })
+                );
+
+                ordersData = relationFallbackQuery.data;
+                ordersError = relationFallbackQuery.error;
+            }
+
+            if (ordersError) {
+                console.warn("Relation fallback failed, trying basic orders query", {
+                    message: ordersError?.message || null,
+                    code: ordersError?.code || null,
+                    details: ordersError?.details || null,
+                    hint: ordersError?.hint || null,
+                });
+
+                const basicQuery = await runSafeQuery(
+                    supabase
+                        .from("orders")
+                        .select("*")
+                        .eq("assigned_route_id", routeData.id)
+                        .order("created_at", { ascending: true })
+                );
+
+                if (basicQuery.error) throw basicQuery.error;
+
+                const baseRows = Array.isArray(basicQuery.data) ? basicQuery.data : [];
+                const customerIds = Array.from(new Set(baseRows.map((row: any) => row.customer_id).filter(Boolean)));
+                const orderIds = baseRows.map((row: any) => row.id).filter(Boolean);
+
+                const [customersRes, itemsRes, paymentsRes, stopsRes] = await Promise.all([
+                    customerIds.length > 0
+                        ? supabase
+                            .from("customers")
+                            .select("id, name, phone, address, zone")
+                            .in("id", customerIds)
+                        : Promise.resolve({ data: [], error: null } as any),
+                    orderIds.length > 0
+                        ? supabase
+                            .from("order_items")
+                            .select("id, order_id, product_name, quantity, unit_price, total")
+                            .in("order_id", orderIds)
+                        : Promise.resolve({ data: [], error: null } as any),
+                    orderIds.length > 0
+                        ? supabase
+                            .from("order_payments")
+                            .select("id, order_id, amount, method")
+                            .in("order_id", orderIds)
+                        : Promise.resolve({ data: [], error: null } as any),
+                    orderIds.length > 0
+                        ? supabase
+                            .from("route_stops")
+                            .select("id, order_id, stop_order, visit_status")
+                            .eq("route_id", routeData.id)
+                            .in("order_id", orderIds)
+                        : Promise.resolve({ data: [], error: null } as any),
+                ]);
+
+                if (customersRes.error || itemsRes.error || paymentsRes.error || stopsRes.error) {
+                    throw customersRes.error || itemsRes.error || paymentsRes.error || stopsRes.error;
+                }
+
+                const customersById = new Map((customersRes.data || []).map((c: any) => [c.id, c]));
+                const itemsByOrderId = new Map<string, any[]>();
+                const paymentsByOrderId = new Map<string, any[]>();
+                const stopsByOrderId = new Map<string, any[]>();
+
+                for (const item of itemsRes.data || []) {
+                    const list = itemsByOrderId.get(item.order_id) || [];
+                    list.push(item);
+                    itemsByOrderId.set(item.order_id, list);
+                }
+
+                for (const payment of paymentsRes.data || []) {
+                    const list = paymentsByOrderId.get(payment.order_id) || [];
+                    list.push(payment);
+                    paymentsByOrderId.set(payment.order_id, list);
+                }
+
+                for (const stop of stopsRes.data || []) {
+                    const list = stopsByOrderId.get(stop.order_id) || [];
+                    list.push(stop);
+                    stopsByOrderId.set(stop.order_id, list);
+                }
+
+                ordersData = baseRows.map((row: any) => ({
+                    ...row,
+                    customer: row.customer_id ? customersById.get(row.customer_id) || null : null,
+                    order_items: itemsByOrderId.get(row.id) || [],
+                    order_payments: paymentsByOrderId.get(row.id) || [],
+                    route_stops: stopsByOrderId.get(row.id) || [],
+                }));
+            }
 
             setOrders(ordersData || []);
         } catch (error: any) {
-            console.error("Error fetching orders:", error);
+            console.error("Error fetching orders:", {
+                message: error?.message || "unknown",
+                code: error?.code || "unknown",
+                details: error?.details || null,
+                hint: error?.hint || null,
+                type: typeof error,
+            });
             toast.error("Error al cargar pedidos");
         } finally {
             setLoading(false);
@@ -215,15 +522,17 @@ export default function DeliveryOrdersPage() {
             if (error) throw error;
             if (data?.success === false) throw new Error(data?.error || "No se pudo marcar como entregado");
 
-            await supabase
-                .from("route_stops")
-                .update({
-                    visit_status: "visited",
-                    visited_at: new Date().toISOString(),
-                    visit_notes: `Entrega registrada. Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}`,
-                })
-                .eq("order_id", deliveryOrder.id)
-                .eq("route_id", activeRoute?.id);
+            if (activeRoute?.id) {
+                await supabase
+                    .from("route_stops")
+                    .update({
+                        visit_status: "visited",
+                        visited_at: new Date().toISOString(),
+                        visit_notes: `Entrega registrada. Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}`,
+                    })
+                    .eq("order_id", deliveryOrder.id)
+                    .eq("route_id", activeRoute.id);
+            }
 
             toast.success(amount > 0 ? "Pedido entregado y cobro registrado" : "Pedido marcado como entregado");
             closeDeliverDialog();
@@ -248,15 +557,17 @@ export default function DeliveryOrdersPage() {
             if (error) throw error;
             if (data?.success === false) throw new Error(data?.error || "No se pudo registrar incidencia");
 
-            await supabase
-                .from("route_stops")
-                .update({
-                    visit_status: "not_home",
-                    visited_at: new Date().toISOString(),
-                    visit_notes: "Cliente no estaba en casa",
-                })
-                .eq("order_id", orderId)
-                .eq("route_id", activeRoute?.id);
+            if (activeRoute?.id) {
+                await supabase
+                    .from("route_stops")
+                    .update({
+                        visit_status: "not_home",
+                        visited_at: new Date().toISOString(),
+                        visit_notes: "Cliente no estaba en casa",
+                    })
+                    .eq("order_id", orderId)
+                    .eq("route_id", activeRoute.id);
+            }
 
             toast.success("Marcado como no disponible");
             fetchMyOrders();
@@ -301,7 +612,7 @@ export default function DeliveryOrdersPage() {
         const methods: string[] = Array.from(
             new Set(
                 payments
-                    .map((p: any) => String(p.payment_method || "").toLowerCase())
+                    .map((p: any) => String(p.method || p.payment_method || "").toLowerCase())
                     .filter(Boolean)
             )
         );
@@ -315,24 +626,6 @@ export default function DeliveryOrdersPage() {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-950">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    if (!activeRoute) {
-        return (
-            <div className="min-h-screen bg-slate-950 p-6">
-                <div className="max-w-2xl mx-auto">
-                    <Card className="p-12 text-center bg-slate-900 border-slate-800">
-                        <MapPin className="h-16 w-16 mx-auto mb-4 text-slate-600" />
-                        <h2 className="text-2xl font-bold text-white mb-2">
-                            No tienes rutas activas
-                        </h2>
-                        <p className="text-slate-400">
-                            Contacta con tu supervisor para que te asigne una ruta
-                        </p>
-                    </Card>
-                </div>
             </div>
         );
     }
@@ -360,7 +653,9 @@ export default function DeliveryOrdersPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-xl font-bold text-white">Operación de Entrega</h1>
-                            <p className="text-sm text-slate-400">{activeRoute.name}</p>
+                            <p className="text-sm text-slate-400">
+                                {activeRoute?.name || (routeModeBlocked ? "Esperando ruta activa" : "Modo sin rutas")}
+                            </p>
                         </div>
                         <div className="text-right">
                             <div className="text-2xl font-bold text-white">{pendingOrders.length}</div>
@@ -386,6 +681,31 @@ export default function DeliveryOrdersPage() {
                 </Card>
             </div>
 
+            {/* Quick Guide */}
+            <div className="max-w-2xl mx-auto px-4">
+                <Card className="p-4 bg-blue-500/10 border-blue-500/20">
+                    <h2 className="text-sm font-semibold text-blue-300 mb-3">Guia rapida de entregas</h2>
+                    {!allowWithoutRouteMode && (
+                        <p className="text-xs text-blue-100/80 mb-3">
+                            Política activa: se requiere ruta asignada para operar pedidos en esta pantalla.
+                        </p>
+                    )}
+                    {withoutRouteMode && (
+                        <p className="text-xs text-blue-100/80 mb-3">
+                            Modo sin rutas activo: se muestran pedidos operables sin depender de una ruta asignada.
+                        </p>
+                    )}
+                    <div className="space-y-2">
+                        {deliveryFlow.map((step) => (
+                            <div key={step.title}>
+                                <p className="text-sm text-white font-medium">{step.title}</p>
+                                <p className="text-xs text-blue-100/80">{step.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+            </div>
+
             {/* Orders List */}
             <div className="max-w-2xl mx-auto p-4 space-y-4">
                 <div className="flex items-center justify-between">
@@ -400,7 +720,9 @@ export default function DeliveryOrdersPage() {
                             ¡Todos los pedidos entregados!
                         </h3>
                         <p className="text-slate-400">
-                            Has completado todos los pedidos de tu ruta
+                            {routeModeBlocked
+                                ? "No hay ruta activa asignada. Pide a un administrador que te asigne una ruta para continuar."
+                                : "Has completado todos los pedidos de tu ruta"}
                         </p>
                     </Card>
                 ) : (

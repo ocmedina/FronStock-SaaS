@@ -2,7 +2,7 @@
 
 import { PLANS, PlanType } from '@/config/plans';
 import { PlanCard } from '@/components/settings/PlanCard';
-import { createPlanCheckout, cancelSubscription, finalizePlanCheckoutFromReturn, reconcileLatestApprovedPlanPayment, updatePlan, devActivatePlan } from '@/actions/plans';
+import { updatePlan, devActivatePlan } from '@/actions/plans';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -29,13 +29,13 @@ interface PlansClientWrapperProps {
 
 export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices = {}, subscriptionStatus = 'none', planExpiresAt, isDev = false }: PlansClientWrapperProps) {
     const [isLoading, setIsLoading] = useState<PlanType | null>(null);
-    const [isCancelling, setIsCancelling] = useState(false);
     const [isDevActivating, setIsDevActivating] = useState<PlanType | null>(null);
     const [confirmPlanId, setConfirmPlanId] = useState<PlanType | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentPlan = PLANS[currentPlanId] || PLANS.free;
     const confirmPlan = confirmPlanId ? PLANS[confirmPlanId] : null;
+    const salesWhatsappNumber = process.env.NEXT_PUBLIC_SALES_WHATSAPP_NUMBER || '';
 
     const formatLimit = (value: number, suffix?: string) => {
         if (value === Infinity) {
@@ -58,81 +58,26 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
         return `$${plan.price.toLocaleString('es-AR')}/mes`;
     };
 
+    const buildSalesWhatsappUrl = (planId: PlanType) => {
+        const cleaned = salesWhatsappNumber.replace(/\D/g, '');
+        if (!cleaned) {
+            return null;
+        }
+
+        const planName = PLANS[planId]?.name || planId;
+        const message = encodeURIComponent(`Hola! Quiero cambiar mi cuenta al plan ${planName} de FrontStock.`);
+        return `https://wa.me/${cleaned}?text=${message}`;
+    };
+
     useEffect(() => {
-        const status = searchParams.get('checkout');
-        if (!status) {
+        // Limpia parámetros heredados del flujo de checkout anterior.
+        if (!searchParams.get('checkout')) {
             return;
         }
 
-        let cancelled = false;
-
-        const confirmReturn = async () => {
-            if (status === 'success') {
-                const paymentId = searchParams.get('payment_id')
-                    || searchParams.get('collection_id')
-                    || searchParams.get('data.id');
-
-                const result = await finalizePlanCheckoutFromReturn(paymentId);
-                if (cancelled) {
-                    return;
-                }
-
-                if (result.error) {
-                    toast.error(result.error);
-                } else {
-                    toast.success('Suscripción activada correctamente.');
-                    router.refresh();
-                }
-            }
-
-            if (status === 'cancelled') {
-                toast.info('Suscripción cancelada. No se aplicaron cambios de plan.');
-            }
-
-            if (status === 'pending') {
-                toast.info('Suscripción pendiente. El plan se activará cuando la suscripción figure autorizada.');
-            }
-
-            router.replace('/dashboard/settings/plans');
-        };
-
-        void confirmReturn();
-
-        return () => {
-            cancelled = true;
-        };
+        toast.info('El alta de planes pagos se gestiona por WhatsApp con ventas.');
+        router.replace('/dashboard/settings/plans');
     }, [searchParams, router]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const reconcile = async () => {
-            const status = searchParams.get('checkout');
-            if (status) {
-                return;
-            }
-
-            const result = await reconcileLatestApprovedPlanPayment();
-            if (cancelled) {
-                return;
-            }
-
-            if (result.error) {
-                return;
-            }
-
-            if (result.success && result.planId && result.planId !== currentPlanId) {
-                toast.success('Detectamos una suscripción activa y actualizamos tu plan automáticamente.');
-                router.refresh();
-            }
-        };
-
-        void reconcile();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [searchParams, currentPlanId, router]);
 
     const handleSelectPlan = async (planId: PlanType) => {
         if (!canManage) {
@@ -168,53 +113,26 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
         }
     };
 
-    const handleConfirmCheckout = async () => {
+    const handleContactSales = async () => {
         if (!confirmPlanId) {
             return;
         }
 
         setIsLoading(confirmPlanId);
         try {
-            const result = await createPlanCheckout(confirmPlanId);
-
-            if (result.error) {
-                toast.error(result.error);
+            const url = buildSalesWhatsappUrl(confirmPlanId);
+            if (!url) {
+                toast.error('Falta configurar NEXT_PUBLIC_SALES_WHATSAPP_NUMBER para contactar ventas.');
                 return;
             }
 
-            if (result.url) {
-                window.location.href = result.url;
-                return;
-            }
-
-            toast.error('No se pudo abrir checkout. Intenta nuevamente.');
+            window.open(url, '_blank', 'noopener,noreferrer');
+            toast.success('Te redirigimos a WhatsApp para coordinar el cambio de plan.');
         } catch (error) {
-            toast.error('Ocurrió un error inesperado al iniciar la suscripción.');
+            toast.error('No se pudo abrir WhatsApp en este momento.');
         } finally {
             setIsLoading(null);
             setConfirmPlanId(null);
-        }
-    };
-
-    const handleCancelSubscription = async () => {
-        if (!canManage) {
-            toast.error('Solo owner/admin puede cancelar la suscripción');
-            return;
-        }
-
-        setIsCancelling(true);
-        try {
-            const result = await cancelSubscription();
-            if (result.error) {
-                toast.error(result.error);
-            } else {
-                toast.success('Suscripción cancelada. Tu plan volvió a Gratuito.');
-                router.refresh();
-            }
-        } catch {
-            toast.error('Error al cancelar la suscripción.');
-        } finally {
-            setIsCancelling(false);
         }
     };
 
@@ -259,20 +177,13 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
                         <Badge variant="secondary">Usuarios: {currentPlan.limits.maxUsers === Infinity ? 'Ilimitado' : currentPlan.limits.maxUsers}</Badge>
                         <Badge variant="secondary">Productos: {currentPlan.limits.maxProducts === Infinity ? 'Ilimitado' : currentPlan.limits.maxProducts}</Badge>
                         <Badge variant="secondary">Historial: {currentPlan.limits.salesHistoryMonths === Infinity ? 'Ilimitado' : `${currentPlan.limits.salesHistoryMonths} meses`}</Badge>
-                        {subscriptionStatus === 'authorized' && canManage && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive border-destructive/50 hover:bg-destructive/10"
-                                onClick={handleCancelSubscription}
-                                disabled={isCancelling}
-                            >
-                                {isCancelling ? 'Cancelando...' : 'Cancelar suscripción'}
-                            </Button>
-                        )}
                     </div>
                 </CardContent>
             </Card>
+
+            <p className="text-sm text-muted-foreground">
+                Los planes pagos se activan por gestión comercial. Selecciona un plan y presiona Contactar con ventas.
+            </p>
 
             {!canManage && (
                 <p className="text-sm text-muted-foreground">
@@ -304,7 +215,7 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
                                     <span className="font-semibold text-foreground">{confirmPlan.name}</span> ({formatPrice(confirmPlan.id)})
                                 </DialogDescription>
                                 <p className="text-sm text-muted-foreground">
-                                    Se te redirigirá a Mercado Pago para activar tu suscripción mensual. El plan se activará cuando el cobro quede autorizado.
+                                    Se abrirá WhatsApp para contactar al equipo de ventas y coordinar la activación del nuevo plan.
                                 </p>
                             </DialogHeader>
 
@@ -348,8 +259,8 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
                                 <Button variant="outline" onClick={() => setConfirmPlanId(null)} disabled={isLoading === confirmPlan.id}>
                                     Cancelar
                                 </Button>
-                                <Button onClick={handleConfirmCheckout} disabled={isLoading === confirmPlan.id}>
-                                    {isLoading === confirmPlan.id ? 'Procesando...' : 'Confirmar y suscribirse'}
+                                <Button onClick={handleContactSales} disabled={isLoading === confirmPlan.id}>
+                                    {isLoading === confirmPlan.id ? 'Procesando...' : 'Contactar con ventas'}
                                 </Button>
                             </DialogFooter>
                         </>
@@ -361,7 +272,7 @@ export function PlansClientWrapper({ currentPlanId, canManage = true, arsPrices 
                 <Card className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
                     <CardContent className="pt-6">
                         <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 mb-2">
-                            Modo Desarrollo — Activar plan manualmente (sin Mercado Pago)
+                            Modo Desarrollo — Activar plan manualmente
                         </p>
                         <div className="flex flex-wrap gap-2">
                             {(['entrepreneur', 'business', 'enterprise'] as PlanType[]).map((planId) => (

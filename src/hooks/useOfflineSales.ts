@@ -432,9 +432,15 @@ export function useOfflineSales(organizationId: string | null | undefined) {
               // Mark origin as offline when possible (non-blocking if column/function version differs)
               const createdSaleId = data?.sale_id || data?.id;
               if (createdSaleId) {
+                const normalizedMethod = String(sale.payment_method || '').toLowerCase();
+                const isCredit = ['credit', 'fiado', 'current_account', 'cuenta_corriente'].includes(normalizedMethod);
                 const { error: originUpdateError } = await freshSupabase
                   .from('sales')
-                  .update({ channel: 'offline' })
+                  .update({
+                    channel: 'offline',
+                    payment_method: normalizedMethod || 'cash',
+                    payment_status: isCredit ? 'pending' : 'paid',
+                  })
                   .eq('id', createdSaleId)
                   .eq('organization_id', organizationId);
 

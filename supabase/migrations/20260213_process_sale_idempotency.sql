@@ -37,6 +37,8 @@ DECLARE
     v_supplier_amount numeric;
     v_total numeric := 0;
     v_subtotal numeric := 0;
+    v_main_payment_method text := 'cash';
+    v_has_credit boolean := false;
 BEGIN
     -- 0. IDEMPOTENCY CHECK
     IF p_client_reference IS NOT NULL AND length(trim(p_client_reference)) > 0 THEN
@@ -69,6 +71,20 @@ BEGIN
 
     v_total := v_subtotal - COALESCE(p_discount, 0) + COALESCE(p_surcharge, 0);
 
+    -- Resolver método de pago principal y estado de pago
+    IF COALESCE(jsonb_array_length(p_payments), 0) = 1 THEN
+        v_main_payment_method := COALESCE(p_payments->0->>'method', 'cash');
+    ELSIF COALESCE(jsonb_array_length(p_payments), 0) > 1 THEN
+        v_main_payment_method := 'mixed';
+    END IF;
+
+    FOR v_payment IN SELECT * FROM jsonb_array_elements(COALESCE(p_payments, '[]'::jsonb))
+    LOOP
+        IF lower(COALESCE(v_payment->>'method', '')) IN ('credit', 'fiado', 'current_account', 'cuenta_corriente') THEN
+            v_has_credit := true;
+        END IF;
+    END LOOP;
+
     -- 2. CREAR VENTA
     INSERT INTO sales (
         organization_id,
@@ -78,6 +94,8 @@ BEGIN
         discount,
         surcharge,
         status,
+        payment_method,
+        payment_status,
         client_reference
     ) VALUES (
         p_org_id,
@@ -87,6 +105,8 @@ BEGIN
         COALESCE(p_discount, 0),
         COALESCE(p_surcharge, 0),
         'completed',
+        v_main_payment_method,
+        CASE WHEN v_has_credit THEN 'pending' ELSE 'paid' END,
         NULLIF(trim(p_client_reference), '')
     ) RETURNING id INTO v_sale_id;
 

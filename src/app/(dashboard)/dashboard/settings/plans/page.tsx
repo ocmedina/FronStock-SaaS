@@ -38,9 +38,9 @@ export default async function PlansPage() {
     return (
         <div className="container mx-auto py-8 max-w-5xl">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">Planes de Suscripción</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Planes</h1>
                 <p className="text-muted-foreground mt-2">
-                    Elige el plan que mejor se adapte a las necesidades de tu negocio.
+                    Todos los upgrades de plan se coordinan con ventas por WhatsApp.
                 </p>
             </div>
 

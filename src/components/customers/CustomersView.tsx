@@ -28,6 +28,7 @@ export function CustomersView({
     const { canCreate, canEdit, canDelete } = usePermissions();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [pendingOrdersDebtByCustomer, setPendingOrdersDebtByCustomer] = useState<Record<string, number>>({});
+    const [pendingSalesDebtByCustomer, setPendingSalesDebtByCustomer] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     // UI States
@@ -136,6 +137,62 @@ export function CustomersView({
 
                 setPendingOrdersDebtByCustomer(debtMap);
             }
+
+            const { data: pendingSales, error: salesError } = await supabase
+                .from('sales')
+                .select('id, customer_id, total, payment_method, payment_status')
+                .eq('organization_id', organizationId)
+                .in('payment_status', ['pending', 'partial']);
+
+            if (salesError) {
+                console.error("Error fetching pending sales debt:", salesError);
+                setPendingSalesDebtByCustomer({});
+            } else {
+                const saleIds = (pendingSales || []).map((s: any) => s.id).filter(Boolean);
+                const paidBySale = new Map<string, number>();
+
+                if (saleIds.length > 0) {
+                    const { data: salePayments, error: salePaymentsError } = await supabase
+                        .from('sale_payments')
+                        .select('sale_id, amount, payment_method')
+                        .eq('organization_id', organizationId)
+                        .in('sale_id', saleIds);
+
+                    if (salePaymentsError) {
+                        console.error("Error fetching sale payments:", salePaymentsError);
+                    } else {
+                        const creditMethods = new Set(['credit', 'current_account', 'cuenta_corriente', 'fiado']);
+                        (salePayments || []).forEach((payment: any) => {
+                            const method = String(payment.payment_method || '').toLowerCase();
+                            if (!creditMethods.has(method)) {
+                                paidBySale.set(
+                                    payment.sale_id,
+                                    (paidBySale.get(payment.sale_id) || 0) + Number(payment.amount || 0)
+                                );
+                            }
+                        });
+                    }
+                }
+
+                const debtMap: Record<string, number> = {};
+                const creditMethods = new Set(['credit', 'current_account', 'cuenta_corriente', 'fiado', 'mixed']);
+
+                (pendingSales || []).forEach((sale: any) => {
+                    if (!sale.customer_id) return;
+
+                    const method = String(sale.payment_method || '').toLowerCase();
+                    if (!creditMethods.has(method)) return;
+
+                    const total = Number(sale.total || 0);
+                    const paidNonCredit = paidBySale.get(sale.id) || 0;
+                    const pending = Math.max(0, total - paidNonCredit);
+                    if (pending <= 0) return;
+
+                    debtMap[sale.customer_id] = (debtMap[sale.customer_id] || 0) + pending;
+                });
+
+                setPendingSalesDebtByCustomer(debtMap);
+            }
         }
         setIsLoading(false);
     }, [organizationId, supabase]);
@@ -143,13 +200,15 @@ export function CustomersView({
     const customersWithEffectiveDebt = useMemo(() => {
         return customers.map((customer) => {
             const pendingOrdersDebt = pendingOrdersDebtByCustomer[customer.id] || 0;
-            const effectiveBalance = customer.balance > 0 ? customer.balance : pendingOrdersDebt;
+            const pendingSalesDebt = pendingSalesDebtByCustomer[customer.id] || 0;
+            const fallbackDebt = pendingOrdersDebt + pendingSalesDebt;
+            const effectiveBalance = customer.balance > 0 ? customer.balance : fallbackDebt;
             return {
                 ...customer,
                 balance: effectiveBalance,
             };
         });
-    }, [customers, pendingOrdersDebtByCustomer]);
+    }, [customers, pendingOrdersDebtByCustomer, pendingSalesDebtByCustomer]);
 
     useEffect(() => {
         if (organizationId) {

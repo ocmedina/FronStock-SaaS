@@ -6,6 +6,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/Protected";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,9 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Banknote, ArrowRightLeft, HandCoins, ReceiptText, TrendingUp, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { getOpenCashSession } from "@/lib/cash-session";
+
+type CashSessionPolicy = "always" | "cash_only" | "off";
+type CashSessionScope = "all_users" | "assigned_users";
 
 type PaymentKey = "cash" | "transfer" | "card" | "credit" | "other";
 
@@ -75,6 +79,12 @@ interface ActiveCashSession {
   status: "open" | "closed";
 }
 
+interface SecurityUserOption {
+  id: string;
+  full_name: string | null;
+  role: string | null;
+}
+
 const emptyTotals = (): MethodTotals => ({
   cash: 0,
   transfer: 0,
@@ -100,11 +110,24 @@ const defaultData: CashClosingData = {
 };
 
 const normalizeMethod = (method: unknown): PaymentKey => {
-  const value = String(method || "").toLowerCase();
+  const value = String(method || "").toLowerCase().trim();
   if (value === "cash" || value === "efectivo") return "cash";
   if (value === "transfer" || value === "transferencia") return "transfer";
-  if (value === "card" || value === "tarjeta" || value === "debit_card" || value === "credit_card") return "card";
-  if (value === "credit" || value === "fiado" || value === "account") return "credit";
+  if (
+    value === "card" ||
+    value === "tarjeta" ||
+    value === "debit_card" ||
+    value === "credit_card" ||
+    value === "tarjeta_debito" ||
+    value === "tarjeta_credito"
+  ) return "card";
+  if (
+    value === "credit" ||
+    value === "fiado" ||
+    value === "account" ||
+    value === "current_account" ||
+    value === "cuenta_corriente"
+  ) return "credit";
   return "other";
 };
 
@@ -152,7 +175,7 @@ const getTodayRange = () => {
 
 export default function CashClosingPage() {
   const supabase = useMemo(() => createClient(), []);
-  const { organizationId, isLoading: orgLoading } = useOrganization();
+  const { organizationId, organization, profile, isLoading: orgLoading, refetch } = useOrganization();
   const { canView } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<CashClosingData>(defaultData);
@@ -167,6 +190,85 @@ export default function CashClosingPage() {
   const [openingNotes, setOpeningNotes] = useState<string>("");
   const [countedCash, setCountedCash] = useState<string>("");
   const [closeNotes, setCloseNotes] = useState<string>("");
+  const [cashSessionPolicy, setCashSessionPolicy] = useState<CashSessionPolicy>("cash_only");
+  const [cashSessionScope, setCashSessionScope] = useState<CashSessionScope>("all_users");
+  const [cashSessionAssignedUserIds, setCashSessionAssignedUserIds] = useState<string[]>([]);
+  const [securityUsers, setSecurityUsers] = useState<SecurityUserOption[]>([]);
+  const [savingCashSessionPolicy, setSavingCashSessionPolicy] = useState(false);
+
+  const canConfigureCashPolicy = profile?.role === "owner" || profile?.role === "admin";
+
+  useEffect(() => {
+    setCashSessionPolicy((organization?.cash_session_policy as CashSessionPolicy) || "cash_only");
+    setCashSessionScope((organization?.cash_session_scope as CashSessionScope) || "all_users");
+    setCashSessionAssignedUserIds(
+      Array.isArray(organization?.cash_session_assigned_user_ids)
+        ? organization.cash_session_assigned_user_ids
+        : []
+    );
+  }, [organization]);
+
+  useEffect(() => {
+    const loadOrganizationUsers = async () => {
+      if (!organizationId || !canConfigureCashPolicy) {
+        setSecurityUsers([]);
+        return;
+      }
+
+      const { data, error: usersError } = await supabase
+        .from("profiles")
+        .select("id, full_name, role")
+        .eq("organization_id", organizationId)
+        .order("full_name", { ascending: true });
+
+      if (usersError) {
+        toast.error(`No se pudieron cargar usuarios: ${usersError.message}`);
+        return;
+      }
+
+      setSecurityUsers((data || []) as SecurityUserOption[]);
+    };
+
+    loadOrganizationUsers().catch((error: any) => {
+      toast.error(error?.message || "No se pudieron cargar usuarios");
+    });
+  }, [organizationId, canConfigureCashPolicy, supabase]);
+
+  const handleToggleCashSessionAssignedUser = (userId: string, checked: boolean) => {
+    setCashSessionAssignedUserIds((prev) => {
+      if (checked) {
+        if (prev.includes(userId)) return prev;
+        return [...prev, userId];
+      }
+      return prev.filter((id) => id !== userId);
+    });
+  };
+
+  const handleSaveCashSessionPolicy = useCallback(async () => {
+    if (!organizationId || !canConfigureCashPolicy || savingCashSessionPolicy) return;
+
+    setSavingCashSessionPolicy(true);
+    try {
+      const { error: saveError } = await supabase
+        .from("organizations")
+        .update({
+          cash_session_policy: cashSessionPolicy,
+          cash_session_scope: cashSessionScope,
+          cash_session_assigned_user_ids:
+            cashSessionScope === "assigned_users" ? cashSessionAssignedUserIds : [],
+        })
+        .eq("id", organizationId);
+
+      if (saveError) throw saveError;
+
+      toast.success("Política de caja guardada");
+      await refetch();
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo guardar la política de caja");
+    } finally {
+      setSavingCashSessionPolicy(false);
+    }
+  }, [organizationId, canConfigureCashPolicy, savingCashSessionPolicy, supabase, cashSessionPolicy, cashSessionScope, cashSessionAssignedUserIds, refetch]);
 
   const fetchCashClosing = useCallback(async () => {
     if (!organizationId) return;
@@ -175,7 +277,12 @@ export default function CashClosingPage() {
     setError(null);
 
     try {
-      const { startIso, endIso } = getTodayRange();
+      const nowIso = new Date().toISOString();
+      const { startIso: todayStartIso } = getTodayRange();
+      const startIso = activeSession?.opened_at
+        ? new Date(activeSession.opened_at).toISOString()
+        : todayStartIso;
+      const endIso = nowIso;
 
       const { data: sales, error: salesError } = await supabase
         .from("sales")
@@ -187,17 +294,15 @@ export default function CashClosingPage() {
 
       if (salesError) throw salesError;
 
-      const mixedSaleIds = (sales || [])
-        .filter((sale: any) => String(sale.payment_method || "").toLowerCase() === "mixed")
-        .map((sale: any) => sale.id);
+      const saleIds = (sales || []).map((sale: any) => sale.id).filter(Boolean);
 
       const [salePaymentsResult, orderPaymentsResult, ordersResult, supplierPaymentsResult] = await Promise.all([
-        mixedSaleIds.length > 0
+        saleIds.length > 0
           ? supabase
               .from("sale_payments")
               .select("sale_id, amount, payment_method")
               .eq("organization_id", organizationId)
-              .in("sale_id", mixedSaleIds)
+              .in("sale_id", saleIds)
           : Promise.resolve({ data: [], error: null }),
         supabase
           .from("order_payments")
@@ -251,11 +356,18 @@ export default function CashClosingPage() {
         const paymentStatus = String(sale.payment_status || "paid").toLowerCase();
         const normalizedMethod = normalizeMethod(sale.payment_method);
         const isMixed = String(sale.payment_method || "").toLowerCase() === "mixed";
+        const channel = String(sale.channel || "pos").toLowerCase();
+        const isDeliverySale = ["delivery", "reparto", "route", "online"].includes(channel);
+        const paymentParts = salePaymentsBySale.get(String(sale.id || "")) || [];
+        const paidByParts = paymentParts.reduce((sum, part) => sum + Number(part.amount || 0), 0);
 
-        soldLocal += total;
+        if (isDeliverySale) {
+          soldDelivery += total;
+        } else {
+          soldLocal += total;
+        }
 
         if (isMixed) {
-          const paymentParts = salePaymentsBySale.get(String(sale.id || "")) || [];
           if (paymentParts.length === 0) {
             soldByMethod.other += total;
           } else {
@@ -269,20 +381,30 @@ export default function CashClosingPage() {
         }
 
         if (paymentStatus === "pending" || paymentStatus === "partial") {
-          fiadoTotal += total;
+          const pendingAmount = paymentParts.length > 0
+            ? Math.max(total - paidByParts, 0)
+            : total;
+          fiadoTotal += pendingAmount;
         }
 
-        if (isMixed) {
-          const paymentParts = salePaymentsBySale.get(String(sale.id || "")) || [];
+        if (isMixed || paymentParts.length > 0) {
           paymentParts.forEach((part) => {
             const method = normalizeMethod(part.payment_method);
             const amount = Number(part.amount || 0);
             collectedByMethod[method] += amount;
-            collectedLocal += amount;
+            if (isDeliverySale) {
+              collectedDelivery += amount;
+            } else {
+              collectedLocal += amount;
+            }
           });
         } else if (paymentStatus === "paid") {
           collectedByMethod[normalizedMethod] += total;
-          collectedLocal += total;
+          if (isDeliverySale) {
+            collectedDelivery += total;
+          } else {
+            collectedLocal += total;
+          }
         }
       });
 
@@ -341,7 +463,7 @@ export default function CashClosingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [organizationId, supabase]);
+  }, [organizationId, supabase, activeSession]);
 
   const fetchHistory = useCallback(async () => {
     if (!organizationId) return;
@@ -496,6 +618,7 @@ export default function CashClosingPage() {
   }
 
   const netResult = data.collectedTotal - data.expensesTotal;
+  const periodLabel = activeSession ? "sesión actual" : "hoy";
   const selectedSoldByMethod = toMethodTotals(selectedClosing?.sold_by_method);
   const selectedCollectedByMethod = toMethodTotals(selectedClosing?.collected_by_method);
   const selectedExpensesByMethod = toMethodTotals(selectedClosing?.expenses_by_method);
@@ -613,7 +736,7 @@ export default function CashClosingPage() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Card className="border-primary/20">
               <CardHeader className="pb-2">
-                <CardDescription>Vendido hoy</CardDescription>
+                <CardDescription>Vendido ({periodLabel})</CardDescription>
                 <CardTitle className="text-xl">{formatMoney(data.soldTotal)}</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-1">
@@ -624,7 +747,7 @@ export default function CashClosingPage() {
 
             <Card className="border-primary/20">
               <CardHeader className="pb-2">
-                <CardDescription>Cobrado hoy</CardDescription>
+                <CardDescription>Cobrado ({periodLabel})</CardDescription>
                 <CardTitle className="text-xl">{formatMoney(data.collectedTotal)}</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-1">
@@ -819,6 +942,109 @@ export default function CashClosingPage() {
               )}
             </CardContent>
           </Card>
+
+          {canConfigureCashPolicy ? (
+            <section className="space-y-3 border-t pt-6 mt-2">
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold tracking-tight">Administración de Política de Caja</h2>
+                <p className="text-sm text-muted-foreground">
+                  Esta sección es administrativa y no afecta la operación visual del cierre diario.
+                </p>
+              </div>
+
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-base md:text-lg">Configuración de apertura de caja</CardTitle>
+                  <CardDescription>
+                    Define cuándo exigir caja abierta y si aplica a todos o solo a empleados seleccionados.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-2 md:grid-cols-3">
+                    <Button
+                      type="button"
+                      variant={cashSessionPolicy === "always" ? "default" : "outline"}
+                      onClick={() => setCashSessionPolicy("always")}
+                    >
+                      Exigir siempre
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={cashSessionPolicy === "cash_only" ? "default" : "outline"}
+                      onClick={() => setCashSessionPolicy("cash_only")}
+                    >
+                      Solo pagos en efectivo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={cashSessionPolicy === "off" ? "default" : "outline"}
+                      onClick={() => setCashSessionPolicy("off")}
+                    >
+                      Desactivada
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Button
+                      type="button"
+                      variant={cashSessionScope === "all_users" ? "default" : "outline"}
+                      onClick={() => setCashSessionScope("all_users")}
+                    >
+                      Aplicar a todos
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={cashSessionScope === "assigned_users" ? "default" : "outline"}
+                      onClick={() => setCashSessionScope("assigned_users")}
+                    >
+                      Solo empleados asignados
+                    </Button>
+                  </div>
+
+                  {cashSessionScope === "assigned_users" ? (
+                    <div className="space-y-2 rounded-md border p-3 max-h-48 overflow-auto">
+                      {securityUsers.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No hay usuarios para asignar.</p>
+                      ) : (
+                        securityUsers.map((user) => {
+                          const checked = cashSessionAssignedUserIds.includes(user.id);
+                          return (
+                            <label
+                              key={user.id}
+                              className="flex items-center justify-between gap-3 py-1"
+                            >
+                              <span className="text-sm">
+                                {user.full_name || "Sin nombre"}
+                                <span className="text-xs text-muted-foreground ml-2 capitalize">
+                                  {user.role || "usuario"}
+                                </span>
+                              </span>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(value) => handleToggleCashSessionAssignedUser(user.id, Boolean(value))}
+                              />
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  ) : null}
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={handleSaveCashSessionPolicy}
+                      disabled={savingCashSessionPolicy}
+                      className="w-full md:w-auto"
+                    >
+                      {savingCashSessionPolicy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Guardar configuración
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          ) : null}
 
           <Dialog open={!!selectedClosing} onOpenChange={(open) => !open && setSelectedClosing(null)}>
             <DialogContent className="w-[calc(100vw-0.75rem)] max-w-[calc(100vw-0.75rem)] h-[92vh] max-h-[92vh] overflow-y-auto p-4 sm:w-full sm:max-w-4xl sm:h-auto sm:max-h-[90vh] sm:p-6 lg:max-w-6xl xl:max-w-7xl">

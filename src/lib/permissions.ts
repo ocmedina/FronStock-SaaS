@@ -97,7 +97,7 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         delivery: { view: true, create: true, edit: true, delete: true },
         reports: { view: true, create: true, edit: true, delete: true },
         settings: { view: true, create: true, edit: true, delete: false },
-        users: { view: true, create: true, edit: true, delete: false },
+        users: { view: true, create: true, edit: true, delete: true },
         permissions: { view: true, create: true, edit: true, delete: false },
         // Granular defaults
         'products:cost_price': { view: true, create: false, edit: false, delete: false },

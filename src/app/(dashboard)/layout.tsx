@@ -4,6 +4,7 @@ import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { DashboardShell } from '@/components/DashboardShell';
 import { OfflineStatusBanner } from '@/components/OfflineStatusBanner';
+import { CashSessionStartupPrompt } from '@/components/cash/CashSessionStartupPrompt';
 
 export default async function DashboardLayout({
     children,
@@ -23,6 +24,8 @@ export default async function DashboardLayout({
         <OrganizationProvider>
             <NotificationsProvider>
                 <DashboardShell>
+                    <CashSessionStartupPrompt />
+
                     {/* Offline/Sync Status Banner */}
                     <OfflineStatusBanner />
                     

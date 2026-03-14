@@ -12,14 +12,32 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 });
     }
 
-    // Only allow fetching from our Supabase storage domain
+    // Only allow fetching from exact Supabase origin.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl || !url.startsWith(supabaseUrl)) {
+    if (!supabaseUrl) {
+        return NextResponse.json({ error: 'Supabase URL not configured' }, { status: 500 });
+    }
+
+    let requestedUrl: URL;
+    let allowedOrigin: string;
+
+    try {
+        requestedUrl = new URL(url);
+        allowedOrigin = new URL(supabaseUrl).origin;
+    } catch {
+        return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+    }
+
+    if (!['https:', 'http:'].includes(requestedUrl.protocol)) {
+        return NextResponse.json({ error: 'URL protocol not allowed' }, { status: 403 });
+    }
+
+    if (requestedUrl.origin !== allowedOrigin) {
         return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
     }
 
     try {
-        const res = await fetch(url);
+        const res = await fetch(requestedUrl.toString());
         if (!res.ok) {
             return NextResponse.json({ error: 'Failed to fetch image' }, { status: res.status });
         }

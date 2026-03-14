@@ -7,7 +7,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineOrders } from "@/hooks/useOfflineOrders";
 import { offlineDB } from "@/lib/offline/db";
-import { ensureOpenCashSession } from "@/lib/cash-session";
+import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
@@ -30,7 +30,7 @@ interface NewOrderFormProps {
 
 export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className = "" }: NewOrderFormProps) {
     const router = useRouter();
-    const { organizationId } = useOrganization();
+    const { organizationId, organization, profile } = useOrganization();
     const { isOnline } = useOnlineStatus();
     const { saveOrderOffline } = useOfflineOrders(organizationId);
     const supabase = createClient();
@@ -426,9 +426,17 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 return;
             }
 
-            const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
-            if (!hasOpenSession) {
-                return;
+            const requiresOpenSession = shouldRequireOpenCashSession({
+                organization,
+                profile,
+                paymentMethods: [paymentMethod],
+            });
+
+            if (requiresOpenSession) {
+                const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+                if (!hasOpenSession) {
+                    return;
+                }
             }
 
             let { data, error } = await supabase.rpc('create_order', payload);

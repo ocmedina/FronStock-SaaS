@@ -186,12 +186,12 @@ export async function searchPaymentsByOrgAndPlan(organizationId: string, planId:
     );
 }
 
-export function verifyWebhookSignature(
+export async function verifyWebhookSignature(
     xSignature: string,
     xRequestId: string,
     dataId: string,
     secret: string,
-): boolean {
+): Promise<boolean> {
     const parts = xSignature.split(',');
     let ts = '';
     let hash = '';
@@ -204,7 +204,7 @@ export function verifyWebhookSignature(
 
     if (!ts || !hash) return false;
 
-    const { createHmac } = require('crypto') as typeof import('crypto');
+    const { createHmac } = await import('crypto');
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
     const computed = createHmac('sha256', secret).update(manifest).digest('hex');
 

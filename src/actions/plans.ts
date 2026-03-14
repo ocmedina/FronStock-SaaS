@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { PlanType } from '@/config/plans';
 import { headers } from 'next/headers';
 
+const MERCADOPAGO_ENABLED = process.env.ENABLE_MERCADOPAGO === 'true';
+
 const PAID_PLAN_AMOUNT_ENV: Partial<Record<PlanType, string>> = {
     entrepreneur: 'MP_PLAN_PRICE_ENTREPRENEUR_ARS',
     business: 'MP_PLAN_PRICE_BUSINESS_ARS',
@@ -149,6 +151,10 @@ export async function updatePlan(planId: PlanType) {
 
 export async function cancelSubscription() {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { error: 'La integración de Mercado Pago está desactivada temporalmente.' };
+        }
+
         const auth = await getAuthorizedProfile();
         if ('error' in auth) {
             return { error: auth.error };
@@ -191,6 +197,10 @@ export async function cancelSubscription() {
 
 export async function getSubscriptionStatus() {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { status: 'none' as const, subscriptionId: null, expiresAt: null };
+        }
+
         const auth = await getAuthorizedProfile();
         if ('error' in auth) {
             return { status: 'none' as const };
@@ -215,6 +225,10 @@ export async function getSubscriptionStatus() {
 
 export async function createPlanCheckout(planId: PlanType) {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { error: 'La integración de Mercado Pago está desactivada temporalmente. Contacta a ventas por WhatsApp.' };
+        }
+
         if (planId === 'free') {
             return { error: 'El plan Gratuito no requiere pago.' };
         }
@@ -232,18 +246,45 @@ export async function createPlanCheckout(planId: PlanType) {
             return { error: `Falta configurar monto ARS para ${planId}. Define ${envName}.` };
         }
 
-        const { createSubscription } = await import('@/lib/billing/mercadopago');
+        const { createSubscription, updateSubscriptionStatus } = await import('@/lib/billing/mercadopago');
         const { PLANS } = await import('@/config/plans');
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const supabaseAdmin = createAdminClient();
+
+        // Cancel existing subscription if one is active to prevent double billing
+        const { data: currentOrg } = await supabaseAdmin
+            .from('organizations')
+            .select('mp_subscription_id, mp_subscription_status')
+            .eq('id', auth.profile.organization_id)
+            .single();
+
+        if (currentOrg?.mp_subscription_id && currentOrg.mp_subscription_status === 'authorized') {
+            try {
+                await updateSubscriptionStatus(currentOrg.mp_subscription_id, 'cancelled');
+                console.info(`[Plans] Cancelled previous subscription ${currentOrg.mp_subscription_id} before creating new one for plan ${planId}`);
+            } catch (e) {
+                console.error('[Plans] Error cancelling previous subscription:', e);
+                // Continue — we'll overwrite the subscription ID anyway
+            }
+        }
 
         const baseUrl = await resolveBaseUrl();
         const planName = PLANS[planId].name;
         const notificationUrl = `${baseUrl}/api/billing/mercadopago/webhook`;
         const externalReference = `org:${auth.profile.organization_id}|plan:${planId}|user:${auth.user.id}`;
 
+        // In test mode: use MP_TEST_PAYER_EMAIL (a buyer test account from the same MP developer account).
+        // In production: use the real user's email.
+        // To get your test buyer email: mercadopago.com.ar/developers/panel/test-users
+        const isTestToken = (process.env.MP_ACCESS_TOKEN || '').startsWith('TEST-');
+        const payerEmail = isTestToken
+            ? (process.env.MP_TEST_PAYER_EMAIL || auth.user.email || '')
+            : (auth.user.email || '');
+
         const subscription = await createSubscription({
             reason: `FrontStock - Plan ${planName} (mensual)`,
             externalReference,
-            payerEmail: auth.user.email || '',
+            payerEmail,
             autoRecurring: {
                 frequency: 1,
                 frequencyType: 'months',
@@ -254,7 +295,6 @@ export async function createPlanCheckout(planId: PlanType) {
             notificationUrl,
         });
 
-        const isTestToken = (process.env.MP_ACCESS_TOKEN || '').startsWith('TEST-');
         const checkoutUrl = isTestToken
             ? (subscription.sandbox_init_point || subscription.init_point)
             : (subscription.init_point || subscription.sandbox_init_point);
@@ -265,8 +305,6 @@ export async function createPlanCheckout(planId: PlanType) {
 
         // Save subscription ID immediately so we can track it
         if (subscription.id) {
-            const { createAdminClient } = await import('@/lib/supabase/admin');
-            const supabaseAdmin = createAdminClient();
             await supabaseAdmin
                 .from('organizations')
                 .update({
@@ -287,6 +325,10 @@ export async function createPlanCheckout(planId: PlanType) {
 
 export async function finalizePlanCheckoutFromReturn(paymentId?: string | null) {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { error: 'La integración de Mercado Pago está desactivada temporalmente.' };
+        }
+
         const auth = await getAuthorizedProfile();
         if ('error' in auth) {
             return { error: auth.error };
@@ -372,6 +414,10 @@ export async function finalizePlanCheckoutFromReturn(paymentId?: string | null) 
 
 export async function finalizePlanCheckoutByReference(planId: PlanType) {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { error: 'La integración de Mercado Pago está desactivada temporalmente.' };
+        }
+
         if (!['entrepreneur', 'business', 'enterprise'].includes(planId)) {
             return { error: 'Plan inválido para validación de cobro.' };
         }
@@ -418,6 +464,10 @@ export async function finalizePlanCheckoutByReference(planId: PlanType) {
 
 export async function reconcileLatestApprovedPlanPayment() {
     try {
+        if (!MERCADOPAGO_ENABLED) {
+            return { success: false as const, reason: 'disabled' as const };
+        }
+
         const auth = await getAuthorizedProfile();
         if ('error' in auth) {
             return { error: auth.error };
@@ -498,11 +548,16 @@ export async function devActivatePlan(planId: PlanType) {
         const { createAdminClient } = await import('@/lib/supabase/admin');
         const supabaseAdmin = createAdminClient();
 
+        // Set plan_expires_at to simulate production behavior (30 days from now)
+        const devExpiresAt = new Date();
+        devExpiresAt.setDate(devExpiresAt.getDate() + 30);
+
         const { error } = await supabaseAdmin
             .from('organizations')
             .update({
                 plan_type: planId,
                 mp_subscription_status: 'authorized',
+                plan_expires_at: devExpiresAt.toISOString(),
                 updated_at: new Date().toISOString(),
             })
             .eq('id', auth.profile.organization_id);
@@ -511,6 +566,7 @@ export async function devActivatePlan(planId: PlanType) {
             return { error: `No se pudo activar: ${error.message}` };
         }
 
+        console.info(`[Plans][DEV] Plan ${planId} activated manually for org ${auth.profile.organization_id}`);
         revalidatePath('/dashboard/settings/plans');
         return { success: true, planId };
     } catch (error) {

@@ -21,11 +21,11 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineSales } from "@/hooks/useOfflineSales";
 import { offlineDB } from "@/lib/offline/db";
-import { ensureOpenCashSession } from "@/lib/cash-session";
+import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
-  const { organizationId, isLoading: orgLoading } = useOrganization();
+  const { organizationId, organization, profile, isLoading: orgLoading } = useOrganization();
   const { canCreate, canEdit } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -340,14 +340,25 @@ export default function POSPage() {
 
       const finalPayments = payments || [{ method: "cash", amount: total }];
       const paymentMethod = finalPayments[0]?.method || "cash";
+      const normalizedMethods = finalPayments.map((p) => String(p.method || "").toLowerCase());
+      const primaryMethod = finalPayments.length === 1 ? (normalizedMethods[0] || "cash") : "mixed";
+      const hasCredit = normalizedMethods.includes("credit") || normalizedMethods.includes("fiado") || normalizedMethods.includes("current_account") || normalizedMethods.includes("cuenta_corriente");
 
       // Get customer name if exists
       const customer = customers.find(c => c.id === selectedCustomerId);
 
       if (isOnline) {
-        const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
-        if (!hasOpenSession) {
-          return;
+        const requiresOpenSession = shouldRequireOpenCashSession({
+          organization,
+          profile,
+          paymentMethods: normalizedMethods,
+        });
+
+        if (requiresOpenSession) {
+          const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
+          if (!hasOpenSession) {
+            return;
+          }
         }
 
         // ONLINE: Process sale via Supabase
@@ -372,6 +383,21 @@ export default function POSPage() {
 
         if (!result.success) {
           throw new Error(result.error || "Error al procesar la venta");
+        }
+
+        if (result.sale_id) {
+          const { error: paymentMethodUpdateError } = await supabase
+            .from("sales")
+            .update({
+              payment_method: primaryMethod,
+              payment_status: hasCredit ? "pending" : "paid",
+            })
+            .eq("id", result.sale_id)
+            .eq("organization_id", organizationId);
+
+          if (paymentMethodUpdateError) {
+            console.warn("No se pudo actualizar payment_method de la venta:", paymentMethodUpdateError.message);
+          }
         }
 
         toast.success(`¡Venta #${result.sale_number} procesada exitosamente!`, {

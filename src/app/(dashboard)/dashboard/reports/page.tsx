@@ -31,6 +31,8 @@ import {
   Award,
   ArrowUpRight,
   ArrowDownRight,
+  HandCoins,
+  Layers,
 } from "lucide-react";
 import {
   AreaChart,
@@ -62,7 +64,42 @@ interface DailySales {
   count: number;
 }
 
+interface ReportTransaction {
+  id: string;
+  total: number;
+  created_at: string;
+  payment_method: string | null;
+  customer_id: string | null;
+  source: "sales" | "orders";
+}
+
 type Period = "today" | "week" | "month" | "year" | "custom";
+
+const PAYMENT_METHOD_ALIAS_TO_CANONICAL: Record<string, string> = {
+  cash: "cash",
+  efectivo: "cash",
+  card: "card",
+  tarjeta: "card",
+  tarjeta_credito: "card",
+  tarjeta_debito: "card",
+  debit_card: "card",
+  credit_card: "card",
+  transfer: "transfer",
+  transferencia: "transfer",
+  bank_transfer: "transfer",
+  credit: "credit",
+  fiado: "credit",
+  current_account: "credit",
+  cuenta_corriente: "credit",
+  mixed: "mixed",
+  mixto: "mixed",
+};
+
+const normalizePaymentMethod = (method: string | null | undefined) => {
+  if (!method) return "unknown";
+  const normalized = String(method).trim().toLowerCase().replace(/\s+/g, "_");
+  return PAYMENT_METHOD_ALIAS_TO_CANONICAL[normalized] || normalized;
+};
 
 export default function ReportsPage() {
   const { organizationId, isLoading: orgLoading } = useOrganization();
@@ -158,8 +195,8 @@ export default function ReportsPage() {
       startDate = planStartDate;
     }
 
-    // Build query with filters
-    let query = supabase
+    // Build base query for sales (mostrador)
+    let salesQuery = supabase
       .from("sales")
       .select("id, total, created_at, payment_method, customer_id")
       .eq("organization_id", organizationId)
@@ -167,27 +204,100 @@ export default function ReportsPage() {
       .gte("created_at", startDate);
 
     if (endDate) {
-      query = query.lte("created_at", endDate);
-    }
-
-    // Apply payment method filter
-    if (filters.paymentMethods.length > 0) {
-      query = query.in("payment_method", filters.paymentMethods);
+      salesQuery = salesQuery.lte("created_at", endDate);
     }
 
     // Apply amount range filters
     if (filters.minAmount !== null) {
-      query = query.gte("total", filters.minAmount);
+      salesQuery = salesQuery.gte("total", filters.minAmount);
     }
     if (filters.maxAmount !== null) {
-      query = query.lte("total", filters.maxAmount);
+      salesQuery = salesQuery.lte("total", filters.maxAmount);
     }
 
-    query = query.order("created_at", { ascending: false });
+    salesQuery = salesQuery.order("created_at", { ascending: false });
 
-    const { data: sales } = await query;
+    // Orders (delivery/pedidos) are tracked in a separate table and must be included too.
+    let ordersQuery = supabase
+      .from("orders")
+      .select("id, total, created_at, payment_method, customer_id, status, delivery_status")
+      .eq("organization_id", organizationId)
+      .neq("status", "cancelled")
+      .neq("delivery_status", "cancelled")
+      .gte("created_at", startDate);
 
-    if (!sales || sales.length === 0) {
+    if (endDate) {
+      ordersQuery = ordersQuery.lte("created_at", endDate);
+    }
+
+    if (filters.minAmount !== null) {
+      ordersQuery = ordersQuery.gte("total", filters.minAmount);
+    }
+    if (filters.maxAmount !== null) {
+      ordersQuery = ordersQuery.lte("total", filters.maxAmount);
+    }
+
+    ordersQuery = ordersQuery.order("created_at", { ascending: false });
+
+    const [{ data: sales, error: salesError }, { data: ordersWithDeliveryStatus, error: ordersError }] = await Promise.all([salesQuery, ordersQuery]);
+
+    if (salesError) {
+      console.error("[Reports] Error loading sales:", salesError.message);
+    }
+
+    let orders = ordersWithDeliveryStatus;
+    if (ordersError) {
+      console.warn("[Reports] Orders query with delivery_status failed, retrying fallback:", ordersError.message);
+
+      let fallbackOrdersQuery = supabase
+        .from("orders")
+        .select("id, total, created_at, payment_method, customer_id, status")
+        .eq("organization_id", organizationId)
+        .neq("status", "cancelled")
+        .gte("created_at", startDate);
+
+      if (endDate) {
+        fallbackOrdersQuery = fallbackOrdersQuery.lte("created_at", endDate);
+      }
+      if (filters.minAmount !== null) {
+        fallbackOrdersQuery = fallbackOrdersQuery.gte("total", filters.minAmount);
+      }
+      if (filters.maxAmount !== null) {
+        fallbackOrdersQuery = fallbackOrdersQuery.lte("total", filters.maxAmount);
+      }
+
+      fallbackOrdersQuery = fallbackOrdersQuery.order("created_at", { ascending: false });
+
+      const { data: fallbackOrders, error: fallbackOrdersError } = await fallbackOrdersQuery;
+      if (fallbackOrdersError) {
+        console.error("[Reports] Fallback orders query also failed:", fallbackOrdersError.message);
+        orders = [];
+      } else {
+        orders = fallbackOrders;
+      }
+    }
+
+    const salesTransactions: ReportTransaction[] = (sales || []).map((s) => ({
+      id: s.id,
+      total: Number(s.total),
+      created_at: s.created_at,
+      payment_method: s.payment_method,
+      customer_id: s.customer_id,
+      source: "sales",
+    }));
+
+    const ordersTransactions: ReportTransaction[] = (orders || []).map((o: any) => ({
+      id: o.id,
+      total: Number(o.total),
+      created_at: o.created_at,
+      payment_method: o.payment_method,
+      customer_id: o.customer_id,
+      source: "orders",
+    }));
+
+    const transactions = [...salesTransactions, ...ordersTransactions];
+
+    if (transactions.length === 0) {
       setStats({
         totalRevenue: 0,
         totalSales: 0,
@@ -202,14 +312,23 @@ export default function ReportsPage() {
     }
 
     // Apply client-side filters for sales channels and customer types
-    let filteredSales = sales;
+    let filteredSales = transactions;
 
-    // Filter by customer type if needed
+    if (filters.paymentMethods.length > 0) {
+      filteredSales = filteredSales.filter((sale) =>
+        filters.paymentMethods.includes(normalizePaymentMethod(sale.payment_method) as "cash" | "card" | "transfer" | "credit"),
+      );
+    }
+
+    // Filter by customer type and sales channel.
+    // Channel must be inferred by transaction origin (orders=delivery, sales=counter),
+    // because customer.service_type does not represent every transaction channel reliably.
     if (filters.customerTypes.length > 0 || filters.salesChannels.length > 0) {
-      const customerIds = sales
+      const customerIds = transactions
         .map((s) => s.customer_id)
         .filter((id): id is string => id !== null && id !== undefined);
 
+      let customerMap = new Map<string, { customer_type: string; service_type: string | null }>();
       if (customerIds.length > 0) {
         const { data: customers } = await supabase
           .from("customers")
@@ -217,26 +336,38 @@ export default function ReportsPage() {
           .in("id", customerIds);
 
         if (customers) {
-          const customerMap = new Map(
+          customerMap = new Map(
             customers.map((c) => [c.id, c])
           );
-
-          filteredSales = sales.filter((sale) => {
-            if (!sale.customer_id) return filters.customerTypes.length === 0 && filters.salesChannels.length === 0;
-            const customer = customerMap.get(sale.customer_id);
-            if (!customer) return false;
-
-            const matchesType =
-              filters.customerTypes.length === 0 ||
-              filters.customerTypes.includes(customer.customer_type);
-            const matchesChannel =
-              filters.salesChannels.length === 0 ||
-              filters.salesChannels.includes(customer.service_type);
-
-            return matchesType && matchesChannel;
-          });
         }
       }
+
+      filteredSales = transactions.filter((sale) => {
+        const transactionChannel = sale.source === "orders" ? "delivery" : "counter";
+        const matchesChannel =
+          filters.salesChannels.length === 0 ||
+          filters.salesChannels.includes("both") ||
+          filters.salesChannels.includes(transactionChannel as "delivery" | "counter");
+
+        if (!matchesChannel) {
+          return false;
+        }
+
+        if (filters.customerTypes.length === 0) {
+          return true;
+        }
+
+        if (!sale.customer_id) {
+          return false;
+        }
+
+        const customer = customerMap.get(sale.customer_id);
+        if (!customer) {
+          return false;
+        }
+
+        return filters.customerTypes.includes(customer.customer_type as "retail" | "wholesale");
+      });
     }
 
     const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.total), 0);
@@ -245,8 +376,9 @@ export default function ReportsPage() {
 
     const paymentMethods: Record<string, number> = {};
     filteredSales.forEach((s) => {
-      paymentMethods[s.payment_method] =
-        (paymentMethods[s.payment_method] || 0) + Number(s.total);
+      const methodKey = normalizePaymentMethod(s.payment_method);
+      paymentMethods[methodKey] =
+        (paymentMethods[methodKey] || 0) + Number(s.total);
     });
 
     const dailyMap: Record<string, { total: number; count: number }> = {};
@@ -260,15 +392,22 @@ export default function ReportsPage() {
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    const saleIds = filteredSales.map((s) => s.id);
-    const { data: saleItems } = await supabase
-      .from("sale_items")
-      .select("product_name, quantity, total")
-      .in("sale_id", saleIds);
+    const saleIds = filteredSales.filter((s) => s.source === "sales").map((s) => s.id);
+    const orderIds = filteredSales.filter((s) => s.source === "orders").map((s) => s.id);
+
+    const saleItemsPromise = saleIds.length > 0
+      ? supabase.from("sale_items").select("product_name, quantity, total").in("sale_id", saleIds)
+      : Promise.resolve({ data: [] as Array<{ product_name: string; quantity: number; total: number }> });
+
+    const orderItemsPromise = orderIds.length > 0
+      ? supabase.from("order_items").select("product_name, quantity, total").in("order_id", orderIds)
+      : Promise.resolve({ data: [] as Array<{ product_name: string; quantity: number; total: number }> });
+
+    const [{ data: saleItems }, { data: orderItems }] = await Promise.all([saleItemsPromise, orderItemsPromise]);
 
     const productMap: Record<string, { quantity: number; revenue: number }> =
       {};
-    saleItems?.forEach((item) => {
+    [...(saleItems || []), ...(orderItems || [])].forEach((item) => {
       if (!productMap[item.product_name]) {
         productMap[item.product_name] = { quantity: 0, revenue: 0 };
       }
@@ -314,18 +453,27 @@ export default function ReportsPage() {
     cash: "Efectivo",
     card: "Tarjeta",
     transfer: "Transferencia",
+    credit: "Fiado",
+    mixed: "Pago Mixto",
+    unknown: "Sin definir",
   };
 
   const paymentIcons: Record<string, typeof Banknote> = {
     cash: Banknote,
     card: CreditCard,
     transfer: Building,
+    credit: HandCoins,
+    mixed: Layers,
+    unknown: Banknote,
   };
 
   const paymentColors: Record<string, string> = {
     cash: "#10b981",
     card: "#3b82f6",
     transfer: "#8b5cf6",
+    credit: "#f59e0b",
+    mixed: "#ef4444",
+    unknown: "#6b7280",
   };
 
   const revenueChange =
