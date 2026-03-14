@@ -190,12 +190,14 @@ export async function clearOfflineOrganizationData(organizationId: string): Prom
 
   await offlineDB.transaction(
     'rw',
-    offlineDB.products,
-    offlineDB.customers,
-    offlineDB.pendingSales,
-    offlineDB.invoices,
-    offlineDB.orders,
-    offlineDB.pendingOrders,
+    [
+      offlineDB.products,
+      offlineDB.customers,
+      offlineDB.pendingSales,
+      offlineDB.invoices,
+      offlineDB.orders,
+      offlineDB.pendingOrders,
+    ],
     async () => {
       await Promise.all([
         offlineDB.products.where('organization_id').equals(organizationId).delete(),

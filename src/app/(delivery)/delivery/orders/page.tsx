@@ -128,7 +128,7 @@ export default function DeliveryOrdersPage() {
                 }
 
                 // Modo sin rutas: cargar pedidos del repartidor o pedidos operables de delivery
-                const runSafeQuery = async (queryPromise: Promise<any>) => {
+                const runSafeQuery = async (queryPromise: any) => {
                     try {
                         const res = await queryPromise;
                         if (!res || typeof res !== "object") {
@@ -252,7 +252,7 @@ export default function DeliveryOrdersPage() {
             let ordersData: any[] | null = null;
             let ordersError: any = null;
 
-            const runSafeQuery = async (queryPromise: Promise<any>) => {
+            const runSafeQuery = async (queryPromise: any) => {
                 try {
                     const res = await queryPromise;
                     if (!res || typeof res !== "object") {

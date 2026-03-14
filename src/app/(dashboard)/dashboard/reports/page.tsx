@@ -245,7 +245,18 @@ export default function ReportsPage() {
       console.error("[Reports] Error loading sales:", salesError.message);
     }
 
-    let orders = ordersWithDeliveryStatus;
+    let orders: Array<{
+      id: any;
+      total: any;
+      created_at: any;
+      payment_method: any;
+      customer_id: any;
+      status: any;
+      delivery_status: any;
+    }> = (ordersWithDeliveryStatus || []).map((order: any) => ({
+      ...order,
+      delivery_status: order?.delivery_status ?? null,
+    }));
     if (ordersError) {
       console.warn("[Reports] Orders query with delivery_status failed, retrying fallback:", ordersError.message);
 
@@ -273,7 +284,10 @@ export default function ReportsPage() {
         console.error("[Reports] Fallback orders query also failed:", fallbackOrdersError.message);
         orders = [];
       } else {
-        orders = fallbackOrders;
+        orders = (fallbackOrders || []).map((order: any) => ({
+          ...order,
+          delivery_status: null,
+        }));
       }
     }
 
