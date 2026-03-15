@@ -15,18 +15,18 @@ function MobileHeader() {
     const { organization } = useOrganization();
 
     return (
-        <header className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <header className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-sm supports-[backdrop-filter]:bg-sidebar/80">
             <div className="flex items-center gap-3">
                 {/* MobileMenuButton removed - moved to BottomNav */}
                 <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs shrink-0"
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sidebar-primary-foreground font-bold text-xs shrink-0"
                         style={{ background: 'var(--gradient-primary)' }}>
                         FS
                     </div>
                     <div>
-                        <h1 className="text-sm font-bold text-white leading-none">FrontStock</h1>
+                        <h1 className="text-sm font-bold text-sidebar-foreground leading-none">FrontStock</h1>
                         {organization && (
-                            <p className="text-[9px] text-slate-500 truncate max-w-[120px] uppercase tracking-wide">{organization.name}</p>
+                            <p className="text-[9px] text-sidebar-foreground/60 truncate max-w-[120px] uppercase tracking-wide">{organization.name}</p>
                         )}
                     </div>
                 </div>
