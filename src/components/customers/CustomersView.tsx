@@ -5,7 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Upload, Loader2, ChevronDown } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Customer, AccountMovement, CustomerSale } from "./types";
 import { CustomerKPIs } from "./CustomerKPIs";
@@ -14,6 +20,8 @@ import { CustomerTable } from "./CustomerTable";
 import { CustomerFormModal } from "./CustomerFormModal";
 import { CustomerHistoryModal } from "./CustomerHistoryModal";
 import { CustomerPaymentModal } from "./CustomerPaymentModal";
+import { ImportCustomersModal } from "./ImportCustomersModal";
+import { ImportCustomerHistoryModal } from "./ImportCustomerHistoryModal";
 
 interface CustomersViewProps {
     initialShowDebtorsOnly?: boolean;
@@ -35,6 +43,8 @@ export function CustomersView({
     const [showModal, setShowModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [showImportHistoryModal, setShowImportHistoryModal] = useState(false);
 
     // Selection States
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -400,15 +410,35 @@ export function CustomersView({
                     </p>
                 </div>
                 {canCreate("customers") && (
-                    <Button
-                        onClick={() => {
-                            setEditingCustomer(null);
-                            setShowModal(true);
-                        }}
-                        className="shadow-lg shadow-primary/20"
-                    >
-                        <Plus className="mr-2 h-4 w-4" /> Nuevo Cliente
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="shadow-sm"
+                                >
+                                    <Upload className="mr-2 h-4 w-4" /> Importar <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setShowImportModal(true)}>
+                                    Importar Nuevos Clientes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setShowImportHistoryModal(true)}>
+                                    Importar Historial (Cargos/Pagos)
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button
+                            onClick={() => {
+                                setEditingCustomer(null);
+                                setShowModal(true);
+                            }}
+                            className="shadow-lg shadow-primary/20"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Nuevo Cliente
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -495,6 +525,24 @@ export function CustomersView({
                 onOpenChange={setShowPaymentModal}
                 onSubmit={handlePayment}
                 saving={saving}
+            />
+
+            <ImportCustomersModal
+                open={showImportModal}
+                onOpenChange={setShowImportModal}
+                onSuccess={() => {
+                    setShowImportModal(false);
+                    fetchCustomers();
+                }}
+            />
+
+            <ImportCustomerHistoryModal
+                open={showImportHistoryModal}
+                onOpenChange={setShowImportHistoryModal}
+                onSuccess={() => {
+                    setShowImportHistoryModal(false);
+                    fetchCustomers();
+                }}
             />
         </div>
     );

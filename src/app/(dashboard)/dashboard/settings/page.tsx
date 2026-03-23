@@ -98,6 +98,9 @@ export default function SettingsPage() {
     const [resetOrgConfirmText, setResetOrgConfirmText] = useState('');
     const [resettingOrgData, setResettingOrgData] = useState(false);
     const [showResetOrgSuccessModal, setShowResetOrgSuccessModal] = useState(false);
+    const [requirePermissionsPassword, setRequirePermissionsPassword] = useState(false);
+    const [permissionsPassword, setPermissionsPassword] = useState('');
+    const [savingPermissionsPassword, setSavingPermissionsPassword] = useState(false);
 
     const saveSecurityPreferences = async (payload: {
         sessionTimeoutMinutes: number;
@@ -141,6 +144,8 @@ export default function SettingsPage() {
                 ? organization.cash_session_assigned_user_ids
                 : []
         );
+        setRequirePermissionsPassword(organization?.require_permissions_password || false);
+        setPermissionsPassword(organization?.permissions_password || '');
         if (profile?.full_name) {
             setProfileName(profile.full_name);
         }
@@ -388,6 +393,28 @@ export default function SettingsPage() {
             });
         } finally {
             setResettingOrgData(false);
+        }
+    };
+
+    const handleSavePermissionsPassword = async () => {
+        if (!organization?.id) return;
+        setSavingPermissionsPassword(true);
+        setMessage(null);
+        try {
+            const { error } = await supabase
+                .from('organizations')
+                .update({
+                    require_permissions_password: requirePermissionsPassword,
+                    permissions_password: permissionsPassword,
+                })
+                .eq('id', organization.id);
+            if (error) throw error;
+            setMessage({ type: 'success', text: 'Configuración de seguridad de permisos guardada correctamente.' });
+            await refetch();
+        } catch (error: any) {
+            setMessage({ type: 'error', text: `Error al guardar: ${error.message}` });
+        } finally {
+            setSavingPermissionsPassword(false);
         }
     };
 
@@ -893,6 +920,49 @@ export default function SettingsPage() {
                                         >
                                             {savingCashSessionPolicy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                                             Guardar política de caja
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {(profile?.role === 'owner' || profile?.role === 'admin') && (
+                                <div className="rounded-lg border border-border p-4 space-y-4 shadow-sm">
+                                    <div>
+                                        <p className="text-sm font-medium">Contraseña para sección de Permisos</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Solicita una clave secreta al entrar a "/dashboard/permissions".
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center justify-between border-b pb-4">
+                                        <p className="text-sm">Requerir contraseña secreta</p>
+                                        <Switch
+                                            checked={requirePermissionsPassword}
+                                            onCheckedChange={setRequirePermissionsPassword}
+                                        />
+                                    </div>
+                                    
+                                    {requirePermissionsPassword && (
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Clave/PIN actual</label>
+                                            <Input
+                                                type="text"
+                                                value={permissionsPassword}
+                                                onChange={(e) => setPermissionsPassword(e.target.value)}
+                                                placeholder="Ej. 1234"
+                                                className="max-w-xs"
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            type="button"
+                                            onClick={handleSavePermissionsPassword}
+                                            disabled={savingPermissionsPassword}
+                                            className="w-full sm:w-auto"
+                                        >
+                                            {savingPermissionsPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                            Guardar acceso a Permisos
                                         </Button>
                                     </div>
                                 </div>

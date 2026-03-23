@@ -1,0 +1,1182 @@
+
+> frontstock@0.1.0 lint
+> eslint
+
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\actions\invitations.ts
+  132:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\actions\organization.ts
+   54:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(auth)\layout.tsx
+  14:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(auth)\register\page.tsx
+  33:8  warning  React Hook useEffect has a missing dependency: 'checkInvitation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\cash-closing\page.tsx
+  232:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  297:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  354:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  411:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  435:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  460:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  528:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  558:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  601:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\delivery\customers\page.tsx
+  124:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  409:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  420:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\delivery\routes\page.tsx
+   60:40   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   61:42   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   63:48   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   67:52   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   68:10   warning  'selectedRoute' is assigned a value but never used                                                            @typescript-eslint/no-unused-vars
+   68:54   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  122:120  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  142:6    warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  174:35   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  214:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  249:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  269:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  287:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  307:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  312:42   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  325:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  330:49   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  333:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  340:23   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  356:20   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  359:49   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  395:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  415:36   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  648:23   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  651:23   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  654:23   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  662:77   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  662:85   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  856:55   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\delivery\shifts\page.tsx
+   12:10  warning  'es' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   13:19  warning  'Wallet' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   13:33  warning  'Clock' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   13:40  warning  'CheckCircle2' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+   27:42  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   71:47  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  106:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  132:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  143:8   warning  React Hook useEffect has a missing dependency: 'fetchShifts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\invoices\actions.ts
+  102:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\invoices\page.tsx
+  41:12  warning  'filters' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\orders\edit\[id]\page.tsx
+  17:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:16  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  37:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\orders\new\page.tsx
+  15:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\orders\page.tsx
+   68:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\page.tsx
+  186:15  warning  'dateStr' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  192:48  warning  'i' is defined but never used                 @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\permissions\page.tsx
+   86:14  error  Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+   99:14  error  Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+  276:57  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+  276:84  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+  287:33  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+  287:52  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+  288:36  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+  288:48  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                          react/no-unescaped-entities
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\promotions\page.tsx
+   9:65  warning  'Users' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   9:81  warning  'Edit' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  29:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\promotions\page.tsx:29:9
+  27 |
+  28 |     useEffect(() => {
+> 29 |         loadPromotions();
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |     }, [organization?.id]);
+  31 |
+  32 |     const promotionTypeIcons: Record<Promotion['type'], any> = {  react-hooks/set-state-in-effect
+  30:8   warning  React Hook useEffect has a missing dependency: 'loadPromotions'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+  32:57  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\purchases\page.tsx
+   10:29  warning  'CardHeader' is defined but never used    @typescript-eslint/no-unused-vars
+   10:41  warning  'CardTitle' is defined but never used     @typescript-eslint/no-unused-vars
+  260:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\reports\page.tsx
+    9:29  warning  'CardDescription' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   53:7   warning  'COLORS' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  249:11  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  250:14  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  251:19  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  252:23  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  253:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  254:15  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  255:24  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  256:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  287:53  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  303:76  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  455:25  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\reports\page.tsx:455:25
+  453 |
+  454 |   useEffect(() => {
+> 455 |     if (organizationId) fetchReports();
+      |                         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  456 |   }, [organizationId, fetchReports]);
+  457 |
+  458 |   const periodLabels: Record<Period, string> = {  react-hooks/set-state-in-effect
+  758:44  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  807:44  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  860:44  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  860:55  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\sales-v2\page.tsx
+   37:12  warning  'showSuspended' is assigned a value but never used        @typescript-eslint/no-unused-vars
+   40:54  warning  'deleteSuspendedSale' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  224:25  error    Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  254:11  warning  'handleResumeSale' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\sales\history\page.tsx
+   24:5   warning  'Select' is defined but never used                    @typescript-eslint/no-unused-vars
+   25:5   warning  'SelectContent' is defined but never used             @typescript-eslint/no-unused-vars
+   26:5   warning  'SelectItem' is defined but never used                @typescript-eslint/no-unused-vars
+   27:5   warning  'SelectTrigger' is defined but never used             @typescript-eslint/no-unused-vars
+   28:5   warning  'SelectValue' is defined but never used               @typescript-eslint/no-unused-vars
+   32:5   warning  'Calendar' is defined but never used                  @typescript-eslint/no-unused-vars
+   84:26  warning  'setStatusFilter' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  231:14  error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  626:28  error    Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\sales\page.tsx
+  108:48  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  113:41  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  151:15  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  163:21  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  173:6   warning  React Hook useCallback has a missing dependency: 'products.length'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  423:42  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  450:21  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\settings\page.tsx
+   25:5   warning  'Settings' is defined but never used                                                                                                         @typescript-eslint/no-unused-vars
+   79:12  warning  'savingOrg' is assigned a value but never used                                                                                               @typescript-eslint/no-unused-vars
+  218:8   warning  React Hook useEffect has missing dependencies: 'saveSecurityPreferences' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  245:8   warning  React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array                                  react-hooks/exhaustive-deps
+  346:25  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+  384:25  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+  394:11  warning  'handleSaveOrg' is assigned a value but never used                                                                                           @typescript-eslint/no-unused-vars
+  998:67  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\settings\plans\PlansClientWrapper.tsx
+  109:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  131:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\settings\plans\debug\page.tsx
+  41:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\settings\plans\page.tsx
+   2:10  warning  'PLANS' is defined but never used         @typescript-eslint/no-unused-vars
+   3:10  warning  'PlanCard' is defined but never used      @typescript-eslint/no-unused-vars
+  25:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\stock\page.tsx
+  21:27  warning  'profile' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  71:39  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(dashboard)\dashboard\suppliers\page.tsx
+   29:10  warning  'SupplierCard' is defined but never used        @typescript-eslint/no-unused-vars
+   82:20  warning  'setSortBy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  673:89  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\debtors\page.tsx
+    6:23   warning  'MapPin' is defined but never used                                                                                                @typescript-eslint/no-unused-vars
+    6:31   warning  'DollarSign' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+   16:44   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   19:58   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   24:8    warning  React Hook useEffect has a missing dependency: 'fetchDebtors'. Either include it or remove the dependency array                   react-hooks/exhaustive-deps
+   46:8    warning  React Hook useEffect has missing dependencies: 'fetchDebtors' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   66:64   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   78:101  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   84:75   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   85:52   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  116:34   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  117:27   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  117:35   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  128:34   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  129:69   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  130:84   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  133:37   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  134:35   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  134:43   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  173:18   warning  'e' is defined but never used                                                                                                     @typescript-eslint/no-unused-vars
+  173:21   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  262:70   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\history\page.tsx
+   18:42   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   33:8    warning  React Hook useEffect has a missing dependency: 'fetchHistory'. Either include it or remove the dependency array                   react-hooks/exhaustive-deps
+   60:8    warning  React Hook useEffect has missing dependencies: 'fetchHistory' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   90:30   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   96:33   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+   99:59   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  107:88   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  107:105  error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  113:61   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  136:28   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  136:52   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  155:55   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  161:63   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  166:18   warning  'error' is defined but never used                                                                                                 @typescript-eslint/no-unused-vars
+  208:44   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+  213:30   error    Unexpected any. Specify a different type                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\orders\page.tsx
+   13:10  warning  'Checkbox' is defined but never used                                                                                               @typescript-eslint/no-unused-vars
+   36:42  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+   37:52  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+   41:56  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+   91:8   warning  React Hook useEffect has missing dependencies: 'fetchMyOrders' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  133:59  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  146:42  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  154:35  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  254:29  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  255:30  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  257:55  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  270:38  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  353:75  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  354:53  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  362:72  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  368:72  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  374:72  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  381:72  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  388:81  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  389:56  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  390:59  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  391:56  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  411:49  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  421:25  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  435:39  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  542:25  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  576:25  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  612:44  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  617:30  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+  635:38  error    Unexpected any. Specify a different type                                                                                           @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\page.tsx
+    9:52  warning  'DollarSign' is defined but never used                                                                                           @typescript-eslint/no-unused-vars
+    9:64  warning  'Bell' is defined but never used                                                                                                 @typescript-eslint/no-unused-vars
+   10:17  warning  'Banknote' is defined but never used                                                                                             @typescript-eslint/no-unused-vars
+   45:7   warning  'STATUS_LABELS' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  113:42  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  115:62  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  117:55  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  119:83  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  147:8   warning  React Hook useEffect has missing dependencies: 'fetchOrders' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  165:21  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\routes\page.tsx
+   40:52  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   75:30  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  146:40  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  157:8   warning  React Hook useEffect has a missing dependency: 'fetchActiveRoute'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\(delivery)\delivery\sale\page.tsx
+   32:5   warning  'CreditCard' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   36:5   warning  'FileText' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   66:46  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  121:8   warning  React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  262:17  warning  'signatureData' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  295:23  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  503:78  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  519:82  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\api\customers\import-history\route.ts
+   66:17  error  'customerId' is never reassigned. Use 'const' instead  prefer-const
+  162:21  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\app\api\customers\import\route.ts
+  80:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\DashboardShell.tsx
+  4:36  warning  'MobileMenuButton' is defined but never used  @typescript-eslint/no-unused-vars
+  4:54  warning  'useSidebar' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\Navbar.tsx
+   39:5   warning  'Bell' is defined but never used         @typescript-eslint/no-unused-vars
+   40:5   warning  'Search' is defined but never used       @typescript-eslint/no-unused-vars
+  144:34  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\OfflineDebugPanel.tsx
+   18:3   warning  'HardDrive' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   45:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  100:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  118:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  138:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\OfflineDebugPanel.tsx:138:5
+  136 |
+  137 |   useEffect(() => {
+> 138 |     loadStats();
+      |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  139 |     loadPendingSales();
+  140 |
+  141 |     // Refresh every 10 seconds  react-hooks/set-state-in-effect
+  148:6   warning  React Hook useEffect has missing dependencies: 'loadPendingSales' and 'loadStats'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\auth\SessionTimeout.tsx
+   21:44  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\auth\SessionTimeout.tsx:21:44
+  19 |     const supabase = createClient();
+  20 |     const timerRef = useRef<NodeJS.Timeout | null>(null);
+> 21 |     const lastActivityRef = useRef<number>(Date.now());
+     |                                            ^^^^^^^^^^ Cannot call impure function
+  22 |     const timeoutMinutesRef = useRef<number>(timeoutInMinutes);
+  23 |
+  24 |     const getTimeoutMs = useCallback(() => {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/purity
+   65:17  error    Error: Cannot access variable before it is declared
+
+`resetTimer` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\auth\SessionTimeout.tsx:65:17
+  63 |             } else {
+  64 |                 // If for some reason timer fired early, restart it for the remaining time
+> 65 |                 resetTimer();
+     |                 ^^^^^^^^^^ `resetTimer` accessed before it is declared
+  66 |             }
+  67 |         }, timeoutMs);
+  68 |     }, [getTimeoutMs, logout]);
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\auth\SessionTimeout.tsx:48:5
+  46 |     }, [router, supabase]);
+  47 |
+> 48 |     const resetTimer = useCallback(() => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |         lastActivityRef.current = Date.now();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         const timeoutMs = getTimeoutMs();
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |         }, timeoutMs);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 68 |     }, [getTimeoutMs, logout]);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `resetTimer` is declared here
+  69 |
+  70 |     useEffect(() => {
+  71 |         const syncTimeoutFromServer = async () => {  react-hooks/immutability
+  137:8   warning  React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\cash\CashSessionStartupPrompt.tsx
+  119:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\customers\CustomerFormModal.tsx
+  18:26  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  64:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\customers\CustomerFormModal.tsx:64:13
+  62 |             const paymentTerms = editingCustomer.payment_terms || "contado";
+  63 |             const hasCreditConfigured = limit > 0 || paymentTerms !== "contado";
+> 64 |             setCreditEnabled(hasCreditConfigured);
+     |             ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  65 |             setFormData({
+  66 |                 name: editingCustomer.name || "",
+  67 |                 email: editingCustomer.email || "",  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\customers\CustomersView.tsx
+   91:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  190:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\customers\ImportCustomerHistoryModal.tsx
+   30:12  warning  'file' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   32:44  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   66:96  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   78:47  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  139:46  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\customers\ImportCustomersModal.tsx
+    6:10  warning  'Input' is defined but never used          @typescript-eslint/no-unused-vars
+   33:12  warning  'file' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   35:44  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   69:84  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+   81:47  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  142:44  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\CustomerForm.tsx
+    3:20  warning  'useEffect' is defined but never used     @typescript-eslint/no-unused-vars
+  104:25  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\DeliveryConfirmationModal.tsx
+   6:10  warning  'Input' is defined but never used         @typescript-eslint/no-unused-vars
+   9:59  warning  'Wallet' is defined but never used        @typescript-eslint/no-unused-vars
+  18:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\OrderCart.tsx
+  11:23  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  12:15  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  19:13  warning  'organizationId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\OrderDetailsModal.tsx
+    9:56   warning  'Calendar' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+    9:66   warning  'DollarSign' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+    9:78   warning  'ChefHat' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   26:40   error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   27:40   error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   39:8    warning  React Hook useEffect has a missing dependency: 'fetchOrderDetails'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   73:45   error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  112:25   error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  325:95   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                       react/no-unescaped-entities
+  325:118  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                       react/no-unescaped-entities
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\OrderSummary.tsx
+    4:19  warning  'Truck' is defined but never used                        @typescript-eslint/no-unused-vars
+    4:26  warning  'DollarSign' is defined but never used                   @typescript-eslint/no-unused-vars
+    4:38  warning  'Wallet' is defined but never used                       @typescript-eslint/no-unused-vars
+    4:46  warning  'CreditCard' is defined but never used                   @typescript-eslint/no-unused-vars
+    4:58  warning  'Clock' is defined but never used                        @typescript-eslint/no-unused-vars
+   15:23  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   16:15  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   30:25  warning  'setDeliveryFee' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   93:25  warning  'p_client_reference' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  121:21  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\ProductGrid.tsx
+   5:31  warning  'ShoppingBag' is defined but never used       @typescript-eslint/no-unused-vars
+  28:12  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\QuickCustomerSearch.tsx
+  15:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:61  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:34  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  91:18  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  91:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\delivery\ShiftControl.tsx
+   11:27  warning  'RefreshCw' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   11:38  warning  'CheckCircle2' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+   13:10  warning  'es' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+   22:52  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   53:8   warning  React Hook useEffect has a missing dependency: 'fetchActiveShift'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   74:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  101:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\CreateInvoiceModal.tsx
+   21:10  warning  'CreateInvoiceData' is defined but never used                                                                                                @typescript-eslint/no-unused-vars
+   29:24  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+   40:40  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+   41:48  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+   61:8   warning  React Hook useEffect has missing dependencies: 'fetchData' and 'handlePreselectedOrder'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  265:25  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\InvoiceDetailModal.tsx
+  68:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\InvoiceFilters.tsx
+  42:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\InvoiceList.tsx
+  11:15  warning  'FileText' is defined but never used      @typescript-eslint/no-unused-vars
+  21:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\InvoicePDF.tsx
+    2:57  warning  'Font' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+  180:33  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  256:80  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  263:83  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\invoices\InvoiceStats.tsx
+  5:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\notifications\NotificationCenter.tsx
+  10:5  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\AssignToRouteModal.tsx
+   36:42  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+   44:8   warning  React Hook useEffect has a missing dependency: 'fetchRoutes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   63:25  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  105:25  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\DownloadOrderInvoiceButton.tsx
+  10:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\DownloadRemitoButton.tsx
+   9:12  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:30  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\EditOrderModal.tsx
+    4:60  warning  'DialogFooter' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+   33:16  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   54:46  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   63:8   warning  React Hook useEffect has a missing dependency: 'fetchOrderItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   69:8   warning  React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  138:40  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  251:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  274:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\NewOrderForm.tsx
+   11:10  warning  'Button' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   12:10  warning  'Input' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   14:51  warning  'Save' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+   59:46  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   72:46  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   78:48  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  101:8   warning  React Hook useEffect has a missing dependency: 'searchProducts'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+  111:35  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  113:30  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  130:8   warning  React Hook useEffect has a missing dependency: 'searchCustomers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  140:35  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  154:46  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  162:34  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  182:35  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  212:8   warning  React Hook useEffect has a missing dependency: 'handleSubmit'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  255:72  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  272:25  warning  'p_client_reference' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+  283:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  680:94  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\OrderRemito80PDF.tsx
+  139:38  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\ViewInvoiceButton.tsx
+   7:20  warning  'useCallback' is defined but never used   @typescript-eslint/no-unused-vars
+  11:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:13  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\cards\DraggableOrderCard.tsx
+  31:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\views\OrdersCompactView.tsx
+  8:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\views\OrdersGroupedView.tsx
+   7:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\views\OrdersKanbanView.tsx
+  10:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  13:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\orders\views\OrdersListView.tsx
+   5:35  warning  'CheckSquare' is defined but never used   @typescript-eslint/no-unused-vars
+  14:13  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:30  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\products\ProductModal.tsx
+   62:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\products\ProductModal.tsx:62:13
+  60 |     useEffect(() => {
+  61 |         if (product) {
+> 62 |             setFormData({
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  63 |                 name: product.name || "",
+  64 |                 sku: product.sku || "",
+  65 |                 barcode: product.barcode || "",  react-hooks/set-state-in-effect
+  201:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\products\ProductModal.tsx:201:13
+  199 |     useEffect(() => {
+  200 |         if (formData.is_combo) {
+> 201 |             setFormData(prev => ({ ...prev, cost_price: comboCost.toString() }));
+      |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  202 |         }
+  203 |     }, [comboCost, formData.is_combo]);
+  204 |        react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\promotions\PromotionFormModal.tsx
+  129:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\purchases\CreatePurchaseOrderModal.tsx
+   61:11  warning  'router' is assigned a value but never used                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   91:8   warning  React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array                                                                                                                         react-hooks/exhaustive-deps
+   97:8   warning  React Hook useEffect has a missing dependency: 'onOpenChange'. Either include it or remove the dependency array. If 'onOpenChange' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  106:8   warning  React Hook useEffect has a missing dependency: 'validateCreditLimit'. Either include it or remove the dependency array                                                                                                                   react-hooks/exhaustive-deps
+  280:23  error    Unexpected any. Specify a different type                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  336:53  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                          react/no-unescaped-entities
+  336:70  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                          react/no-unescaped-entities
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\purchases\DownloadPurchaseOrderButton.tsx
+  12:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\purchases\PurchaseOrderPDF.tsx
+  174:12  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  175:20  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  207:29  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  209:29  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  283:63  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\purchases\ReceivePurchaseOrderModal.tsx
+   15:10  warning  'Label' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   70:12  warning  'receiveType' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   70:25  warning  'setReceiveType' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   78:8   warning  React Hook useEffect has a missing dependency: 'fetchOrderItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  177:23  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\purchases\SupplierInvoiceModal.tsx
+   31:10  warning  'CreateSupplierInvoiceData' is defined but never used                                                         @typescript-eslint/no-unused-vars
+   51:48  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   52:58  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   72:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  123:32  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\reports\ReportsFilters.tsx
+  48:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\DeliveryNotePDF.tsx
+  158:33  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\FrequentCustomers.tsx
+  52:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSPaymentPanel.tsx
+    6:5   warning  'CheckCircle2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   45:17  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+   52:35  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-explicit-any
+   77:5   warning  'appliedPromotionId' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   97:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSPaymentPanel.tsx:97:13
+   95 |     useEffect(() => {
+   96 |         if (activeTab.payments && activeTab.payments.length > 1) {
+>  97 |             setMode("mixed");
+      |             ^^^^^^^ Avoid calling setState() directly within an effect
+   98 |         } else if (activeTab.payments && activeTab.payments.length === 1) {
+   99 |             // Check if matches the total (approx)
+  100 |             if (Math.abs(activeTab.payments[0].amount - total) < 0.01) {  react-hooks/set-state-in-effect
+  190:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSPaymentPanel.tsx:190:13
+  188 |             }
+  189 |             // Otherwise, switch to mixed
+> 190 |             setMode("mixed");
+      |             ^^^^^^^ Avoid calling setState() directly within an effect
+  191 |         } else if (activeTab.payments.length === 1) {
+  192 |             if (Math.abs(activeTab.payments[0].amount - total) < 0.01) {
+  193 |                 setMode("simple");                                                                        react-hooks/set-state-in-effect
+  199:8   warning  React Hook useEffect has missing dependencies: 'mode' and 'selectedSimpleMethod'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+  221:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSPaymentPanel.tsx:221:13
+  219 |     useEffect(() => {
+  220 |         if (remaining > 0) {
+> 221 |             setAmount(remaining.toFixed(2));
+      |             ^^^^^^^^^ Avoid calling setState() directly within an effect
+  222 |         } else {
+  223 |             setAmount("");
+  224 |         }                                                                                                                                                                        react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSProductSearch.tsx
+   2:18  warning  'Loader2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  29:11  warning  The 'filteredProducts' conditional could make the dependencies of useEffect Hook (at line 74) change on every render. To fix this, wrap the initialization of 'filteredProducts' in its own useMemo() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+  42:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\POSProductSearch.tsx:42:9
+  40 |
+  41 |     useEffect(() => {
+> 42 |         setShowDropdown(searchQuery.length > 0 && filteredProducts.length > 0);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |         setSelectedIndex(0);
+  44 |     }, [searchQuery, filteredProducts.length]);
+  45 |  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\PromotionsSelector.tsx
+  39:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\PromotionsSelector.tsx:39:13
+  37 |     useEffect(() => {
+  38 |         if (!organization?.id || items.length === 0) {
+> 39 |             setPromotions([]);
+     |             ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |             return;
+  41 |         }
+  42 |  react-hooks/set-state-in-effect
+  91:46  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\SuspendedSalesPanel.tsx
+  7:10  warning  'Input' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\TicketPDF.tsx
+    2:57  warning  'Font' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+  142:25  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\TicketView.tsx
+   10:19  warning  'X' is defined but never used             @typescript-eslint/no-unused-vars
+   11:10  warning  'SaleTab' is defined but never used       @typescript-eslint/no-unused-vars
+   21:16  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   26:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\PaymentPanel.tsx
+  92:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\PaymentPanel.tsx:92:13
+  90 |     useEffect(() => {
+  91 |         if (!applySupplierSettlement) {
+> 92 |             setSupplierSettlementAmount('');
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  93 |         }
+  94 |     }, [applySupplierSettlement]);
+  95 |  react-hooks/set-state-in-effect
+  97:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\PaymentPanel.tsx:97:9
+   95 |
+   96 |     useEffect(() => {
+>  97 |         setSupplierSettlementAmount('');
+      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+   98 |     }, [supplierToSettleId]);
+   99 |
+  100 |     const calculateBillBreakdown = (amount: number) => {  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\ProductGrid.tsx
+  44:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\ProductGrid.tsx:44:9
+  42 |             .sort((a, b) => b.stock - a.stock)
+  43 |             .slice(0, maxItems);
+> 44 |         setTopProducts(sorted);
+     |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  45 |     }, [products, maxItems]);
+  46 |
+  47 |     if (topProducts.length === 0) {  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\QuickActions.tsx
+  18:5  warning  'onCatalogClick' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\SearchBar.tsx
+  30:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\SearchBar.tsx:30:13
+  28 |     useEffect(() => {
+  29 |         if (!query.trim()) {
+> 30 |             setResults([]);
+     |             ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  31 |             setShowResults(false);
+  32 |             return;
+  33 |         }  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\sales\v2\SuspendedSalesModal.tsx
+  15:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\settings\LegacyImportPanel.tsx
+   59:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\settings\OrganizationSettingsForm.tsx
+   79:25  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  116:25  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  132:29  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\stock\StockMovementModal.tsx
+  27:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\suppliers\AdvancePaymentCalculator.tsx
+    6:10  warning  'Button' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+   50:8   warning  React Hook useEffect has a missing dependency: 'calculateAdvance'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  119:23  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\suppliers\PaymentAlertsWidget.tsx
+  39:8  warning  React Hook useEffect has a missing dependency: 'fetchDueInvoices'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\suppliers\PaymentRegistrationModal.tsx
+   44:5   warning  'organizationId' is defined but never used  @typescript-eslint/no-unused-vars
+  121:25  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\suppliers\PurchaseOrderPDF.tsx
+  2:50  warning  'Font' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\ui\index.tsx
+  211:33  warning  'onClose' is defined but never used                @typescript-eslint/no-unused-vars
+  250:44  warning  'emptyMessage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\users\CreateUserModal.tsx
+   8:39  warning  'Lock' is defined but never used   @typescript-eslint/no-unused-vars
+  56:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\users\EditRoleModal.tsx
+  17:41  warning  'ASSIGNABLE_ROLES' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\components\users\UserFilters.tsx
+  30:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\AppearanceContext.tsx
+  55:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\AppearanceContext.tsx:55:5
+  53 |
+  54 |   useEffect(() => {
+> 55 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  56 |
+  57 |     const savedDensity = localStorage.getItem(STORAGE_KEYS.density);
+  58 |     if (isDensity(savedDensity)) {  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\LayoutContext.tsx
+  24:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\LayoutContext.tsx:24:9
+  22 |
+  23 |     useEffect(() => {
+> 24 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |         const saved = localStorage.getItem('layout-mode') as LayoutMode;
+  26 |         if (saved === 'sidebar' || saved === 'navbar') {
+  27 |             setLayoutMode(saved);  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\NotificationsContext.tsx
+  15:12  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  64:8   warning  React Hook useEffect has a missing dependency: 'loadNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\OrganizationContext.tsx
+  127:45  error  'profileError' is never reassigned. Use 'const' instead  prefer-const
+  203:23  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\PermissionsContext.tsx
+   63:13  error    Error: Cannot access variable before it is declared
+
+`initializeDefaults` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\PermissionsContext.tsx:63:13
+  61 |             // Si la tabla no existe o hay error, usar defaults
+  62 |             console.warn('Could not fetch permissions, using defaults:', fetchError.message);
+> 63 |             initializeDefaults();
+     |             ^^^^^^^^^^^^^^^^^^ `initializeDefaults` accessed before it is declared
+  64 |         } else if (data && data.length > 0) {
+  65 |             setPermissions(data);
+  66 |         } else {
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\PermissionsContext.tsx:74:5
+   72 |     }, [organizationId, supabase]);
+   73 |
+>  74 |     const initializeDefaults = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  75 |         if (!organizationId) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  76 |
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 109 |         setPermissions(defaultPerms);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 110 |     };
+      | ^^^^^^^ `initializeDefaults` is declared here
+  111 |
+  112 |     useEffect(() => {
+  113 |         if (organizationId && !orgLoading) {  react-hooks/immutability
+   72:8   warning  React Hook useCallback has a missing dependency: 'initializeDefaults'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+   81:18  error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @next/next/no-assign-module-variable
+  161:14  error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @next/next/no-assign-module-variable
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\ThemeContext.tsx
+  62:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\ThemeContext.tsx:62:9
+  60 |                 : 'system';
+  61 |
+> 62 |         setThemeState(initialTheme);
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  63 |         applyThemeClass(initialTheme);
+  64 |         setMounted(true);
+  65 |     }, []);  react-hooks/set-state-in-effect
+  69:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\contexts\ThemeContext.tsx:69:9
+  67 |     useEffect(() => {
+  68 |         if (!mounted) return;
+> 69 |         applyThemeClass(theme);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  70 |     }, [theme, mounted]);
+  71 |
+  72 |     useEffect(() => {          react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\orders\useOrderDragDrop.ts
+  10:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\orders\useOrdersData.ts
+   13:42  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+   47:72  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  112:21  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  112:29  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  116:68  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  176:57  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  195:70  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  209:25  error    Unexpected any. Specify a different type                                                                                         @typescript-eslint/no-explicit-any
+  258:8   warning  React Hook useEffect has missing dependencies: 'fetchOrders' and 'supabase'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\use-media-query.ts
+  13:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\use-media-query.ts:13:9
+  11 |         const result = matchMedia(query)
+  12 |         result.addEventListener("change", onChange)
+> 13 |         setValue(result.matches)
+     |         ^^^^^^^^ Avoid calling setState() directly within an effect
+  14 |
+  15 |         return () => result.removeEventListener("change", onChange)
+  16 |     }, [query])  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\useImageToBase64.ts
+  9:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\useImageToBase64.ts:9:13
+   7 |     useEffect(() => {
+   8 |         if (!imageUrl) {
+>  9 |             setBase64(null);
+     |             ^^^^^^^^^ Avoid calling setState() directly within an effect
+  10 |             return;
+  11 |         }
+  12 |  react-hooks/set-state-in-effect
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\useOfflineOrders.ts
+  104:21  warning  'p_client_reference' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  126:25  error    Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\hooks\useOfflineSales.ts
+    9:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  235:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  455:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  499:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  547:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\lib\cash-session.ts
+  59:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\lib\legacy-import\upsertBatch.ts
+  169:7  error  'skipped' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\lib\offline\db.ts
+  81:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\lib\orders\filters.ts
+   2:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\lib\supabase\middleware.ts
+  41:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Noxi-PC\OneDrive\Documentos\Demos\frontstock\src\proxy.ts
+  13:11  warning  'hasSupabaseAuthCookie' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 548 problems (391 errors, 157 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

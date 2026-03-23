@@ -20,11 +20,14 @@ import { Shield, ShieldAlert, BadgeCheck } from 'lucide-react';
 const ROLES: Role[] = ['admin', 'manager', 'employee', 'delivery', 'billing', 'viewer'];
 
 export default function PermissionsPage() {
-    const { permissions, updatePermission, isLoading: orgLoading } = useOrganization();
+    const { permissions, updatePermission, isLoading: orgLoading, organization } = useOrganization();
     const { canEditPermissions, isOwner } = usePermissions();
     const [selectedRole, setSelectedRole] = useState<Role>('admin');
     const [saving, setSaving] = useState<string | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [passwordError, setPasswordError] = useState(false);
 
     const getPermission = (role: string, module: string) => {
         const perm = permissions.find((p) => p.role === role && p.module === module);
@@ -122,6 +125,52 @@ export default function PermissionsPage() {
 
     if (!canEditPermissions) {
         return <AccessDenied message="Solo propietarios y administradores pueden gestionar permisos" />;
+    }
+
+    if (organization?.require_permissions_password && !isAuthenticated) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                <Shield className="h-12 w-12 text-slate-400" />
+                <h2 className="text-xl font-bold text-slate-800">Sección Protegida</h2>
+                <p className="text-slate-500 text-center max-w-md">
+                    Esta configuración requiere contraseña. Ingresa la clave de permisos para continuar.
+                </p>
+                <div className="flex gap-2 w-full max-w-sm mt-4">
+                    <input
+                        type="password"
+                        placeholder="Contraseña"
+                        value={passwordInput}
+                        onChange={(e) => { 
+                            setPasswordInput(e.target.value); 
+                            setPasswordError(false); 
+                        }}
+                        className={`flex-1 px-3 py-2 border rounded-md shadow-sm outline-none focus:ring-2 focus:ring-blue-500 ${passwordError ? 'border-red-500 bg-red-50/50' : 'border-slate-300'}`}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                if (passwordInput === organization.permissions_password) {
+                                    setIsAuthenticated(true);
+                                } else {
+                                    setPasswordError(true);
+                                }
+                            }
+                        }}
+                    />
+                    <button
+                        onClick={() => {
+                            if (passwordInput === organization.permissions_password) {
+                                setIsAuthenticated(true);
+                            } else {
+                                setPasswordError(true);
+                            }
+                        }}
+                        className="px-4 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800"
+                    >
+                        Ingresar
+                    </button>
+                </div>
+                {passwordError && <p className="text-red-500 text-sm mt-1 animate-pulse">Contraseña incorrecta</p>}
+            </div>
+        );
     }
 
     return (
