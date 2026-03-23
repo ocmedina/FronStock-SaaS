@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { ShiftControl } from "@/components/delivery/ShiftControl";
 
 export default function DeliveryOrdersPage() {
     const { profile, organizationId } = useOrganization();
@@ -665,9 +666,12 @@ export default function DeliveryOrdersPage() {
                             </p>
                         </div>
                     </div>
-                        <div className="text-right">
-                            <div className="text-2xl font-bold text-white">{pendingOrders.length}</div>
-                            <div className="text-xs text-slate-400">Pendientes</div>
+                        <div className="flex items-center gap-3">
+                            <ShiftControl />
+                            <div className="text-right">
+                                <div className="text-2xl font-bold text-white">{pendingOrders.length}</div>
+                                <div className="text-xs text-slate-400">Pendientes</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -902,22 +906,39 @@ export default function DeliveryOrdersPage() {
                             </div>
                         )}
 
-                        <div className="flex items-start gap-2 rounded-lg border border-slate-700 p-3">
-                            <Checkbox
-                                id="confirm-delivery"
-                                checked={deliveryConfirmed}
-                                onCheckedChange={(checked) => setDeliveryConfirmed(checked === true)}
-                            />
-                            <Label htmlFor="confirm-delivery" className="text-sm text-slate-300 cursor-pointer">
+                        <div className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/40 p-3 cursor-pointer"
+                            onClick={() => setDeliveryConfirmed(!deliveryConfirmed)}
+                        >
+                            <div className={`mt-0.5 h-5 w-5 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${
+                                deliveryConfirmed
+                                    ? "bg-emerald-500 border-emerald-500"
+                                    : "bg-slate-900 border-slate-600"
+                            }`}>
+                                {deliveryConfirmed && (
+                                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
+                            <span className="text-sm text-slate-300 select-none">
                                 Confirmo que el pedido fue entregado y el método de pago es correcto.
-                            </Label>
+                            </span>
                         </div>
 
                         <div className="flex gap-2 justify-end pt-2">
-                            <Button variant="outline" className="border-slate-700" onClick={closeDeliverDialog} disabled={submittingDelivery}>
+                            <Button
+                                variant="outline"
+                                className="bg-slate-800 border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white"
+                                onClick={closeDeliverDialog}
+                                disabled={submittingDelivery}
+                            >
                                 Cancelar
                             </Button>
-                            <Button className="bg-emerald-600 hover:bg-emerald-500" onClick={handleMarkDelivered} disabled={submittingDelivery || !deliveryConfirmed || fullPaymentRequiredAndMissing}>
+                            <Button
+                                className="bg-emerald-600 hover:bg-emerald-500"
+                                onClick={handleMarkDelivered}
+                                disabled={submittingDelivery || !deliveryConfirmed || fullPaymentRequiredAndMissing}
+                            >
                                 {submittingDelivery && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                                 Confirmar entrega
                             </Button>

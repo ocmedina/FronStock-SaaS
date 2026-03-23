@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
+import { ShiftControl } from "@/components/delivery/ShiftControl";
 
 type RouteStop = {
     id: string;
@@ -205,13 +206,16 @@ export default function RoutesPage() {
     if (!activeRoute) {
         return (
             <div className="flex flex-col h-screen bg-slate-950">
-                <div className="flex items-center gap-3 p-4 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
-                    <Link href="/delivery">
-                        <Button variant="ghost" size="icon" className="text-slate-400">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <h1 className="text-lg font-bold text-white">Mi Ruta</h1>
+                <div className="flex items-center justify-between gap-3 p-4 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
+                    <div className="flex items-center gap-2">
+                        <Link href="/delivery">
+                            <Button variant="ghost" size="icon" className="text-slate-400">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <h1 className="text-lg font-bold text-white">Mi Ruta</h1>
+                    </div>
+                    <ShiftControl />
                 </div>
                 <div className="flex-1 flex items-center justify-center p-4">
                     <Card className="bg-slate-900 border-slate-800 p-8 text-center max-w-md">
@@ -234,21 +238,26 @@ export default function RoutesPage() {
     return (
         <div className="flex flex-col h-screen bg-slate-950">
             {/* Header */}
-            <div className="flex items-center gap-3 p-4 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
-                <Link href="/delivery">
-                    <Button variant="ghost" size="icon" className="text-slate-400">
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                </Link>
-                <div className="flex-1">
-                    <h1 className="text-lg font-bold text-white">{activeRoute.name}</h1>
-                    <p className="text-xs text-slate-400">Zona: {activeRoute.zone || 'N/A'}</p>
+            <div className="flex items-center justify-between gap-3 p-4 border-b border-slate-800 bg-slate-950 sticky top-0 z-10">
+                <div className="flex items-center gap-2">
+                    <Link href="/delivery">
+                        <Button variant="ghost" size="icon" className="text-slate-400">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                    <div className="flex-1">
+                        <h1 className="text-lg font-bold text-white">{activeRoute.name}</h1>
+                        <p className="text-xs text-slate-400">Zona: {activeRoute.zone || 'N/A'}</p>
+                    </div>
                 </div>
-                <Badge variant={activeRoute.status === 'in_progress' ? 'default' : 'secondary'}>
-                    {activeRoute.status === 'planned' ? 'Planificada' : 
-                     activeRoute.status === 'in_progress' ? 'En Progreso' : 
-                     'Completada'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                    <Badge variant={activeRoute.status === 'in_progress' ? 'default' : 'secondary'}>
+                        {activeRoute.status === 'planned' ? 'Planificada' : 
+                         activeRoute.status === 'in_progress' ? 'En Progreso' : 
+                         'Completada'}
+                    </Badge>
+                    <ShiftControl />
+                </div>
             </div>
 
             {/* Progress */}

@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
 import { Badge } from "@/components/ui/badge";
+import { ShiftControl } from "@/components/delivery/ShiftControl";
 
 export default function HistoryPage() {
     const { organizationId } = useOrganization();
@@ -241,13 +242,16 @@ export default function HistoryPage() {
         <div className="min-h-screen bg-slate-950 pb-20">
             {/* Header */}
             <div className="sticky top-0 bg-slate-950/90 backdrop-blur z-20 border-b border-slate-800 p-4">
-                <div className="flex items-center gap-3 mb-4">
-                    <Link href="/delivery">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                            <ArrowLeft className="h-6 w-6" />
-                        </Button>
-                    </Link>
-                    <h1 className="text-xl font-bold text-white">Historial</h1>
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                        <Link href="/delivery">
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                <ArrowLeft className="h-6 w-6" />
+                            </Button>
+                        </Link>
+                        <h1 className="text-xl font-bold text-white">Historial</h1>
+                    </div>
+                    <ShiftControl />
                 </div>
 
                 {/* Filters */}

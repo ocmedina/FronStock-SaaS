@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { NewOrderForm } from "@/components/orders/NewOrderForm";
 import { useRouter } from "next/navigation";
+import { ShiftControl } from "@/components/delivery/ShiftControl";
 
 export default function DeliveryOrderPage() {
     const router = useRouter();
@@ -13,16 +14,19 @@ export default function DeliveryOrderPage() {
         <div className="min-h-screen flex flex-col bg-slate-950">
             {/* Mobile Header */}
             <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur border-b border-slate-800 px-4 py-3">
-                <div className="flex items-center gap-3">
-                    <Link href="/delivery">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                            <ArrowLeft className="h-5 w-5" />
-                        </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-lg font-bold text-white">Nuevo Pedido</h1>
-                        <p className="text-xs text-slate-400">Modo Delivery</p>
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <Link href="/delivery">
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-lg font-bold text-white">Nuevo Pedido</h1>
+                            <p className="text-xs text-slate-400">Modo Delivery</p>
+                        </div>
                     </div>
+                    <ShiftControl />
                 </div>
             </div>
 
