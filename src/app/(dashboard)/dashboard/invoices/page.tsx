@@ -28,7 +28,7 @@ export default function InvoicesPage() {
         organization,
         isLoading: orgLoading,
     } = useOrganization();
-    const { canView, canCreate } = usePermissions();
+    const { canView, canCreate, canDelete } = usePermissions();
     const { base64: logoBase64 } = useImageToBase64(organization?.logo_url);
     const { isOnline } = useOnlineStatus();
     const { cacheInvoices } = useOfflineSales(organizationId ?? undefined);
@@ -179,29 +179,31 @@ export default function InvoicesPage() {
                     <Button variant="outline" size="icon" onClick={fetchInvoices}>
                         <RefreshCw className="h-4 w-4" />
                     </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={async () => {
-                            if (window.confirm("¿ESTÁS SEGURO? \n\nEsto borrará TODAS las facturas de la organización y reiniciará la numeración a 0001-00000001. \n\nLas ventas volverán a estado 'pendiente de facturar'. \n\nEsta acción NO se puede deshacer.")) {
-                                if (window.prompt("Escribe 'BORRAR' para confirmar") !== "BORRAR") return;
+                    {canDelete("invoices") && (
+                        <Button
+                            variant="destructive"
+                            onClick={async () => {
+                                if (window.confirm("¿ESTÁS SEGURO? \n\nEsto borrará TODAS las facturas de la organización y reiniciará la numeración a 0001-00000001. \n\nLas ventas volverán a estado 'pendiente de facturar'. \n\nEsta acción NO se puede deshacer.")) {
+                                    if (window.prompt("Escribe 'BORRAR' para confirmar") !== "BORRAR") return;
 
-                                setLoading(true);
-                                const { resetInvoices } = await import('@/actions/invoices');
-                                const result = await resetInvoices();
+                                    setLoading(true);
+                                    const { resetInvoices } = await import('@/actions/invoices');
+                                    const result = await resetInvoices();
 
-                                if (result.error) {
-                                    alert("Error al borrar facturas: " + result.error);
-                                } else {
-                                    alert("Facturas borradas correctamente. La numeración se ha reiniciado.");
-                                    fetchInvoices();
+                                    if (result.error) {
+                                        alert("Error al borrar facturas: " + result.error);
+                                    } else {
+                                        alert("Facturas borradas correctamente. La numeración se ha reiniciado.");
+                                        fetchInvoices();
+                                    }
+                                    setLoading(false);
                                 }
-                                setLoading(false);
-                            }
-                        }}
-                    >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Resetear Facturación
-                    </Button>
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Resetear Facturación
+                        </Button>
+                    )}
                     {canCreate("invoices") && (
                         <Button
                             onClick={() => setShowCreateModal(true)}

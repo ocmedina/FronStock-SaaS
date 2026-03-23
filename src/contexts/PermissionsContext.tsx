@@ -75,7 +75,7 @@ export function PermissionsProvider({ children }: PermissionsProviderProps) {
         if (!organizationId) return;
 
         const defaultPerms: PermissionRecord[] = [];
-        const roles: Role[] = ['owner', 'admin', 'manager', 'employee', 'delivery', 'viewer'];
+        const roles: Role[] = ['owner', 'admin', 'manager', 'employee', 'delivery', 'billing', 'viewer'];
 
         for (const role of roles) {
             for (const module of MODULES) {

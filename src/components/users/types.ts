@@ -6,6 +6,7 @@ import {
     Eye,
     LucideIcon,
     Truck,
+    FileText,
 } from "lucide-react";
 import { Role } from "@/lib/permissions";
 
@@ -30,6 +31,7 @@ export const ASSIGNABLE_ROLES: Role[] = [
     "manager",
     "employee",
     "delivery",
+    "billing",
     "viewer",
 ];
 
@@ -39,6 +41,7 @@ export const ROLE_COLORS: Record<string, string> = {
     manager: "bg-gradient-to-r from-emerald-500 to-green-500",
     employee: "bg-gradient-to-r from-amber-500 to-orange-500",
     delivery: "bg-gradient-to-r from-indigo-500 to-blue-600",
+    billing: "bg-gradient-to-r from-teal-500 to-cyan-600",
     viewer: "bg-gradient-to-r from-slate-400 to-slate-500",
 };
 
@@ -48,5 +51,6 @@ export const ROLE_ICONS: Record<string, LucideIcon> = {
     manager: Briefcase,
     employee: UserCog,
     delivery: Truck,
+    billing: FileText,
     viewer: Eye,
 };

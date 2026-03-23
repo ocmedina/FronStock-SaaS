@@ -60,7 +60,7 @@ export interface Customer {
   cuit?: string | null; // Alias de tax_id para compatibilidad
 }
 
-export type UserRole = 'owner' | 'admin' | 'manager' | 'employee';
+export type UserRole = 'owner' | 'admin' | 'manager' | 'employee' | 'delivery' | 'billing' | 'viewer';
 
 // Base interface para entidades con tenant
 export interface TenantEntity {

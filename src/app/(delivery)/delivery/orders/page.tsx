@@ -21,6 +21,7 @@ import {
     DollarSign,
     CheckCircle2,
     XCircle,
+    ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -651,12 +652,19 @@ export default function DeliveryOrdersPage() {
             <div className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 p-4">
                 <div className="max-w-2xl mx-auto">
                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                        <Link href="/delivery">
+                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
                         <div>
                             <h1 className="text-xl font-bold text-white">Operación de Entrega</h1>
                             <p className="text-sm text-slate-400">
                                 {activeRoute?.name || (routeModeBlocked ? "Esperando ruta activa" : "Modo sin rutas")}
                             </p>
                         </div>
+                    </div>
                         <div className="text-right">
                             <div className="text-2xl font-bold text-white">{pendingOrders.length}</div>
                             <div className="text-xs text-slate-400">Pendientes</div>

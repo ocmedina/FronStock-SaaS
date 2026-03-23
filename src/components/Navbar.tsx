@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { roleLabels, type Role } from '@/lib/permissions';
 import { resolveDashboardModuleFromPath } from '@/lib/route-permissions';
 import { Button } from '@/components/ui/button';
 import {
@@ -281,7 +282,7 @@ export function Navbar() {
                                     <div className="flex flex-col">
                                         <span>{profile?.full_name || 'Usuario'}</span>
                                         <span className="text-xs font-normal text-sidebar-foreground/60">
-                                            {profile?.role === 'admin' ? 'Administrador' : profile?.role}
+                                            {profile?.role ? roleLabels[profile.role as Role] || profile.role : 'Usuario'}
                                         </span>
                                     </div>
                                 </DropdownMenuLabel>

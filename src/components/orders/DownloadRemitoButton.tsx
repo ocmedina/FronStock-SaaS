@@ -40,7 +40,7 @@ export function DownloadRemitoButton({ order, className, compact }: DownloadRemi
                     <Button
                         variant={compact ? "ghost" : "outline"}
                         size="sm"
-                        className={compact ? "h-8 w-8 p-0 text-purple-400 hover:bg-purple-500/10" : "w-full border-slate-700 text-slate-300 hover:bg-slate-800"}
+                        className={compact ? "h-8 w-8 p-0 text-purple-400 hover:bg-purple-500/10" : "w-full bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"}
                         disabled={loading}
                         title="Descargar Remito"
                     >

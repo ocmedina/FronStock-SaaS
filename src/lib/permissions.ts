@@ -1,6 +1,6 @@
 // Sistema de roles y permisos dinámicos para FrontStock SaaS
 
-export type Role = 'owner' | 'admin' | 'manager' | 'employee' | 'delivery' | 'viewer';
+export type Role = 'owner' | 'admin' | 'manager' | 'employee' | 'delivery' | 'viewer' | 'billing';
 
 export const MODULES = [
     'dashboard',
@@ -207,6 +207,31 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'sales:view_metrics': { view: true, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
+    billing: {
+        dashboard: { view: true, create: false, edit: false, delete: false },
+        products: { view: false, create: false, edit: false, delete: false },
+        stock: { view: false, create: false, edit: false, delete: false },
+        categories: { view: false, create: false, edit: false, delete: false },
+        customers: { view: false, create: false, edit: false, delete: false },
+        suppliers: { view: false, create: false, edit: false, delete: false },
+        purchases: { view: false, create: false, edit: false, delete: false },
+        sales: { view: false, create: false, edit: false, delete: false },
+        invoices: { view: true, create: true, edit: true, delete: false },
+        promotions: { view: false, create: false, edit: false, delete: false },
+        orders: { view: false, create: false, edit: false, delete: false },
+        delivery: { view: false, create: false, edit: false, delete: false },
+        reports: { view: false, create: false, edit: false, delete: false },
+        settings: { view: false, create: false, edit: false, delete: false },
+        users: { view: false, create: false, edit: false, delete: false },
+        permissions: { view: false, create: false, edit: false, delete: false },
+        // Granular defaults
+        'products:cost_price': { view: false, create: false, edit: false, delete: false },
+        'products:import': { view: false, create: false, edit: false, delete: false },
+        'products:export': { view: false, create: false, edit: false, delete: false },
+        'sales:view_all': { view: false, create: false, edit: false, delete: false },
+        'sales:view_metrics': { view: false, create: false, edit: false, delete: false },
+        'users:manage_roles': { view: false, create: false, edit: false, delete: false },
+    },
 };
 
 // Etiquetas de roles en español
@@ -217,6 +242,7 @@ export const roleLabels: Record<Role, string> = {
     employee: 'Empleado',
     delivery: 'Repartidor',
     viewer: 'Solo lectura',
+    billing: 'Facturacion',
 };
 
 // Etiquetas de módulos en español
@@ -247,6 +273,7 @@ export const roleDescriptions: Record<Role, string> = {
     employee: 'Realizar ventas y ver productos',
     delivery: 'Gestión de entregas y repartos',
     viewer: 'Solo puede ver información',
+    billing: 'Solo puede gestionar la facturación',
 };
 
 // Helper para verificar si un rol puede asignar otro rol
@@ -257,6 +284,7 @@ export function canAssignRole(currentRole: Role, targetRole: Role): boolean {
         manager: 3,
         employee: 2,
         delivery: 1,
+        billing: 1,
         viewer: 0,
     };
     return roleHierarchy[currentRole] > roleHierarchy[targetRole];
