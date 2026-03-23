@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-    Truck, ShoppingCart, MapPin, User, LogOut, Clock,
-    CheckCircle2, Package, AlertCircle, Wallet, ChevronRight,
-    Phone, Plus, Loader2, RefreshCw, Calendar, Route, AlertTriangle
+    Truck, MapPin, User, LogOut, Clock,
+    CheckCircle2, Package, ChevronRight,
+    Phone, Plus, Loader2, RefreshCw, Calendar, Route, AlertTriangle,
+    Navigation, XCircle, MessageCircle, RotateCcw, DollarSign, Bell,
+    TrendingUp, Banknote
 } from "lucide-react";
+import { DownloadRemitoButton } from "@/components/orders/DownloadRemitoButton";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
-import { formatDistanceToNow, isToday } from "date-fns";
+import { formatDistanceToNow, isToday, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
@@ -73,7 +76,18 @@ export default function DeliveryHomePage() {
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [zoneFilter, setZoneFilter] = useState<string | null>(null);
+    const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
+    const [now, setNow] = useState(new Date());
+    const [showSummary, setShowSummary] = useState(false);
+    const prevOrderIds = useRef<Set<string>>(new Set());
     const supabase = createClient();
+
+    // ─── LIVE CLOCK (para el timer en camino) ──────────────────────────────────
+    useEffect(() => {
+        const interval = setInterval(() => setNow(new Date()), 30_000);
+        return () => clearInterval(interval);
+    }, []);
 
     // ─── DATA ──────────────────────────────────────────────────────────────────
     const fetchOrders = async (silent = false) => {
@@ -95,7 +109,20 @@ export default function DeliveryHomePage() {
                 .limit(50);
 
             if (error) throw error;
-            if (data) setOrders(data as any[]);
+            if (data) {
+                const incoming = data as any[];
+                // Detect brand-new orders for the "new" badge
+                const incomingIds = new Set(incoming.map((o: any) => o.id));
+                if (prevOrderIds.current.size > 0) {
+                    const fresh = incoming.filter((o: any) => !prevOrderIds.current.has(o.id));
+                    if (fresh.length > 0) {
+                        setNewOrderIds(prev => new Set([...prev, ...fresh.map((o: any) => o.id)]));
+                        toast('🔔 Nuevo pedido recibido', { description: fresh[0]?.customer?.name || '', duration: 4000 });
+                    }
+                }
+                prevOrderIds.current = incomingIds;
+                setOrders(incoming);
+            }
         } catch (e) {
             console.error("Error fetching orders", e);
         } finally {
@@ -163,8 +190,23 @@ export default function DeliveryHomePage() {
     const totalActive = pendingOrders.length + inDeliveryOrders.length + deliveredTodayOrders.length;
     const progressPct = totalActive > 0 ? Math.round((deliveredTodayOrders.length / totalActive) * 100) : 0;
 
+    // Zone filter
+    const allZones = Array.from(new Set(
+        pendingOrders.map(o => o.customer?.address?.split(',').pop()?.trim()).filter(Boolean)
+    )) as string[];
+    const filteredPending = zoneFilter
+        ? pendingOrders.filter(o => o.customer?.address?.includes(zoneFilter))
+        : pendingOrders;
+
+    // Turno summary
+    const totalCashExpected = [...pendingOrders, ...inDeliveryOrders]
+        .filter(o => ['cash', 'efectivo'].includes((o.payment_method || '').toLowerCase()))
+        .reduce((s, o) => s + (o.total || 0), 0);
+    const totalDeliveredAmount = deliveredTodayOrders.reduce((s, o) => s + (o.total || 0), 0);
+    const totalPendingAmount = pendingOrders.reduce((s, o) => s + (o.total || 0), 0);
+
     const tabData: Record<TabId, { label: string; orders: DeliveryOrder[]; count: number }> = {
-        pending: { label: "Pendientes", orders: pendingOrders, count: pendingOrders.length },
+        pending: { label: "Pendientes", orders: filteredPending, count: pendingOrders.length },
         in_delivery: { label: "En Camino", orders: inDeliveryOrders, count: inDeliveryOrders.length },
         delivered: { label: "Entregados hoy", orders: deliveredTodayOrders, count: deliveredTodayOrders.length },
     };
@@ -189,8 +231,21 @@ export default function DeliveryHomePage() {
                             </p>
                         </div>
 
-                        {/* Right: shift + avatar */}
+                        {/* Right: shift + summary + logout */}
                         <div className="flex items-center gap-2 shrink-0">
+                            <button
+                                onClick={() => setShowSummary(s => !s)}
+                                className={cn(
+                                    "h-8 px-2.5 rounded-full border flex items-center gap-1.5 text-[11px] font-bold transition-colors",
+                                    showSummary
+                                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                        : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                                )}
+                                title="Resumen de turno"
+                            >
+                                <TrendingUp className="h-3.5 w-3.5" />
+                                <span>Turno</span>
+                            </button>
                             <ShiftControl />
                             <button
                                 onClick={handleLogout}
@@ -251,6 +306,29 @@ export default function DeliveryHomePage() {
                     </div>
                 </div>
 
+                {/* ── TURNO SUMMARY PANEL ────────────────────────────────── */}
+                {showSummary && (
+                    <div className="mx-4 mt-2 mb-0 rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+                        <div className="grid grid-cols-3 divide-x divide-slate-800">
+                            <div className="p-3 text-center">
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium">Entregado hoy</p>
+                                <p className="text-base font-black text-emerald-400 mt-0.5">${totalDeliveredAmount.toLocaleString()}</p>
+                                <p className="text-[10px] text-slate-600">{deliveredTodayOrders.length} pedidos</p>
+                            </div>
+                            <div className="p-3 text-center">
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium">Pendiente</p>
+                                <p className="text-base font-black text-amber-400 mt-0.5">${totalPendingAmount.toLocaleString()}</p>
+                                <p className="text-[10px] text-slate-600">{pendingOrders.length} pedidos</p>
+                            </div>
+                            <div className="p-3 text-center">
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium">Efectivo esperado</p>
+                                <p className="text-base font-black text-blue-400 mt-0.5">${totalCashExpected.toLocaleString()}</p>
+                                <p className="text-[10px] text-slate-600">en caja</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── CONTENT ───────────────────────────────────────────────── */}
                 <div className="px-4 py-3 space-y-3">
 
@@ -259,6 +337,38 @@ export default function DeliveryHomePage() {
                         <div className="flex items-center justify-center gap-2 py-1 text-[11px] text-slate-500">
                             <RefreshCw className="h-3 w-3 animate-spin" />
                             Actualizando...
+                        </div>
+                    )}
+
+                    {/* Zone filter chips — solo en pendientes */}
+                    {activeTab === "pending" && allZones.length > 1 && (
+                        <div className="flex gap-2 flex-wrap pb-1">
+                            <button
+                                onClick={() => setZoneFilter(null)}
+                                className={cn(
+                                    "h-7 px-3 rounded-full text-[11px] font-semibold border transition-colors",
+                                    !zoneFilter
+                                        ? "bg-slate-700 border-slate-600 text-white"
+                                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300"
+                                )}
+                            >
+                                Todas
+                            </button>
+                            {allZones.map(zone => (
+                                <button
+                                    key={zone}
+                                    onClick={() => setZoneFilter(zoneFilter === zone ? null : zone)}
+                                    className={cn(
+                                        "h-7 px-3 rounded-full text-[11px] font-semibold border transition-colors flex items-center gap-1",
+                                        zoneFilter === zone
+                                            ? "bg-indigo-600 border-indigo-500 text-white"
+                                            : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                                    )}
+                                >
+                                    <MapPin className="h-2.5 w-2.5" />
+                                    {zone}
+                                </button>
+                            ))}
                         </div>
                     )}
 
@@ -319,16 +429,23 @@ export default function DeliveryHomePage() {
                             const isPaid = order.payment_status === "paid";
                             const isRescheduled = status === "rescheduled";
                             const hasRoute = !!order.assigned_route_id;
+                            const isNew = newOrderIds.has(order.id);
+                            const elapsedMins = activeTab === "in_delivery"
+                                ? differenceInMinutes(now, new Date(order.created_at))
+                                : 0;
 
                             return (
                                 <div
                                     key={order.id}
                                     className={cn(
                                         "bg-slate-900 border rounded-2xl overflow-hidden transition-all",
+                                        isNew && "ring-2 ring-blue-500/60",
                                         isRescheduled
                                             ? "border-yellow-500/40"
                                             : activeTab === "in_delivery"
-                                                ? "border-purple-500/30"
+                                                ? elapsedMins > 45
+                                                    ? "border-red-500/40"
+                                                    : "border-purple-500/30"
                                                 : activeTab === "delivered"
                                                     ? "border-emerald-500/20"
                                                     : hasRoute
@@ -404,6 +521,19 @@ export default function DeliveryHomePage() {
                                         <div className="flex items-center gap-2 mb-3 text-[11px] text-slate-500">
                                             <Package className="h-3 w-3" />
                                             <span>{itemCount} ítem{itemCount !== 1 ? "s" : ""}</span>
+                                            {/* Elapsed timer for in_delivery */}
+                                            {activeTab === "in_delivery" && (
+                                                <>
+                                                    <span className="text-slate-700">•</span>
+                                                    <span className={cn(
+                                                        "flex items-center gap-0.5 font-semibold",
+                                                        elapsedMins > 45 ? "text-red-400" : elapsedMins > 20 ? "text-amber-400" : "text-slate-500"
+                                                    )}>
+                                                        <Clock className="h-3 w-3" />
+                                                        {elapsedMins}m en camino
+                                                    </span>
+                                                </>
+                                            )}
                                             {order.customer?.phone && (
                                                 <>
                                                     <span className="text-slate-700">•</span>
@@ -468,6 +598,76 @@ export default function DeliveryHomePage() {
                                                 <ChevronRight className="h-4 w-4" />
                                             </Button>
                                         </div>
+
+                                        {/* ── SECONDARY ACTIONS ───────────────────── */}
+                                        {activeTab !== "delivered" && (
+                                            <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                                                {/* Mapa */}
+                                                {order.customer?.address && (
+                                                    <a
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.customer.address)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors text-[11px] font-semibold"
+                                                    >
+                                                        <Navigation className="h-3 w-3" />
+                                                        Mapa
+                                                    </a>
+                                                )}
+
+                                                {/* WhatsApp */}
+                                                {order.customer?.phone && (
+                                                    <a
+                                                        href={`https://wa.me/${order.customer.phone.replace(/\D/g, '')}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-colors text-[11px] font-semibold"
+                                                    >
+                                                        <MessageCircle className="h-3 w-3" />
+                                                        WhatsApp
+                                                    </a>
+                                                )}
+
+                                                {/* Remito */}
+                                                <DownloadRemitoButton
+                                                    order={{ ...order, order_items: order.order_items || [] }}
+                                                    compact
+                                                    className=""
+                                                />
+
+                                                {/* Reprogramar — solo pendientes */}
+                                                {activeTab === "pending" && (
+                                                    <button
+                                                        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20 transition-colors text-[11px] font-semibold"
+                                                        onClick={() => {
+                                                            if (confirm(`¿Reprogramar pedido de ${order.customer?.name || 'este cliente'}?`)) {
+                                                                handleUpdateStatus(order.id, 'rescheduled');
+                                                            }
+                                                        }}
+                                                        disabled={isUpdating}
+                                                    >
+                                                        <RotateCcw className="h-3 w-3" />
+                                                        Reprogramar
+                                                    </button>
+                                                )}
+
+                                                {/* Cancelar — solo pendientes */}
+                                                {activeTab === "pending" && (
+                                                    <button
+                                                        className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors text-[11px] font-semibold ml-auto"
+                                                        onClick={() => {
+                                                            if (confirm(`¿Cancelar pedido de ${order.customer?.name || 'este cliente'}?`)) {
+                                                                handleUpdateStatus(order.id, 'cancelled');
+                                                            }
+                                                        }}
+                                                        disabled={isUpdating}
+                                                    >
+                                                        <XCircle className="h-3 w-3" />
+                                                        Cancelar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
