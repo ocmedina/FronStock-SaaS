@@ -38,6 +38,8 @@ export function CreateInvoiceModal({
 }: CreateInvoiceModalProps) {
     const [loading, setLoading] = useState(false);
     const [sales, setSales] = useState<any[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
+    const [invoiceSource, setInvoiceSource] = useState<"sale" | "order">("sale");
     const [customers, setCustomers] = useState<any[]>([]);
     const [selectedSaleId, setSelectedSaleId] = useState<string | undefined>(undefined);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined);
@@ -62,7 +64,7 @@ export function CreateInvoiceModal({
 
     const handlePreselectedOrder = async () => {
         // Mock a sale object from the order to make it compatible with the form
-        const mockSale = {
+        const mockOrder = {
             id: preselectedOrder.id,
             created_at: preselectedOrder.created_at,
             total: preselectedOrder.total,
@@ -71,8 +73,9 @@ export function CreateInvoiceModal({
             is_order: true // Flag to identify it's an order
         };
 
-        setSales([mockSale]);
-        setSelectedSaleId(mockSale.id);
+        setInvoiceSource("order");
+        setOrders([mockOrder]);
+        setSelectedSaleId(mockOrder.id);
 
         // Fetch customers for the dropdown just in case they want to change it (though usually fixed for order)
         // or we just use the one from order
@@ -96,7 +99,7 @@ export function CreateInvoiceModal({
 
         try {
             // Fetch sales
-            const { data: salesData, error: salesError } = await supabase
+            const { data: salesData } = await supabase
                 .from("sales")
                 .select("id, created_at, total, customer_id, status, customers(name, cuit)")
                 .eq("organization_id", organizationId)
@@ -104,31 +107,36 @@ export function CreateInvoiceModal({
                 .order("created_at", { ascending: false })
                 .limit(50);
 
-            console.log("[DATA] Sales data:", salesData);
-            console.log("[DATA] First sale example:", salesData?.[0]);
+            // Fetch orders
+            const { data: ordersData } = await supabase
+                .from("orders")
+                .select("id, created_at, total, customer_id, ui_status, customer:customers(name, cuit)")
+                .eq("organization_id", organizationId)
+                .in("ui_status", ["completed", "delivered", "accepted"])
+                .order("created_at", { ascending: false })
+                .limit(50);
 
-            if (salesError) {
-                console.error("[ERROR] Error fetching sales:", salesError);
-            }
-
-            // Filter out sales that already have an invoice
-            const { data: invoices, error: invoicesError } = await supabase
+            // Filter out already invoiced
+            const { data: invoices } = await supabase
                 .from("invoices")
-                .select("sale_id")
+                .select("sale_id, order_id")
                 .eq("organization_id", organizationId);
 
-            console.log("[DATA] Invoices data:", { invoices, invoicesError, count: invoices?.length });
-
-            if (invoicesError) {
-                console.error("[ERROR] Error fetching invoices:", invoicesError);
-            }
-
-            const invoicedSaleIds = new Set(invoices?.map((i) => i.sale_id) || []);
+            const invoicedSaleIds = new Set(invoices?.map((i) => i.sale_id).filter(Boolean) || []);
+            const invoicedOrderIds = new Set(invoices?.map((i) => i.order_id).filter(Boolean) || []);
 
             if (salesData) {
                 const pending = salesData.filter((s) => !invoicedSaleIds.has(s.id));
-                console.log("[OK] Pending sales (not invoiced):", pending.length);
                 setSales(pending);
+            }
+
+            if (ordersData) {
+                const pendingOrders = ordersData.filter(o => !invoicedOrderIds.has(o.id)).map(o => ({
+                    ...o,
+                    customers: o.customer,
+                    is_order: true
+                }));
+                setOrders(pendingOrders);
             }
 
             // Fetch customers
@@ -167,16 +175,17 @@ export function CreateInvoiceModal({
         }
     };
 
-    // Auto-fill customer when sale is selected
+    // Auto-fill customer when item is selected
     useEffect(() => {
         if (selectedSaleId && !preselectedOrder) {
-            const selectedSale = sales.find((s) => s.id === selectedSaleId);
+            const list = invoiceSource === "order" ? orders : sales;
+            const selectedItem = list.find((s) => s.id === selectedSaleId);
 
-            if (selectedSale?.customer_id) {
-                setSelectedCustomerId(selectedSale.customer_id);
+            if (selectedItem?.customer_id) {
+                setSelectedCustomerId(selectedItem.customer_id);
 
                 // Also auto-fill CUIT if available
-                const customer = customers.find((c) => c.id === selectedSale.customer_id);
+                const customer = customers.find((c) => c.id === selectedItem.customer_id);
                 if (customer?.cuit) {
                     setCuit(customer.cuit);
                     setCuitError("");
@@ -186,7 +195,7 @@ export function CreateInvoiceModal({
                 setCuit("");
             }
         }
-    }, [selectedSaleId, sales, customers, preselectedOrder]);
+    }, [selectedSaleId, sales, orders, invoiceSource, customers, preselectedOrder]);
 
     // Auto-fill CUIT when customer is selected manually
     const handleCustomerChange = (customerId: string | undefined) => {
@@ -221,10 +230,11 @@ export function CreateInvoiceModal({
         setLoading(true);
 
         try {
-            const selectedSale = sales.find((s) => s.id === selectedSaleId);
+            const list = invoiceSource === "order" || preselectedOrder ? orders : sales;
+            const selectedItem = list.find((s) => s.id === selectedSaleId);
 
-            if (!selectedSale) {
-                throw new Error("Venta no encontrada");
+            if (!selectedItem) {
+                throw new Error("Elemento a facturar no encontrado");
             }
 
             // Customer logic
@@ -235,7 +245,7 @@ export function CreateInvoiceModal({
             // This handles Numbering (RPC) + AFIP (Simulation/Real) + DB Insert
             const { generateInvoiceAction } = await import('@/app/(dashboard)/dashboard/invoices/actions');
 
-            const isOrder = selectedSale.is_order;
+            const isOrder = selectedItem.is_order;
 
             const result = await generateInvoiceAction(
                 organizationId,
@@ -243,7 +253,7 @@ export function CreateInvoiceModal({
                 invoiceType,
                 finalCustomerId,
                 finalCuit,
-                selectedSale.total,
+                selectedItem.total,
                 withArca,
                 isOrder ? selectedSaleId : null // orderId
             );
@@ -279,33 +289,71 @@ export function CreateInvoiceModal({
                         Nueva Factura
                     </DialogTitle>
                     <DialogDescription>
-                        Selecciona una venta completada para generar su factura correspondiente.
+                        Selecciona un pedido o una venta para generar su comprobante correspondiente y sincronizar con AFIP.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4 py-2">
+                    {/* Switch Source */}
+                    {!preselectedOrder && (
+                        <div className="flex gap-2 mb-2 p-1 bg-slate-100 rounded-lg w-fit transition-colors">
+                            <button
+                                type="button"
+                                onClick={() => { setInvoiceSource("sale"); setSelectedSaleId(undefined); }}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${invoiceSource === "sale" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                            >
+                                Ventas
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setInvoiceSource("order"); setSelectedSaleId(undefined); }}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${invoiceSource === "order" ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                            >
+                                Pedidos
+                            </button>
+                        </div>
+                    )}
+
                     {/* Venta a Facturar */}
                     <div className="space-y-2">
-                        <Label>Venta / Pedido a Facturar</Label>
+                        <Label>Elemento a Facturar</Label>
                         <Select value={selectedSaleId || undefined} onValueChange={setSelectedSaleId}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Seleccione una venta..." />
+                                <SelectValue placeholder={`Seleccione ${invoiceSource === 'order' ? 'un pedido' : 'una venta'}...`} />
                             </SelectTrigger>
                             <SelectContent>
-                                {sales.length === 0 ? (
-                                    <SelectItem value="none" disabled>
-                                        No hay ventas pendientes
-                                    </SelectItem>
-                                ) : (
-                                    sales.map((sale) => (
-                                        <SelectItem key={sale.id} value={sale.id}>
-                                            {new Date(sale.created_at).toLocaleDateString()} - $
-                                            {sale.total}
-                                            {sale.customers?.name
-                                                ? ` (${sale.customers.name})`
-                                                : " (Consumidor Final)"}
+                                {invoiceSource === "sale" ? (
+                                    sales.length === 0 ? (
+                                        <SelectItem value="none" disabled>
+                                            No hay ventas pendientes
                                         </SelectItem>
-                                    ))
+                                    ) : (
+                                        sales.map((sale) => (
+                                            <SelectItem key={sale.id} value={sale.id}>
+                                                {new Date(sale.created_at).toLocaleDateString()} - $
+                                                {sale.total}
+                                                {sale.customers?.name
+                                                    ? ` (${sale.customers.name})`
+                                                    : " (Consumidor Final)"}
+                                            </SelectItem>
+                                        ))
+                                    )
+                                ) : (
+                                    orders.length === 0 ? (
+                                        <SelectItem value="none" disabled>
+                                            No hay pedidos pendientes
+                                        </SelectItem>
+                                    ) : (
+                                        orders.map((order) => (
+                                            <SelectItem key={order.id} value={order.id}>
+                                                {new Date(order.created_at).toLocaleDateString()} - $
+                                                {order.total}
+                                                {order.customers?.name
+                                                    ? ` (${order.customers.name})`
+                                                    : " (Consumidor Final)"}
+                                            </SelectItem>
+                                        ))
+                                    )
                                 )}
                             </SelectContent>
                         </Select>

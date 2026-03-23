@@ -1,4 +1,4 @@
-export type InvoiceType = "A" | "B" | "C";
+export type InvoiceType = "A" | "B" | "C" | "R";
 export type InvoiceStatus = "issued" | "annulled" | "error";
 export type AfipStatus = "pending" | "authorised" | "rejected";
 
@@ -62,4 +62,5 @@ export const INVOICE_TYPES: { value: InvoiceType; label: string }[] = [
     { value: "A", label: "Factura A" },
     { value: "B", label: "Factura B" },
     { value: "C", label: "Factura C" },
+    { value: "R", label: "Remito (R)" },
 ];

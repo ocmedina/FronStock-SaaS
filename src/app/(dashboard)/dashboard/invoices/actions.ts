@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function generateInvoiceAction(
     organizationId: string,
     saleId: string | null, // Made optional to support order-only invoices
-    invoiceType: string, // "A", "B", "C"
+    invoiceType: string, // "A", "B", "C", "R"
     customerId: string | null,
     cuit: string | null,
     total: number,
