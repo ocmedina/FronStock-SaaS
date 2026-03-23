@@ -17,7 +17,7 @@ interface DownloadOrderInvoiceButtonProps {
 export function DownloadOrderInvoiceButton({
     order,
     items,
-    invoiceType = "B",
+    invoiceType = "C",
     className,
     compact,
 }: DownloadOrderInvoiceButtonProps) {

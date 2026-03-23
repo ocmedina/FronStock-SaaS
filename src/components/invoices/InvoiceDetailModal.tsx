@@ -9,10 +9,12 @@ import { FileText, Printer, Download, Loader2 } from "lucide-react";
 import { Invoice } from "./types";
 import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./InvoicePDF";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
 
 import { Organization } from "@/types/database.types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface InvoiceDetailModalProps {
     invoice: Invoice | null;
@@ -26,6 +28,13 @@ export function InvoiceDetailModal({
     organization,
 }: InvoiceDetailModalProps) {
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [showIva, setShowIva] = useState(invoice?.type === 'A');
+
+    useEffect(() => {
+        if (invoice) {
+            setShowIva(invoice.type === 'A');
+        }
+    }, [invoice]);
 
     if (!invoice) return null;
 
@@ -35,7 +44,7 @@ export function InvoiceDetailModal({
         try {
             const logoBase64 = await fetchLogoBase64(organization?.logo_url);
             const blob = await pdf(
-                <InvoicePDF invoice={invoice} organization={organization} logoBase64={logoBase64} />
+                <InvoicePDF invoice={invoice} organization={organization} logoBase64={logoBase64} showIva={showIva} />
             ).toBlob();
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -149,9 +158,21 @@ export function InvoiceDetailModal({
                     {/* Totals */}
                     <div className="flex justify-end mb-8">
                         <div className="w-1/2 space-y-2">
+                            {showIva && (
+                                <>
+                                    <div className="flex justify-between text-gray-500">
+                                        <span>Subtotal</span>
+                                        <span>${(Number(invoice.total) / 1.21).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-500">
+                                        <span>IVA (21%)</span>
+                                        <span>${(Number(invoice.total) - Number(invoice.total) / 1.21).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                </>
+                            )}
                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                 <span>Total</span>
-                                <span>${Number(invoice.total).toLocaleString("es-AR")}</span>
+                                <span>${Number(invoice.total).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </div>
@@ -177,18 +198,24 @@ export function InvoiceDetailModal({
                     )}
                 </div>
 
-                <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={onClose}>
-                        Cerrar
-                    </Button>
-                    <Button variant="outline" onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir
-                    </Button>
-                    <Button onClick={handleDownloadPDF} disabled={pdfLoading}>
-                        {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                        {pdfLoading ? "Generando..." : "Descargar PDF"}
-                    </Button>
+                <div className="flex justify-between items-center sm:flex-row flex-col gap-4">
+                    <div className="flex items-center space-x-2">
+                        <Switch id="show-iva" checked={showIva} onCheckedChange={setShowIva} />
+                        <Label htmlFor="show-iva">Discriminar IVA (21%)</Label>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={onClose}>
+                            Cerrar
+                        </Button>
+                        <Button variant="outline" onClick={() => window.print()}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Imprimir
+                        </Button>
+                        <Button onClick={handleDownloadPDF} disabled={pdfLoading}>
+                            {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                            {pdfLoading ? "Generando..." : "Descargar PDF"}
+                        </Button>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

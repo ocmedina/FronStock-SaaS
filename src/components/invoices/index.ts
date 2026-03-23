@@ -4,3 +4,4 @@ export * from "./InvoiceList";
 export * from "./CreateInvoiceModal";
 export * from "./InvoiceDetailModal";
 export * from "./InvoiceFilters";
+export * from "./EditInvoiceModal";

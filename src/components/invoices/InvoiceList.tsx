@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, FileText, Download, Loader2 } from "lucide-react";
+import { Eye, FileText, Download, Loader2, Pencil } from "lucide-react";
 import { Invoice } from "./types";
 import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./InvoicePDF";
@@ -18,10 +18,11 @@ import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
 interface InvoiceListProps {
     invoices: Invoice[];
     onView: (invoice: Invoice) => void;
+    onEdit?: (invoice: Invoice) => void;
     organization?: any;
 }
 
-export function InvoiceList({ invoices, onView, organization }: InvoiceListProps) {
+export function InvoiceList({ invoices, onView, onEdit, organization }: InvoiceListProps) {
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
     const handleDownloadPDF = useCallback(async (invoice: Invoice) => {
@@ -103,6 +104,11 @@ export function InvoiceList({ invoices, onView, organization }: InvoiceListProps
                                         <Button variant="ghost" size="icon" onClick={() => onView(invoice)} title="Ver detalle">
                                             <Eye className="h-4 w-4" />
                                         </Button>
+                                        {onEdit && (
+                                            <Button variant="ghost" size="icon" onClick={() => onEdit(invoice)} title="Editar Comprobante">
+                                                <Pencil className="h-4 w-4 text-slate-500" />
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="icon"

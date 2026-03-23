@@ -110,9 +110,9 @@ export function CreateInvoiceModal({
             // Fetch orders
             const { data: ordersData } = await supabase
                 .from("orders")
-                .select("id, created_at, total, customer_id, ui_status, customer:customers(name, cuit)")
+                .select("id, created_at, total, customer_id, lifecycle_status, delivery_status, customer:customers(name, cuit)")
                 .eq("organization_id", organizationId)
-                .in("ui_status", ["completed", "delivered", "accepted"])
+                .or("lifecycle_status.in.(delivered,completed),delivery_status.in.(delivered,completed)")
                 .order("created_at", { ascending: false })
                 .limit(50);
 

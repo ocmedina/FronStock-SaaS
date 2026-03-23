@@ -166,9 +166,10 @@ interface InvoicePDFProps {
     invoice: Invoice;
     organization?: Organization | null;
     logoBase64?: string | null;
+    showIva?: boolean;
 }
 
-export const InvoicePDF = ({ invoice, organization, logoBase64 }: InvoicePDFProps) => {
+export const InvoicePDF = ({ invoice, organization, logoBase64, showIva = invoice.type === 'A' }: InvoicePDFProps) => {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -293,17 +294,21 @@ export const InvoicePDF = ({ invoice, organization, logoBase64 }: InvoicePDFProp
 
                 {/* Totals */}
                 <View style={styles.totals}>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>Subtotal:</Text>
-                        <Text style={styles.totalValue}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
-                    </View>
-                    <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>IVA (21%):</Text>
-                        <Text style={styles.totalValue}>$ 0,00</Text>
-                    </View>
-                    <View style={[styles.totalRow, { borderTopWidth: 2, borderTopColor: '#000000' }]}>
+                    {showIva ? (
+                        <>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Subtotal:</Text>
+                                <Text style={styles.totalValue}>$ {(Number(invoice.total) / 1.21).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+                            </View>
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>IVA (21%):</Text>
+                                <Text style={styles.totalValue}>$ {(Number(invoice.total) - (Number(invoice.total) / 1.21)).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+                            </View>
+                        </>
+                    ) : null}
+                    <View style={[styles.totalRow, showIva ? { borderTopWidth: 2, borderTopColor: '#000000' } : {}]}>
                         <Text style={[styles.totalLabel, { fontSize: 14 }]}>TOTAL:</Text>
-                        <Text style={[styles.totalValue, { fontSize: 14 }]}>$ {Number(invoice.total).toLocaleString("es-AR")}</Text>
+                        <Text style={[styles.totalValue, { fontSize: 14 }]}>$ {Number(invoice.total).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
                     </View>
                 </View>
 

@@ -388,7 +388,7 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                                 <DownloadOrderInvoiceButton
                                     order={order}
                                     items={items}
-                                    invoiceType="B"
+                                    invoiceType="C"
                                     className="col-span-1"
                                 />
                             </div>
