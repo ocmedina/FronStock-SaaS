@@ -19,6 +19,8 @@ export interface Organization {
   gross_income_number?: string | null;
   phone?: string | null;
   email?: string | null;
+  require_permissions_password?: boolean | null;
+  permissions_password?: string | null;
 }
 
 export interface Profile {
