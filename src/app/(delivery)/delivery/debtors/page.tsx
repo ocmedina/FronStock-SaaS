@@ -3,15 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { User, Phone, MapPin, DollarSign, ArrowLeft, CheckCircle, Package, Clock } from "lucide-react";
+import { User, Phone, DollarSign, ArrowLeft, CheckCircle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
-import { cn } from "@/lib/utils";
 
 export default function DebtorsPage() {
     const { organizationId } = useOrganization();
@@ -19,7 +17,6 @@ export default function DebtorsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDebtor, setSelectedDebtor] = useState<any>(null);
-    const pathname = usePathname();
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
@@ -178,94 +175,113 @@ export default function DebtorsPage() {
         }
     };
 
-    const filteredDebtors = debtors.filter(d =>
-        d.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredDebtors = debtors.filter((d) =>
+        String(d?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const totalDebtAmount = filteredDebtors.reduce((sum, debtor) => sum + Number(debtor?.totalDebt || 0), 0);
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-20">
-            {/* Header */}
-            <div className="sticky top-0 bg-slate-950/90 backdrop-blur z-20 border-b border-slate-800 p-4">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-2">
-                        <Link href="/delivery">
-                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                                <ArrowLeft className="h-6 w-6" />
-                            </Button>
-                        </Link>
-                        <h1 className="text-xl font-bold text-white">Deudores</h1>
-                    </div>
-                    <ShiftControl />
-                </div>
-                <Input
-                    placeholder="Buscar deudor..."
-                    className="bg-slate-900 border-slate-800 text-white rounded-xl"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                />
+        <div className="relative min-h-screen overflow-hidden bg-slate-950 pb-24">
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="absolute left-0 top-1/3 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.12),transparent_55%)]" />
             </div>
 
-            {/* List */}
-            <div className="p-4 space-y-3">
-                {loading ? (
-                    <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-slate-900 rounded-xl p-4 border border-slate-800 animate-pulse">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-slate-800" />
-                                        <div className="space-y-2">
-                                            <div className="h-4 w-32 bg-slate-800 rounded" />
-                                            <div className="h-3 w-20 bg-slate-800 rounded" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 text-right">
-                                        <div className="h-6 w-20 bg-slate-800 rounded inline-block" />
-                                        <div className="h-3 w-24 bg-slate-800 rounded ml-auto" />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : filteredDebtors.length === 0 ? (
-                    <div className="text-slate-500 text-center py-8">No hay deudores pendientes</div>
-                ) : (
-                    filteredDebtors.map(debtor => (
-                        <div
-                            key={debtor.id}
-                            onClick={() => setSelectedDebtor(debtor)}
-                            className="bg-slate-900 rounded-xl p-4 border border-slate-800 active:scale-[0.98] transition-all cursor-pointer"
-                        >
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
-                                        <User className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white">{debtor.name}</h3>
-                                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                                            <Phone className="h-3 w-3" />
-                                            {debtor.phone || "Sin tel"}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className="block text-2xl font-bold text-red-400">
-                                        ${(debtor.totalDebt || 0).toLocaleString()}
-                                    </span>
-                                    <span className="text-xs text-slate-500 font-medium">
-                                        {debtor.pendingSales?.length || 0} pedidos pendientes
-                                    </span>
-                                </div>
+            <div className="relative mx-auto w-full max-w-3xl">
+                <div className="sticky top-0 z-20 border-b border-slate-800/40 bg-slate-950/70 p-4 backdrop-blur-xl">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <Link href="/delivery">
+                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                    <ArrowLeft className="h-6 w-6" />
+                                </Button>
+                            </Link>
+                            <div>
+                                <h1 className="text-xl font-bold text-white">Deudores</h1>
+                                <p className="text-xs text-slate-500">Control de saldos pendientes</p>
                             </div>
                         </div>
-                    ))
-                )}
+                        <ShiftControl />
+                    </div>
+
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Input
+                            placeholder="Buscar deudor..."
+                            className="rounded-xl border-slate-700 bg-slate-900 pl-9 text-white"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                        <div className="rounded-xl border border-slate-700/60 bg-slate-900/70 p-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-500">Deudores</p>
+                            <p className="mt-1 text-base font-bold text-white">{filteredDebtors.length}</p>
+                        </div>
+                        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-red-300/80">Deuda total</p>
+                            <p className="mt-1 flex items-center gap-1 text-base font-bold text-red-300">
+                                <DollarSign className="h-3.5 w-3.5" />
+                                {totalDebtAmount.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-3 p-4">
+                    {loading ? (
+                        <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900 p-4">
+                                    <div className="mb-2 h-4 w-32 rounded bg-slate-800" />
+                                    <div className="h-3 w-20 rounded bg-slate-800" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredDebtors.length === 0 ? (
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 py-12 text-center text-slate-500">
+                            No hay deudores pendientes
+                        </div>
+                    ) : (
+                        filteredDebtors.map((debtor) => (
+                            <div
+                                key={debtor.id}
+                                onClick={() => setSelectedDebtor(debtor)}
+                                className="cursor-pointer rounded-2xl border border-slate-700/60 bg-slate-900/85 p-4 shadow-[0_12px_24px_rgba(2,6,23,0.22)] transition-all active:scale-[0.98]"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-500/20 bg-red-500/10 text-red-400">
+                                            <User className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-white">{debtor.name}</h3>
+                                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                                                <Phone className="h-3 w-3" />
+                                                {debtor.phone || "Sin tel"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="block text-2xl font-bold text-red-300">
+                                            ${(debtor.totalDebt || 0).toLocaleString()}
+                                        </span>
+                                        <span className="text-xs font-medium text-slate-500">
+                                            {debtor.pendingSales?.length || 0} pedidos pendientes
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
             {/* Debtor Details / Pay Modal */}
             <Dialog open={!!selectedDebtor} onOpenChange={(open) => !open && setSelectedDebtor(null)}>
-                <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-sm rounded-xl">
+                <DialogContent className="max-w-sm rounded-2xl border-slate-700 bg-slate-950 text-white">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-bold">
                             {selectedDebtor?.name}
@@ -273,15 +289,15 @@ export default function DebtorsPage() {
                     </DialogHeader>
 
                     <div className="py-4">
-                        <div className="mb-4 p-4 bg-red-500/5 rounded-xl border border-red-500/10 text-center">
+                        <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center">
                             <span className="text-sm text-red-300 uppercase block mb-1">Deuda Total</span>
-                            <span className="text-3xl font-bold text-red-500">${selectedDebtor?.totalDebt.toLocaleString()}</span>
+                            <span className="text-3xl font-bold text-red-300">${(selectedDebtor?.totalDebt ?? 0).toLocaleString()}</span>
                         </div>
 
                         <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase">Pedidos Pendientes</h3>
                         <div className="space-y-2 max-h-[300px] overflow-y-auto">
                             {selectedDebtor?.pendingSales.map((sale: any) => (
-                                <div key={sale.id} className="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-800">
+                                <div key={sale.id} className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">
                                     <div>
                                         <span className="block font-bold text-white">${(sale.pendingAmount || sale.total).toLocaleString()}</span>
                                         <span className="text-xs text-slate-500">{new Date(sale.created_at).toLocaleDateString()}</span>

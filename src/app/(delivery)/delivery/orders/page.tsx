@@ -23,13 +23,18 @@ import {
     XCircle,
     ArrowLeft,
     Plus,
-    Trash2
+    Trash2,
+    ChevronDown,
+    Navigation,
+    MessageCircle,
+    Copy
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 import { getDeliveryPaymentLabel, getOrderPaymentSummary } from "@/lib/utils/delivery";
+import { DeliveryBottomNav } from "@/components/delivery/DeliveryBottomNav";
 
 export default function DeliveryOrdersPage() {
     const { profile, organizationId } = useOrganization();
@@ -48,6 +53,10 @@ export default function DeliveryOrdersPage() {
     const [splitPayments, setSplitPayments] = useState<{ id: string; amount: string; method: string }[]>([]);
     const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
     const [submittingDelivery, setSubmittingDelivery] = useState(false);
+    const [isGuideExpanded, setIsGuideExpanded] = useState(false);
+    const [zoneFilter, setZoneFilter] = useState("all");
+    const [paymentFilter, setPaymentFilter] = useState("all");
+    const [onlyWithDebtFilter, setOnlyWithDebtFilter] = useState(false);
     const targetOrderId = searchParams.get("orderId");
     const deliveryFlow = [
         {
@@ -326,6 +335,11 @@ export default function DeliveryOrdersPage() {
                                 quantity,
                                 unit_price,
                                 total
+                            ),
+                            order_payments(
+                                id,
+                                amount,
+                                method
                             )
                         `)
                         .eq("assigned_route_id", routeData.id)
@@ -467,6 +481,76 @@ export default function DeliveryOrdersPage() {
     const handleRemoveSplit = (id: string) => {
         if (splitPayments.length <= 1) return;
         setSplitPayments(splitPayments.filter(p => p.id !== id));
+    };
+
+    const getOrderZone = (order: any) => {
+        const explicitZone = String(order?.customer?.zone || "").trim();
+        if (explicitZone) return explicitZone;
+
+        const address = String(order?.customer?.address || "").trim();
+        if (!address) return "";
+
+        const parts = address.split(",").map((part) => part.trim()).filter(Boolean);
+        return parts[parts.length - 1] || "";
+    };
+
+    const getOrderPaidAmount = (order: any) => {
+        if (!Array.isArray(order?.order_payments)) return 0;
+        return order.order_payments.reduce((sum: number, payment: any) => sum + Number(payment?.amount || 0), 0);
+    };
+
+    const getOrderPendingBalance = (order: any) => {
+        const total = Number(order?.total || 0);
+        const paidAmount = getOrderPaidAmount(order);
+        return Math.max(0, total - paidAmount);
+    };
+
+    const normalizePhone = (phone?: string | null) => String(phone || "").replace(/\D/g, "");
+
+    const handleOpenMap = (address?: string | null) => {
+        if (!address) {
+            toast.error("Este cliente no tiene direccion cargada");
+            return;
+        }
+
+        const query = encodeURIComponent(address);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, "_blank", "noopener,noreferrer");
+    };
+
+    const handleCallCustomer = (phone?: string | null) => {
+        const cleanedPhone = normalizePhone(phone);
+        if (!cleanedPhone) {
+            toast.error("Este cliente no tiene telefono");
+            return;
+        }
+
+        window.location.href = `tel:${cleanedPhone}`;
+    };
+
+    const handleWhatsappCustomer = (order: any) => {
+        const cleanedPhone = normalizePhone(order?.customer?.phone);
+        if (!cleanedPhone) {
+            toast.error("Este cliente no tiene telefono para WhatsApp");
+            return;
+        }
+
+        const customerName = order?.customer?.name ? ` ${order.customer.name}` : "";
+        const message = encodeURIComponent(`Hola${customerName}, voy en camino con tu pedido.`);
+        window.open(`https://wa.me/${cleanedPhone}?text=${message}`, "_blank", "noopener,noreferrer");
+    };
+
+    const handleCopyAddress = async (address?: string | null) => {
+        if (!address) {
+            toast.error("No hay direccion para copiar");
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(address);
+            toast.success("Direccion copiada");
+        } catch {
+            toast.error("No se pudo copiar la direccion");
+        }
     };
 
 
@@ -611,12 +695,12 @@ export default function DeliveryOrdersPage() {
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
-            assigned: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-            in_delivery: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+            assigned: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+            in_delivery: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
             not_delivered: "bg-red-500/10 text-red-400 border-red-500/20",
             rescheduled: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-            assigned_to_route: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-            out_for_delivery: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+            assigned_to_route: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+            out_for_delivery: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
             delivered: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
             cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
         };
@@ -656,6 +740,33 @@ export default function DeliveryOrdersPage() {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 8);
 
+    const zoneOptions = Array.from(
+        new Set(pendingOrders.map((order) => getOrderZone(order)).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+
+    const paymentMethodOptions = Array.from(
+        new Set(
+            pendingOrders
+                .map((order) => String(order?.payment_method || "").toLowerCase())
+                .filter(Boolean)
+        )
+    );
+
+    const hasActiveFilters = zoneFilter !== "all" || paymentFilter !== "all" || onlyWithDebtFilter;
+
+    const filteredPendingOrders = pendingOrders.filter((order) => {
+        const orderZone = getOrderZone(order);
+        const orderMethod = String(order?.payment_method || "").toLowerCase();
+        const pendingBalance = getOrderPendingBalance(order);
+        const hasPendingDebt = pendingBalance > 0 || ["pending", "partial"].includes(String(order?.payment_status || "").toLowerCase());
+
+        if (zoneFilter !== "all" && orderZone !== zoneFilter) return false;
+        if (paymentFilter !== "all" && orderMethod !== paymentFilter) return false;
+        if (onlyWithDebtFilter && !hasPendingDebt) return false;
+
+        return true;
+    });
+
     const deliveryTotalAmount = Number(deliveryOrder?.total || 0);
     
     // Calcular resúmenes dinámicos según modo
@@ -677,10 +788,16 @@ export default function DeliveryOrdersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-20">
+        <div className="relative min-h-screen overflow-hidden bg-slate-950 pb-24">
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.12),transparent_55%)]" />
+            </div>
+
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 p-4">
-                <div className="max-w-2xl mx-auto">
+            <div className="sticky top-0 z-20 border-b border-slate-800/40 bg-slate-950/70 p-4 backdrop-blur-xl">
+                <div className="mx-auto max-w-3xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                         <Link href="/delivery">
@@ -707,68 +824,149 @@ export default function DeliveryOrdersPage() {
             </div>
 
             {/* Stats */}
-            <div className="max-w-2xl mx-auto p-4 grid grid-cols-3 gap-3">
-                <Card className="p-4 bg-slate-900/50 border-slate-800">
+            <div className="mx-auto grid max-w-3xl grid-cols-3 gap-3 p-4">
+                <Card className="border-slate-700/60 bg-slate-900/70 p-4">
                     <div className="text-2xl font-bold text-white">{orders.length}</div>
                     <div className="text-xs text-slate-400">Total</div>
                 </Card>
-                <Card className="p-4 bg-emerald-500/10 border-emerald-500/20">
+                <Card className="border-emerald-500/20 bg-emerald-500/10 p-4">
                     <div className="text-2xl font-bold text-emerald-400">{completedOrders.length}</div>
                     <div className="text-xs text-emerald-400">Entregados</div>
                 </Card>
-                <Card className="p-4 bg-purple-500/10 border-purple-500/20">
-                    <div className="text-2xl font-bold text-purple-400">{pendingOrders.length}</div>
-                    <div className="text-xs text-purple-400">Pendientes</div>
+                <Card className="border-cyan-500/20 bg-cyan-500/10 p-4">
+                    <div className="text-2xl font-bold text-cyan-300">{pendingOrders.length}</div>
+                    <div className="text-xs text-cyan-300">Pendientes</div>
                 </Card>
             </div>
 
             {/* Quick Guide */}
-            <div className="max-w-2xl mx-auto px-4">
-                <Card className="p-4 bg-blue-500/10 border-blue-500/20">
-                    <h2 className="text-sm font-semibold text-blue-300 mb-3">Guia rapida de entregas</h2>
-                    {!allowWithoutRouteMode && (
-                        <p className="text-xs text-blue-100/80 mb-3">
-                            Política activa: se requiere ruta asignada para operar pedidos en esta pantalla.
-                        </p>
-                    )}
-                    {withoutRouteMode && (
-                        <p className="text-xs text-blue-100/80 mb-3">
-                            Modo sin rutas activo: se muestran pedidos operables sin depender de una ruta asignada.
-                        </p>
-                    )}
-                    <div className="space-y-2">
-                        {deliveryFlow.map((step) => (
-                            <div key={step.title}>
-                                <p className="text-sm text-white font-medium">{step.title}</p>
-                                <p className="text-xs text-blue-100/80">{step.description}</p>
+            <div className="mx-auto max-w-3xl px-4">
+                <Card className={`border-cyan-500/20 bg-cyan-500/10 ${isGuideExpanded ? "p-4" : "px-3 py-2.5"}`}>
+                    <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-2 text-left"
+                        onClick={() => setIsGuideExpanded((prev) => !prev)}
+                        aria-expanded={isGuideExpanded}
+                        aria-controls="delivery-quick-guide-content"
+                    >
+                        <div>
+                            <h2 className="text-xs font-semibold tracking-wide text-cyan-300 sm:text-sm">Guia rapida de entregas</h2>
+                            {isGuideExpanded && (
+                                <p className="mt-0.5 text-[11px] text-cyan-100/70">Ocultar guia</p>
+                            )}
+                        </div>
+                        <ChevronDown
+                            className={`h-3.5 w-3.5 text-cyan-200 transition-transform ${isGuideExpanded ? "rotate-180" : ""}`}
+                            aria-hidden="true"
+                        />
+                    </button>
+
+                    {isGuideExpanded && (
+                        <div id="delivery-quick-guide-content" className="mt-2.5">
+                            {!allowWithoutRouteMode && (
+                                <p className="mb-3 text-xs text-cyan-100/80">
+                                    Política activa: se requiere ruta asignada para operar pedidos en esta pantalla.
+                                </p>
+                            )}
+                            {withoutRouteMode && (
+                                <p className="mb-3 text-xs text-cyan-100/80">
+                                    Modo sin rutas activo: se muestran pedidos operables sin depender de una ruta asignada.
+                                </p>
+                            )}
+                            <div className="space-y-1.5">
+                                {deliveryFlow.map((step) => (
+                                    <div key={step.title}>
+                                        <p className="text-xs font-semibold text-white">{step.title}</p>
+                                        <p className="text-[11px] text-blue-100/80">{step.description}</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    )}
                 </Card>
             </div>
 
             {/* Orders List */}
-            <div className="max-w-2xl mx-auto p-4 space-y-4">
+            <div className="mx-auto max-w-3xl space-y-4 p-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Pendientes por entregar</h2>
-                    <span className="text-xs text-slate-400">{pendingOrders.length} pedidos</span>
+                    <span className="text-xs text-slate-400">
+                        {filteredPendingOrders.length}
+                        {hasActiveFilters ? ` de ${pendingOrders.length}` : ""} pedidos
+                    </span>
                 </div>
 
-                {pendingOrders.length === 0 ? (
+                <Card className="border-slate-700/60 bg-slate-900/70 p-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                        <Select value={zoneFilter} onValueChange={setZoneFilter}>
+                            <SelectTrigger className="h-8 border-slate-700 bg-slate-950 text-xs text-slate-200">
+                                <SelectValue placeholder="Zona" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las zonas</SelectItem>
+                                {zoneOptions.map((zone) => (
+                                    <SelectItem key={zone} value={zone}>{zone}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+                            <SelectTrigger className="h-8 border-slate-700 bg-slate-950 text-xs text-slate-200">
+                                <SelectValue placeholder="Metodo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los metodos</SelectItem>
+                                {paymentMethodOptions.map((method) => (
+                                    <SelectItem key={method} value={method}>{getDeliveryPaymentLabel(method)}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className={`h-8 border text-xs ${onlyWithDebtFilter ? "border-amber-500/40 bg-amber-500/10 text-amber-300" : "border-slate-700 text-slate-300"}`}
+                            onClick={() => setOnlyWithDebtFilter((prev) => !prev)}
+                        >
+                            Con deuda
+                        </Button>
+
+                        {hasActiveFilters && (
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                                onClick={() => {
+                                    setZoneFilter("all");
+                                    setPaymentFilter("all");
+                                    setOnlyWithDebtFilter(false);
+                                }}
+                            >
+                                Limpiar
+                            </Button>
+                        )}
+                    </div>
+                </Card>
+
+                {filteredPendingOrders.length === 0 ? (
                     <Card className="p-12 text-center bg-slate-900 border-slate-800">
                         <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-emerald-500" />
                         <h3 className="text-lg font-semibold text-white mb-2">
-                            ¡Todos los pedidos entregados!
+                            {pendingOrders.length === 0 ? "¡Todos los pedidos entregados!" : "No hay pedidos para esos filtros"}
                         </h3>
                         <p className="text-slate-400">
                             {routeModeBlocked
                                 ? "No hay ruta activa asignada. Pide a un administrador que te asigne una ruta para continuar."
-                                : "Has completado todos los pedidos de tu ruta"}
+                                : pendingOrders.length === 0
+                                    ? "Has completado todos los pedidos de tu ruta"
+                                    : "Prueba cambiando zona, método o el filtro de deuda."}
                         </p>
                     </Card>
                 ) : (
-                    pendingOrders.map((order) => (
-                        <Card key={order.id} className="p-4 bg-slate-900 border-slate-800">
+                    filteredPendingOrders.map((order) => (
+                        <Card key={order.id} className="rounded-2xl border-slate-700/60 bg-slate-900/85 p-4 shadow-[0_12px_24px_rgba(2,6,23,0.22)]">
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex-1">
                                     <h3 className="font-semibold text-white mb-1">
@@ -807,6 +1005,58 @@ export default function DeliveryOrdersPage() {
                                 <span className="text-white font-semibold">
                                     ${order.total.toLocaleString()}
                                 </span>
+                                {getOrderPendingBalance(order) > 0 && (
+                                    <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-300">
+                                        Saldo ${getOrderPendingBalance(order).toLocaleString()}
+                                    </Badge>
+                                )}
+                            </div>
+
+                            <div className="mb-3 grid grid-cols-4 gap-2">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-slate-700 bg-slate-950/70 text-[11px] text-slate-300 hover:bg-slate-800"
+                                    onClick={() => handleOpenMap(order.customer?.address)}
+                                    title="Abrir mapa"
+                                    aria-label={`Abrir mapa para ${order.customer?.name || "cliente"}`}
+                                >
+                                    <Navigation className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-slate-700 bg-slate-950/70 text-[11px] text-slate-300 hover:bg-slate-800"
+                                    onClick={() => handleCallCustomer(order.customer?.phone)}
+                                    title="Llamar"
+                                    aria-label={`Llamar a ${order.customer?.name || "cliente"}`}
+                                >
+                                    <Phone className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-slate-700 bg-slate-950/70 text-[11px] text-slate-300 hover:bg-slate-800"
+                                    onClick={() => handleWhatsappCustomer(order)}
+                                    title="Enviar WhatsApp"
+                                    aria-label={`Enviar WhatsApp a ${order.customer?.name || "cliente"}`}
+                                >
+                                    <MessageCircle className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-slate-700 bg-slate-950/70 text-[11px] text-slate-300 hover:bg-slate-800"
+                                    onClick={() => handleCopyAddress(order.customer?.address)}
+                                    title="Copiar direccion"
+                                    aria-label={`Copiar direccion de ${order.customer?.name || "cliente"}`}
+                                >
+                                    <Copy className="h-3.5 w-3.5" />
+                                </Button>
                             </div>
 
                             {!["delivered", "cancelled", "not_delivered"].includes(getCurrentStatus(order)) && (
@@ -814,7 +1064,7 @@ export default function DeliveryOrdersPage() {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="flex-1 border-red-500/20 text-red-400 hover:bg-red-500/10"
+                                        className="flex-1 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
                                         onClick={() => handleMarkNotHome(order.id)}
                                     >
                                         <XCircle className="h-4 w-4 mr-1.5" />
@@ -852,7 +1102,7 @@ export default function DeliveryOrdersPage() {
                 ) : (
                     <div className="space-y-2">
                         {recentCompleted.map((order) => (
-                            <Card key={`done-${order.id}`} className="p-3 bg-slate-900/70 border-slate-800">
+                            <Card key={`done-${order.id}`} className="border-slate-700/60 bg-slate-900/70 p-3">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="min-w-0">
                                         <p className="text-sm font-semibold text-white truncate">{order.customer?.name || "Cliente sin nombre"}</p>
@@ -897,7 +1147,7 @@ export default function DeliveryOrdersPage() {
                                 Pago Único
                             </button>
                             <button
-                                className={`py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1.5 ${paymentMode === "mixed" ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"}`}
+                                className={`py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1.5 ${paymentMode === "mixed" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "text-slate-500 hover:text-slate-300"}`}
                                 onClick={() => setPaymentMode("mixed")}
                             >
                                 Pagos Múltiples
@@ -917,6 +1167,45 @@ export default function DeliveryOrdersPage() {
                                         onChange={(e) => setPaymentAmount(e.target.value)}
                                         className="bg-slate-950 border-slate-700"
                                     />
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 border-slate-700 bg-slate-900 text-xs text-slate-200"
+                                            onClick={() => {
+                                                setPaymentAmount(String(Number(deliveryTotalAmount.toFixed(2))));
+                                                if (paymentMethod === "credit") setPaymentMethod("cash");
+                                            }}
+                                        >
+                                            Exacto
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 border-slate-700 bg-slate-900 text-xs text-slate-200"
+                                            onClick={() => {
+                                                setPaymentAmount(String(Number((deliveryTotalAmount * 0.5).toFixed(2))));
+                                                if (paymentMethod === "credit") setPaymentMethod("cash");
+                                            }}
+                                        >
+                                            Parcial 50%
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 border-amber-500/40 bg-amber-500/10 text-xs text-amber-300"
+                                            onClick={() => {
+                                                setPaymentMethod("credit");
+                                                setPaymentAmount("0");
+                                            }}
+                                        >
+                                            Dejar saldo
+                                        </Button>
+                                    </div>
                                 </div>
         
                                 <div className="space-y-2">
@@ -980,10 +1269,10 @@ export default function DeliveryOrdersPage() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full mt-2 h-8 border-dashed border-slate-700 bg-transparent text-slate-400 hover:text-indigo-300 hover:border-indigo-500/50 hover:bg-indigo-500/10"
+                                    className="w-full mt-2 h-8 border-dashed border-slate-700 bg-transparent text-slate-400 hover:border-cyan-500/50 hover:bg-cyan-500/10 hover:text-cyan-300"
                                     onClick={handleAddSplit}
                                 >
-                                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Fracción
+                                    <Plus className="h-3.5 w-3.5 mr-1" /> Agregar fracción
                                 </Button>
                             </div>
                         )}
@@ -992,12 +1281,12 @@ export default function DeliveryOrdersPage() {
                             paymentMode === "single" 
                                 ? "border-emerald-500/30 bg-emerald-500/10" 
                                 : Math.abs(pendingAmount) <= 0.05 
-                                    ? "border-indigo-500/30 bg-indigo-500/10" 
+                                    ? "border-cyan-500/30 bg-cyan-500/10" 
                                     : "border-amber-500/30 bg-amber-500/10"
                         }`}>
                             <div>
                                 <p className="text-slate-200">Total Ingresado:</p>
-                                <span className={`font-black text-lg ${paymentMode === "single" ? "text-emerald-400" : "text-indigo-400"}`}>${currentPaymentAmount.toLocaleString()}</span>
+                                <span className={`font-black text-lg ${paymentMode === "single" ? "text-emerald-400" : "text-cyan-300"}`}>${currentPaymentAmount.toLocaleString()}</span>
                             </div>
                             <div className="text-right">
                                 <p className="text-slate-200">{paymentMode === "single" ? "Saldo Restante:" : "Diferencia:"}</p>
@@ -1055,6 +1344,8 @@ export default function DeliveryOrdersPage() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <DeliveryBottomNav />
         </div>
     );
 }

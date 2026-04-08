@@ -4,12 +4,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { NewOrderForm } from "@/components/orders/NewOrderForm";
-import { useRouter } from "next/navigation";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 
 export default function DeliveryOrderPage() {
-    const router = useRouter();
-
     return (
         <div className="min-h-screen flex flex-col bg-slate-950">
             {/* Mobile Header */}
@@ -33,10 +30,8 @@ export default function DeliveryOrderPage() {
             {/* Form - Scrollable */}
             <div className="flex-1 overflow-y-auto p-4 pb-6">
                 <NewOrderForm
+                    mode="delivery"
                     redirectAfterCreate={false}
-                    onSuccess={() => {
-                        router.push('/delivery');
-                    }}
                 />
             </div>
         </div>

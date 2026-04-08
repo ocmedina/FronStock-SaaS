@@ -195,6 +195,42 @@ export default function DeliveryHomePage() {
         }
     };
 
+    const handleQuickDeliverWithUndo = async (order: DeliveryOrder) => {
+        setUpdatingId(order.id);
+        try {
+            const result = await updateOrderStatus({ orderId: order.id, newStatus: "delivered" });
+            if (!result.success) throw new Error(result.error);
+
+            await fetchOrders(true);
+
+            toast.success(`Pedido de ${order.customer?.name || "cliente"} marcado como entregado`, {
+                duration: 7000,
+                action: {
+                    label: "Deshacer",
+                    onClick: async () => {
+                        setUpdatingId(order.id);
+                        try {
+                            const undoResult = await updateOrderStatus({ orderId: order.id, newStatus: "in_delivery" });
+                            if (!undoResult.success) throw new Error(undoResult.error);
+
+                            setActiveTab("in_delivery");
+                            await fetchOrders(true);
+                            toast.success("Entrega revertida");
+                        } catch (undoError: any) {
+                            toast.error("No se pudo deshacer: " + undoError.message);
+                        } finally {
+                            setUpdatingId(null);
+                        }
+                    },
+                },
+            });
+        } catch (e: any) {
+            toast.error("Error: " + e.message);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         window.location.href = "/login";
@@ -230,6 +266,10 @@ export default function DeliveryHomePage() {
         .reduce((s, o) => s + (o.total || 0), 0);
     const totalDeliveredAmount = deliveredTodayOrders.reduce((s, o) => s + (o.total || 0), 0);
     const totalPendingAmount = pendingOrders.reduce((s, o) => s + (o.total || 0), 0);
+    const inDeliveryTotalAmount = inDeliveryOrders.reduce((s, o) => s + (o.total || 0), 0);
+    const inDeliveryPendingCollection = inDeliveryOrders
+        .filter((o) => String(o.payment_status || "").toLowerCase() !== "paid")
+        .reduce((s, o) => s + (o.total || 0), 0);
 
     const tabData: Record<TabId, { label: string; orders: DeliveryOrder[]; count: number }> = {
         pending: { label: "Pendientes", orders: filteredPending, count: pendingOrders.length },
@@ -317,10 +357,10 @@ export default function DeliveryHomePage() {
                                     "flex-1 rounded-xl px-1 py-2 text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 border",
                                     activeTab === id
                                         ? id === "pending"
-                                            ? "border-amber-400/30 bg-amber-500/15 text-amber-100 shadow-[0_0_16px_rgba(251,191,36,0.15)]"
+                                            ? "border-amber-400/30 bg-amber-500/15 text-amber-700 dark:text-amber-100 shadow-[0_0_16px_rgba(251,191,36,0.15)]"
                                             : id === "in_delivery"
-                                                ? "border-cyan-400/30 bg-cyan-500/15 text-cyan-100 shadow-[0_0_16px_rgba(6,182,212,0.15)]"
-                                                : "border-emerald-400/30 bg-emerald-500/15 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.12)]"
+                                                ? "border-cyan-400/30 bg-cyan-500/15 text-cyan-700 dark:text-cyan-100 shadow-[0_0_16px_rgba(6,182,212,0.15)]"
+                                                : "border-emerald-400/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.12)]"
                                         : "border-transparent text-slate-500 hover:text-slate-300"
                                 )}
                             >
@@ -366,7 +406,7 @@ export default function DeliveryHomePage() {
                 )}
 
                 {/* ── CONTENT ───────────────────────────────────────────────── */}
-                    <div className="space-y-3 px-4 py-3">
+                    <div className={cn("space-y-3 px-4 py-3", activeTab === "in_delivery" ? "pb-40" : "") }>
 
                     {/* Refresh indicator */}
                     {refreshing && (
@@ -384,7 +424,7 @@ export default function DeliveryHomePage() {
                                 className={cn(
                                     "h-7 px-3 rounded-full text-[11px] font-semibold border transition-colors",
                                     !zoneFilter
-                                        ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-100"
+                                        ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-700 dark:text-cyan-100"
                                         : "border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300"
                                 )}
                             >
@@ -470,6 +510,7 @@ export default function DeliveryHomePage() {
                             const elapsedMins = activeTab === "in_delivery"
                                 ? differenceInMinutes(now, new Date(timerStart))
                                 : 0;
+                            const cleanPhone = String(order.customer?.phone || "").replace(/\D/g, "");
                             // If order is actively out for delivery, use the new Swipeable Premium Component!
                             if (activeTab === "in_delivery") {
                                 return (
@@ -480,6 +521,32 @@ export default function DeliveryHomePage() {
                                         onViewDetails={(id) => { setSelectedOrderId(id); setDetailsOpen(true); }}
                                     >
                                         <div className="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 transition-colors text-[11px] font-semibold"
+                                                onClick={() => handleQuickDeliverWithUndo(order)}
+                                                disabled={isUpdating}
+                                            >
+                                                {isUpdating ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                                                Entregado
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition-colors text-[11px] font-semibold"
+                                                onClick={() =>
+                                                    openConfirm(
+                                                        "Cliente no disponible",
+                                                        `¿Marcar el pedido de ${order.customer?.name || "este cliente"} como intento fallido y reprogramar?`,
+                                                        () => handleUpdateStatus(order.id, "rescheduled")
+                                                    )
+                                                }
+                                                disabled={isUpdating}
+                                            >
+                                                <XCircle className="h-3 w-3" />
+                                                No estaba
+                                            </button>
+
                                             {/* Mapa */}
                                             {order.customer?.address && (
                                                 <a
@@ -493,10 +560,21 @@ export default function DeliveryHomePage() {
                                                 </a>
                                             )}
 
-                                            {/* WhatsApp */}
-                                            {order.customer?.phone && (
+                                            {/* Llamar */}
+                                            {cleanPhone && (
                                                 <a
-                                                    href={`https://wa.me/${order.customer.phone.replace(/\D/g, '')}`}
+                                                    href={`tel:${cleanPhone}`}
+                                                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-700/40 border border-slate-600/50 text-slate-200 hover:bg-slate-700 transition-colors text-[11px] font-semibold"
+                                                >
+                                                    <Phone className="h-3 w-3" />
+                                                    Llamar
+                                                </a>
+                                            )}
+
+                                            {/* WhatsApp */}
+                                            {cleanPhone && (
+                                                <a
+                                                    href={`https://wa.me/${cleanPhone}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-colors text-[11px] font-semibold"
@@ -505,6 +583,15 @@ export default function DeliveryHomePage() {
                                                     WhatsApp
                                                 </a>
                                             )}
+
+                                            <button
+                                                type="button"
+                                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 hover:bg-cyan-500/20 transition-colors text-[11px] font-semibold"
+                                                onClick={() => router.push(`/delivery/orders?orderId=${order.id}`)}
+                                            >
+                                                <DollarSign className="h-3 w-3" />
+                                                Cobro
+                                            </button>
                                         </div>
                                     </SwipeableOrderCard>
                                 );
@@ -736,6 +823,27 @@ export default function DeliveryHomePage() {
                 onOpenChange={setDetailsOpen}
                 onSuccess={() => fetchOrders(true)}
             />
+
+            {activeTab === "in_delivery" && inDeliveryOrders.length > 0 && (
+                <div className="fixed bottom-24 left-1/2 z-20 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2">
+                    <div className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-slate-900/90 shadow-[0_12px_30px_rgba(2,6,23,0.4)] backdrop-blur">
+                        <div className="grid grid-cols-3 divide-x divide-slate-800">
+                            <div className="p-2.5 text-center">
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">En camino</p>
+                                <p className="mt-0.5 text-sm font-black text-cyan-300">{inDeliveryOrders.length}</p>
+                            </div>
+                            <div className="p-2.5 text-center">
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">Por cobrar</p>
+                                <p className="mt-0.5 text-sm font-black text-amber-300">${inDeliveryPendingCollection.toLocaleString()}</p>
+                            </div>
+                            <div className="p-2.5 text-center">
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">Total tab</p>
+                                <p className="mt-0.5 text-sm font-black text-emerald-300">${inDeliveryTotalAmount.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── CONFIRM DIALOG ────────────────────────────────────────────── */}
             <AlertDialog

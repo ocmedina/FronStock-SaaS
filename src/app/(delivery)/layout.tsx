@@ -23,12 +23,12 @@ export default async function DeliveryLayout({
 
     return (
         <OrganizationProvider>
-            <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+            <div className="delivery-theme min-h-screen bg-background text-foreground flex flex-col">
                 <main className="flex-1 overflow-y-auto pb-24">
                     {children}
                 </main>
                 <DeliveryBottomNav />
-                <Toaster position="top-center" theme="dark" />
+                <Toaster position="top-center" theme="system" />
             </div>
         </OrganizationProvider>
     );

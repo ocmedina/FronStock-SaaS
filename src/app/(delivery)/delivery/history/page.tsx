@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -11,6 +11,7 @@ import { es } from "date-fns/locale";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
 import { Badge } from "@/components/ui/badge";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
+import { getOrderPaymentSummary } from "@/lib/utils/delivery";
 
 export default function HistoryPage() {
     const { organizationId } = useOrganization();
@@ -22,7 +23,7 @@ export default function HistoryPage() {
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [detailsOpen, setDetailsOpen] = useState(false);
 
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
         setMounted(true);
@@ -187,153 +188,156 @@ export default function HistoryPage() {
         }
     };
 
-    const getPaymentMethodLabel = (method?: string) => {
-        if (!method) return 'Sin definir';
-
-        const normalized = method.toLowerCase();
-        const labels: Record<string, string> = {
-            cash: 'Efectivo',
-            transfer: 'Transferencia',
-            card: 'Tarjeta',
-            mixed: 'Mixto',
-            fiado: 'Fiado',
-            credit: 'Cuenta Corriente',
-            current_account: 'Cuenta Corriente',
-            cuenta_corriente: 'Cuenta Corriente',
-        };
-
-        return labels[normalized] || method;
-    };
-
-    const getOrderPaymentSummary = (order: any) => {
-        const payments = Array.isArray(order?.order_payments) ? order.order_payments : [];
-        const methods: string[] = Array.from(
-            new Set(
-                payments
-                    .map((p: any) => String(p.payment_method || '').toLowerCase())
-                    .filter(Boolean)
-            )
-        );
-
-        if (methods.length > 1) return 'Mixto';
-        if (methods.length === 1) return getPaymentMethodLabel(methods[0]);
-        return getPaymentMethodLabel(order?.payment_method);
-    };
+    const totalAmount = orders.reduce((sum, order) => sum + Number(order?.total || 0), 0);
+    const deliveredCount = orders.filter((order) => order?.ui_status === 'delivered').length;
+    const cancelledCount = orders.filter((order) => order?.ui_status === 'cancelled').length;
 
     if (!mounted) {
         return (
-            <div className="min-h-screen bg-slate-950 pb-20">
-                <div className="sticky top-0 bg-slate-950/90 backdrop-blur z-20 border-b border-slate-800 p-4">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Button variant="ghost" size="icon" className="text-slate-400" disabled>
-                            <ArrowLeft className="h-6 w-6" />
-                        </Button>
-                        <h1 className="text-xl font-bold text-white">Historial</h1>
-                    </div>
-                </div>
-                <div className="p-4">
-                    <div className="text-slate-500 text-center py-8">Cargando...</div>
-                </div>
+            <div className="min-h-screen bg-slate-950 pb-24">
+                <div className="p-4 text-center text-slate-500">Cargando...</div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-20">
-            {/* Header */}
-            <div className="sticky top-0 bg-slate-950/90 backdrop-blur z-20 border-b border-slate-800 p-4">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-2">
-                        <Link href="/delivery">
-                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                                <ArrowLeft className="h-6 w-6" />
-                            </Button>
-                        </Link>
-                        <h1 className="text-xl font-bold text-white">Historial</h1>
-                    </div>
-                    <ShiftControl />
-                </div>
-
-                {/* Filters */}
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {[
-                        { label: 'Hoy', days: 1 },
-                        { label: '7 Días', days: 7 },
-                        { label: '30 Días', days: 30 }
-                    ].map(f => (
-                        <Button
-                            key={f.days}
-                            variant="outline"
-                            onClick={() => setFilterDays(f.days)}
-                            className={`
-                                rounded-full text-xs h-8 border-slate-700
-                                ${filterDays === f.days ? 'bg-emerald-600 text-white border-transparent' : 'bg-slate-900 text-slate-400'}
-                            `}
-                        >
-                            {f.label}
-                        </Button>
-                    ))}
-                </div>
-
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    {[
-                        { label: 'Entregadas', value: 'delivered' as const },
-                        { label: 'Todas', value: 'all' as const },
-                        { label: 'No Entregadas', value: 'not_delivered' as const },
-                        { label: 'Canceladas', value: 'cancelled' as const },
-                    ].map((s) => (
-                        <Button
-                            key={s.value}
-                            variant="outline"
-                            onClick={() => setStatusFilter(s.value)}
-                            className={`
-                                rounded-full text-xs h-8 border-slate-700
-                                ${statusFilter === s.value ? 'bg-emerald-600 text-white border-transparent' : 'bg-slate-900 text-slate-400'}
-                            `}
-                        >
-                            {s.label}
-                        </Button>
-                    ))}
-                </div>
+        <div className="relative min-h-screen overflow-hidden bg-slate-950 pb-24">
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.12),transparent_55%)]" />
             </div>
 
-            {/* List */}
-            <div className="p-4 space-y-3">
-                {loading ? (
-                    <div className="text-slate-500 text-center py-8">Cargando...</div>
-                ) : orders.length === 0 ? (
-                    <div className="text-slate-500 text-center py-8">
-                        No hay pedidos para el filtro actual ({statusFilter === 'all' ? 'todos los estados' : statusFilter}) en {filterDays} días
-                    </div>
-                ) : (
-                    orders.map(order => (
-                        <div
-                            key={order.id}
-                            onClick={() => handleViewDetails(order.id)}
-                            className="bg-slate-900 rounded-xl p-4 border border-slate-800 active:scale-[0.98] transition-all cursor-pointer"
-                        >
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <h3 className="font-bold text-white text-sm">
-                                        {order.customer?.name || "Cliente Mostrador"}
-                                    </h3>
-                                    <span className="text-xs text-slate-500">
-                                        {format(new Date(order.created_at), "dd MMM, HH:mm", { locale: es })}
-                                    </span>
-                                </div>
-                                <span className="font-mono font-bold text-emerald-400">
-                                    ${order.total.toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                {getStatusBadge(order.ui_status || 'pending')}
-                                <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-300">
-                                    {getOrderPaymentSummary(order)}
-                                </Badge>
+            <div className="relative mx-auto w-full max-w-3xl">
+                <div className="sticky top-0 z-20 border-b border-slate-800/40 bg-slate-950/70 p-4 backdrop-blur-xl">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <Link href="/delivery">
+                                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
+                                    <ArrowLeft className="h-6 w-6" />
+                                </Button>
+                            </Link>
+                            <div>
+                                <h1 className="text-xl font-bold text-white">Historial</h1>
+                                <p className="text-xs text-slate-500">Seguimiento de entregas y cobros</p>
                             </div>
                         </div>
-                    ))
-                )}
+                        <ShiftControl />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-xl border border-slate-700/60 bg-slate-900/70 p-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-slate-500">Registros</p>
+                            <p className="mt-1 flex items-center gap-1 text-sm font-bold text-white">
+                                <Package className="h-3.5 w-3.5 text-cyan-300" />
+                                {orders.length}
+                            </p>
+                        </div>
+                        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-emerald-300/80">Entregadas</p>
+                            <p className="mt-1 flex items-center gap-1 text-sm font-bold text-emerald-300">
+                                <Clock className="h-3.5 w-3.5" />
+                                {deliveredCount}
+                            </p>
+                        </div>
+                        <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-cyan-200/80">Total</p>
+                            <p className="mt-1 flex items-center gap-1 text-sm font-bold text-cyan-200">
+                                <DollarSign className="h-3.5 w-3.5" />
+                                {totalAmount.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 rounded-2xl border border-slate-700/60 bg-slate-900/70 p-1">
+                        <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+                            {[
+                                { label: 'Hoy', days: 1 },
+                                { label: '7 Días', days: 7 },
+                                { label: '30 Días', days: 30 }
+                            ].map((f) => (
+                                <Button
+                                    key={f.days}
+                                    variant="outline"
+                                    onClick={() => setFilterDays(f.days)}
+                                    className={`h-8 rounded-full border text-xs ${filterDays === f.days
+                                        ? 'border-cyan-500 bg-cyan-600 text-white'
+                                        : 'border-slate-700 bg-slate-900 text-slate-400'
+                                        }`}
+                                >
+                                    {f.label}
+                                </Button>
+                            ))}
+                        </div>
+
+                        <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+                            {[
+                                { label: 'Entregadas', value: 'delivered' as const },
+                                { label: 'Todas', value: 'all' as const },
+                                { label: 'No Entregadas', value: 'not_delivered' as const },
+                                { label: 'Canceladas', value: 'cancelled' as const },
+                            ].map((s) => (
+                                <Button
+                                    key={s.value}
+                                    variant="outline"
+                                    onClick={() => setStatusFilter(s.value)}
+                                    className={`h-8 rounded-full border text-xs ${statusFilter === s.value
+                                        ? 'border-emerald-500 bg-emerald-600 text-white'
+                                        : 'border-slate-700 bg-slate-900 text-slate-400'
+                                        }`}
+                                >
+                                    {s.label}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-3 p-4">
+                    {loading ? (
+                        <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="animate-pulse rounded-2xl border border-slate-800 bg-slate-900 p-4">
+                                    <div className="mb-2 h-4 w-36 rounded bg-slate-800" />
+                                    <div className="mb-3 h-3 w-24 rounded bg-slate-800" />
+                                    <div className="h-6 w-24 rounded bg-slate-800" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : orders.length === 0 ? (
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 py-12 text-center text-slate-500">
+                            No hay pedidos para el filtro actual ({statusFilter === 'all' ? 'todos los estados' : statusFilter}) en {filterDays} días
+                        </div>
+                    ) : (
+                        orders.map((order) => (
+                            <div
+                                key={order.id}
+                                onClick={() => handleViewDetails(order.id)}
+                                className="cursor-pointer rounded-2xl border border-slate-700/60 bg-slate-900/85 p-4 shadow-[0_12px_24px_rgba(2,6,23,0.22)] transition-all active:scale-[0.98]"
+                            >
+                                <div className="mb-2 flex items-start justify-between">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-white">
+                                            {order.customer?.name || "Cliente Mostrador"}
+                                        </h3>
+                                        <span className="text-xs text-slate-500">
+                                            {format(new Date(order.created_at), "dd MMM, HH:mm", { locale: es })}
+                                        </span>
+                                    </div>
+                                    <span className="font-mono text-base font-bold text-emerald-300">
+                                        ${Number(order.total || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    {getStatusBadge(order.ui_status || 'pending')}
+                                    <Badge variant="outline" className="border-slate-700 text-[10px] text-slate-300">
+                                        {getOrderPaymentSummary(order)}
+                                    </Badge>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
             <OrderDetailsModal

@@ -447,6 +447,79 @@ html.density-compact :where(.h-10) {
   }
 }
 
+/* Delivery module: normalize hardcoded dark utilities when theme is light */
+html:not(.dark) .delivery-theme [class*="bg-slate-950"] {
+  background-color: var(--background) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="bg-slate-900"] {
+  background-color: var(--card) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="bg-slate-800"],
+html:not(.dark) .delivery-theme [class*="bg-slate-700"] {
+  background-color: var(--muted) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-white"],
+html:not(.dark) .delivery-theme [class*="text-slate-100"],
+html:not(.dark) .delivery-theme [class*="text-slate-200"],
+html:not(.dark) .delivery-theme [class*="text-slate-300"] {
+  color: var(--foreground) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-slate-400"],
+html:not(.dark) .delivery-theme [class*="text-slate-500"],
+html:not(.dark) .delivery-theme [class*="text-slate-600"],
+html:not(.dark) .delivery-theme [class*="text-slate-700"] {
+  color: var(--muted-foreground) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="border-slate-950"],
+html:not(.dark) .delivery-theme [class*="border-slate-900"],
+html:not(.dark) .delivery-theme [class*="border-slate-800"],
+html:not(.dark) .delivery-theme [class*="border-slate-700"],
+html:not(.dark) .delivery-theme [class*="border-slate-600"] {
+  border-color: var(--border) !important;
+}
+
+html:not(.dark) .delivery-theme [class*="bg-emerald"][class*="text-white"],
+html:not(.dark) .delivery-theme [class*="bg-cyan"][class*="text-white"],
+html:not(.dark) .delivery-theme [class*="bg-blue"][class*="text-white"],
+html:not(.dark) .delivery-theme [class*="bg-red"][class*="text-white"],
+html:not(.dark) .delivery-theme [class*="bg-amber"][class*="text-white"] {
+  color: #ffffff !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-emerald-100"],
+html:not(.dark) .delivery-theme [class*="text-emerald-200"],
+html:not(.dark) .delivery-theme [class*="text-emerald-300"] {
+  color: #047857 !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-cyan-100"],
+html:not(.dark) .delivery-theme [class*="text-cyan-200"],
+html:not(.dark) .delivery-theme [class*="text-cyan-300"] {
+  color: #0e7490 !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-amber-100"],
+html:not(.dark) .delivery-theme [class*="text-amber-200"],
+html:not(.dark) .delivery-theme [class*="text-amber-300"] {
+  color: #b45309 !important;
+}
+
+html:not(.dark) .delivery-theme [class*="text-blue-100"],
+html:not(.dark) .delivery-theme [class*="text-blue-200"] {
+  color: #1d4ed8 !important;
+}
+
+html:not(.dark) .delivery-theme [class*="rounded-xl"][class*="border"],
+html:not(.dark) .delivery-theme [class*="rounded-2xl"][class*="border"],
+html:not(.dark) .delivery-theme [class*="rounded-3xl"][class*="border"] {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 22px rgba(15, 23, 42, 0.05);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -10,7 +10,7 @@ import { offlineDB } from "@/lib/offline/db";
 import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Search, User, MapPin, Phone, Package, Trash2, Save, Keyboard, ChevronLeft, ChevronRight, CheckCircle2, Truck, CircleDollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 
@@ -26,14 +26,38 @@ interface NewOrderFormProps {
     onSuccess?: (orderId: string) => void;
     redirectAfterCreate?: boolean;
     className?: string;
+    mode?: "default" | "delivery";
 }
 
-export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className = "" }: NewOrderFormProps) {
+type QuickCustomer = {
+    id: string;
+    name: string;
+    phone?: string | null;
+    address?: string | null;
+};
+
+type QuickProduct = {
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+};
+
+const RECENT_CUSTOMERS_KEY = "delivery_recent_customers";
+const RECENT_PRODUCTS_KEY = "delivery_recent_products";
+const DELIVERY_FEE_PRESETS = [
+    { id: "free", label: "Sin costo", value: 0 },
+    { id: "flat", label: "Tarifa fija", value: 1500 },
+    { id: "zone", label: "Tarifa por zona", value: 2500 },
+] as const;
+
+export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className = "", mode = "default" }: NewOrderFormProps) {
     const router = useRouter();
     const { organizationId, organization, profile } = useOrganization();
     const { isOnline } = useOnlineStatus();
     const { saveOrderOffline } = useOfflineOrders(organizationId);
     const supabase = createClient();
+    const isDeliveryMode = mode === "delivery";
 
     // Form State
     const [customer, setCustomer] = useState<any>(null);
@@ -42,10 +66,14 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
     const [estimatedMins, setEstimatedMins] = useState(30);
     const [deliveryNotes, setDeliveryNotes] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("cash");
+    const [collectNow, setCollectNow] = useState(false);
+    const [paymentAmount, setPaymentAmount] = useState("");
     const [discountType, setDiscountType] = useState<"none" | "percentage" | "fixed">("none");
     const [discountValue, setDiscountValue] = useState(0);
     const [loading, setLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
+    const [showDeliverySuccess, setShowDeliverySuccess] = useState(false);
+    const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
     // Product Search
     const [searchTerm, setSearchTerm] = useState("");
@@ -58,6 +86,10 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
     const [customers, setCustomers] = useState<any[]>([]);
     const [showCustomerSearch, setShowCustomerSearch] = useState(false);
     const [selectedCustomerIndex, setSelectedCustomerIndex] = useState(0);
+
+    // Quick shortcuts for delivery mode
+    const [recentCustomers, setRecentCustomers] = useState<QuickCustomer[]>([]);
+    const [recentProducts, setRecentProducts] = useState<QuickProduct[]>([]);
 
     // Refs
     const customerSearchRef = useRef<HTMLInputElement>(null);
@@ -72,12 +104,75 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
             : 0;
     const total = subtotal - discountAmount + deliveryFee;
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-    const steps = [
-        { id: 1, title: "Cliente" },
-        { id: 2, title: "Productos" },
-        { id: 3, title: "Entrega" },
-        { id: 4, title: "Pago y Confirmación" },
-    ];
+    const paidAmount = isDeliveryMode && collectNow ? (parseFloat(paymentAmount) || 0) : 0;
+    const pendingAmount = isDeliveryMode ? Math.max(total - paidAmount, 0) : 0;
+    const changeAmount = isDeliveryMode && collectNow ? Math.max(paidAmount - total, 0) : 0;
+    const steps = isDeliveryMode
+        ? [
+            { id: 1, title: "Pedido" },
+            { id: 2, title: "Cobro" },
+        ]
+        : [
+            { id: 1, title: "Cliente" },
+            { id: 2, title: "Productos" },
+            { id: 3, title: "Entrega" },
+            { id: 4, title: "Pago y Confirmación" },
+        ];
+
+    const maxStep = steps.length;
+    const effectivePaymentMethod = isDeliveryMode ? (collectNow ? "cash" : "credit") : paymentMethod;
+    const canConfirmDeliveryOrder = !!customer && items.length > 0 && (!collectNow || paidAmount >= total);
+
+    useEffect(() => {
+        if (!isDeliveryMode) return;
+        try {
+            const customersRaw = localStorage.getItem(RECENT_CUSTOMERS_KEY);
+            const productsRaw = localStorage.getItem(RECENT_PRODUCTS_KEY);
+
+            const parsedCustomers = customersRaw ? JSON.parse(customersRaw) : [];
+            const parsedProducts = productsRaw ? JSON.parse(productsRaw) : [];
+
+            setRecentCustomers(Array.isArray(parsedCustomers) ? parsedCustomers : []);
+            setRecentProducts(Array.isArray(parsedProducts) ? parsedProducts : []);
+        } catch {
+            setRecentCustomers([]);
+            setRecentProducts([]);
+        }
+    }, [isDeliveryMode]);
+
+    const persistRecentCustomer = (cust: any) => {
+        if (!isDeliveryMode || !cust?.id) return;
+
+        const next: QuickCustomer = {
+            id: String(cust.id),
+            name: String(cust.name || "Cliente"),
+            phone: cust.phone || null,
+            address: cust.address || null,
+        };
+
+        setRecentCustomers((prev) => {
+            const deduped = [next, ...prev.filter((item) => item.id !== next.id)].slice(0, 8);
+            localStorage.setItem(RECENT_CUSTOMERS_KEY, JSON.stringify(deduped));
+            return deduped;
+        });
+    };
+
+    const persistRecentProduct = (product: any) => {
+        if (!isDeliveryMode || !product?.id) return;
+
+        const next: QuickProduct = {
+            id: String(product.id),
+            name: String(product.name || "Producto"),
+            price: Number(product.price || 0),
+            stock: Number(product.stock || 0),
+        };
+
+        setRecentProducts((prev) => {
+            const deduped = [next, ...prev.filter((item) => item.id !== next.id)].slice(0, 8);
+            localStorage.setItem(RECENT_PRODUCTS_KEY, JSON.stringify(deduped));
+            return deduped;
+        });
+    };
 
     // Search Products
     useEffect(() => {
@@ -227,6 +322,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 stock: product.stock
             }]);
         }
+        persistRecentProduct(product);
         setSearchTerm("");
         setProducts([]);
         setShowProductSearch(false);
@@ -257,26 +353,49 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
 
     const selectCustomer = (cust: any) => {
         setCustomer(cust);
+        persistRecentCustomer(cust);
         setCustomerSearch("");
         setCustomers([]);
         setShowCustomerSearch(false);
     };
 
-    const handleReset = () => {
+    const handleReset = (showToast = true) => {
         setCustomer(null);
         setItems([]);
         setDeliveryFee(0);
         setEstimatedMins(30);
         setDeliveryNotes("");
         setPaymentMethod("cash");
+        setCollectNow(false);
+        setPaymentAmount("");
         setDiscountType("none");
         setDiscountValue(0);
         setCurrentStep(1);
-        toast.success("Formulario limpiado");
+        setShowDeliverySuccess(false);
+        setCreatedOrderId(null);
+        if (showToast) {
+            toast.success("Formulario limpiado");
+        }
         customerSearchRef.current?.focus();
     };
 
     const validateCurrentStep = () => {
+        if (isDeliveryMode) {
+            if (currentStep === 1) {
+                if (!customer) {
+                    toast.error("Selecciona un cliente para continuar");
+                    return false;
+                }
+
+                if (items.length === 0) {
+                    toast.error("Agrega al menos un producto para continuar");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         if (currentStep === 1 && !customer) {
             toast.error("Selecciona un cliente para continuar");
             return false;
@@ -292,7 +411,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
 
     const goToNextStep = () => {
         if (!validateCurrentStep()) return;
-        setCurrentStep((prev) => Math.min(prev + 1, 4));
+        setCurrentStep((prev) => Math.min(prev + 1, maxStep));
     };
 
     const goToPrevStep = () => {
@@ -301,6 +420,8 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
 
     // Keyboard shortcuts
     useEffect(() => {
+        if (isDeliveryMode) return;
+
         const handleKeyDown = (e: KeyboardEvent) => {
             // Ctrl/Cmd + S to submit
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -323,7 +444,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [customer, items, loading]);
+    }, [customer, items, loading, isDeliveryMode]);
 
     // Handle keyboard navigation in customer dropdown
     const handleCustomerKeyDown = (e: React.KeyboardEvent) => {
@@ -386,6 +507,11 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
             return;
         }
 
+        if (isDeliveryMode && collectNow && paidAmount < total) {
+            toast.error("El monto recibido no cubre el total del pedido");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -393,7 +519,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
             const payload = {
                 p_org_id: organizationId,
                 p_customer_id: customer.id,
-                p_payment_method: paymentMethod,
+                p_payment_method: effectivePaymentMethod,
                 p_items: items.map(i => ({
                     product_id: i.product_id,
                     product_name: i.product_name,
@@ -405,7 +531,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 p_estimated_mins: estimatedMins,
                 p_delivery_fee: deliveryFee,
                 p_discount: discountAmount,
-                p_payment_amount: null,
+                p_payment_amount: isDeliveryMode && collectNow ? paidAmount : null,
                 p_client_reference: clientReference
             };
 
@@ -417,7 +543,13 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     onSuccess(localOrderId);
                 }
 
-                handleReset();
+                if (isDeliveryMode) {
+                    setCreatedOrderId(localOrderId);
+                    setShowDeliverySuccess(true);
+                    return;
+                }
+
+                handleReset(false);
 
                 if (redirectAfterCreate) {
                     router.push('/dashboard/orders');
@@ -429,7 +561,7 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
             const requiresOpenSession = shouldRequireOpenCashSession({
                 organization,
                 profile,
-                paymentMethods: [paymentMethod],
+                paymentMethods: [effectivePaymentMethod],
             });
 
             if (requiresOpenSession) {
@@ -467,7 +599,13 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                 onSuccess(data.order_id);
             }
 
-            handleReset();
+            if (isDeliveryMode) {
+                setCreatedOrderId(data.order_id ?? null);
+                setShowDeliverySuccess(true);
+                return;
+            }
+
+            handleReset(false);
 
             if (redirectAfterCreate) {
                 router.push('/dashboard/orders');
@@ -479,27 +617,66 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
         }
     };
 
-    return (
-        <div className={`space-y-6 ${className}`} role="form" aria-label="Formulario de nuevo pedido">
-            {/* Keyboard Shortcuts Help */}
-            <div className="bg-card/60 border border-border rounded-lg p-3 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2 mb-2">
-                    <Keyboard className="h-3.5 w-3.5" />
-                    <span className="font-semibold text-foreground">Atajos de teclado:</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+K</kbd> Buscar cliente</div>
-                    <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+P</kbd> Buscar producto</div>
-                    <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+S</kbd> Crear pedido</div>
+    if (isDeliveryMode && showDeliverySuccess) {
+        return (
+            <div className={`space-y-4 ${className}`}>
+                <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5">
+                    <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-6 w-6 text-emerald-400" aria-hidden="true" />
+                        <div>
+                            <h2 className="text-lg font-semibold text-foreground">Pedido confirmado</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">El pedido se registró correctamente y ya está listo para seguimiento.</p>
+                            {createdOrderId && (
+                                <p className="mt-2 text-xs text-emerald-300">ID: {createdOrderId}</p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <Button
+                        type="button"
+                        className="h-11 bg-slate-800 text-slate-100 hover:bg-slate-700"
+                        onClick={() => router.push('/delivery/orders')}
+                    >
+                        Ver pedidos
+                    </Button>
+                    <Button
+                        type="button"
+                        className="h-11 bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                        onClick={() => handleReset(false)}
+                    >
+                        Crear otro
+                    </Button>
                 </div>
             </div>
+        );
+    }
+
+    return (
+        <div className={`space-y-6 ${isDeliveryMode ? "pb-24" : ""} ${className}`} role="form" aria-label="Formulario de nuevo pedido">
+            {!isDeliveryMode && (
+                <div className="bg-card/60 border border-border rounded-lg p-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Keyboard className="h-3.5 w-3.5" />
+                        <span className="font-semibold text-foreground">Atajos de teclado:</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+K</kbd> Buscar cliente</div>
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+P</kbd> Buscar producto</div>
+                        <div><kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+S</kbd> Crear pedido</div>
+                    </div>
+                </div>
+            )}
 
             <section className="bg-card border border-border rounded-xl p-4 md:p-6" aria-label="Progreso de creación">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-base md:text-lg font-semibold text-foreground">Nuevo pedido guiado</h2>
+                    <h2 className="text-base md:text-lg font-semibold text-foreground">
+                        {isDeliveryMode ? "Toma rapida de pedido" : "Nuevo pedido guiado"}
+                    </h2>
                     <span className="text-xs text-muted-foreground">Paso {currentStep} de {steps.length}</span>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <div className={`grid gap-2 mb-4 ${isDeliveryMode ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"}`}>
                     {steps.map((step) => {
                         const isDone = currentStep > step.id;
                         const isActive = currentStep === step.id;
@@ -550,6 +727,11 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     <User className="h-5 w-5 text-emerald-500" aria-hidden="true" />
                     Cliente
                 </h2>
+                {isDeliveryMode && (
+                    <p className="mb-3 text-xs text-muted-foreground">
+                        Selecciona cliente y luego carga productos para pasar al cobro.
+                    </p>
+                )}
 
                 {!customer ? (
                     <div className="relative">
@@ -633,26 +815,49 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     </div>
                 )}
 
-                <div className="flex justify-end mt-6">
-                    <Button
-                        type="button"
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                        onClick={goToNextStep}
-                    >
-                        Siguiente
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                </div>
+                {isDeliveryMode && !customer && customerSearch.length < 2 && recentCustomers.length > 0 && (
+                    <div className="mt-3">
+                        <p className="mb-2 text-xs font-medium text-muted-foreground">Recientes</p>
+                        <div className="flex flex-wrap gap-2">
+                            {recentCustomers.map((cust) => (
+                                <button
+                                    key={cust.id}
+                                    type="button"
+                                    onClick={() => selectCustomer(cust)}
+                                    className="rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground hover:bg-muted/50"
+                                >
+                                    {cust.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {!isDeliveryMode && (
+                    <div className="flex justify-end mt-6">
+                        <Button
+                            type="button"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={goToNextStep}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                    </div>
+                )}
             </section>
             )}
 
             {/* Products */}
-            {currentStep === 2 && (
+            {((!isDeliveryMode && currentStep === 2) || (isDeliveryMode && currentStep === 1)) && (
             <section className="bg-card border border-border rounded-xl p-4 md:p-6" aria-labelledby="products-section">
                 <h2 id="products-section" className="text-base md:text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Package className="h-5 w-5 text-emerald-500" aria-hidden="true" />
                     Productos
                 </h2>
+                {isDeliveryMode && (
+                    <p className="mb-3 text-xs text-muted-foreground">Carga rapida: toca un producto para agregarlo y ajusta cantidades abajo.</p>
+                )}
 
                 {/* Product Search */}
                 <div className="relative mb-4">
@@ -706,12 +911,84 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     )}
                 </div>
 
+                {isDeliveryMode && searchTerm.length < 2 && recentProducts.length > 0 && (
+                    <div className="mb-4">
+                        <p className="mb-2 text-xs font-medium text-muted-foreground">Productos recientes</p>
+                        <div className="flex flex-wrap gap-2">
+                            {recentProducts.map((prod) => (
+                                <button
+                                    key={prod.id}
+                                    type="button"
+                                    onClick={() => addProduct(prod)}
+                                    className="rounded-full border border-border bg-muted/30 px-3 py-1.5 text-xs text-foreground hover:bg-muted/50"
+                                >
+                                    {prod.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Items Table */}
                 {items.length === 0 ? (
                     <div className="text-center py-12 border-2 border-dashed border-border rounded-lg" role="status" aria-label="No hay productos">
                         <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
                         <p className="text-muted-foreground">No hay productos agregados</p>
                         <p className="text-muted-foreground text-sm mt-1">Busca y agrega productos al pedido</p>
+                    </div>
+                ) : isDeliveryMode ? (
+                    <div className="space-y-2">
+                        {items.map((item) => (
+                            <div key={item.product_id} className="rounded-lg border border-border bg-muted/20 p-3">
+                                <div className="mb-2 flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-foreground">{item.product_name}</p>
+                                        <p className="text-xs text-muted-foreground">Stock: {item.stock} · ${item.unit_price.toLocaleString()} c/u</p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                        onClick={() => removeItem(item.product_id)}
+                                        aria-label={`Eliminar ${item.product_name} del pedido`}
+                                    >
+                                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                                        >
+                                            -
+                                        </Button>
+                                        <Input
+                                            type="number"
+                                            className="h-8 w-14 text-center text-sm"
+                                            value={item.quantity}
+                                            onChange={(e) => updateQuantity(item.product_id, parseInt(e.target.value) || 0)}
+                                            min="0"
+                                            max={item.stock}
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 w-8 p-0"
+                                            onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                                        >
+                                            +
+                                        </Button>
+                                    </div>
+                                    <span className="font-mono text-sm font-bold text-emerald-400">
+                                        ${(item.unit_price * item.quantity).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="border border-border rounded-lg overflow-hidden">
@@ -789,28 +1066,30 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-6 gap-3">
-                    <Button type="button" variant="outline" onClick={goToPrevStep}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Anterior
-                    </Button>
-                    <div className="text-xs text-muted-foreground">
-                        {totalItems} producto(s) · Subtotal ${subtotal.toLocaleString()}
+                {!isDeliveryMode && (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-6 gap-3">
+                        <Button type="button" variant="outline" onClick={goToPrevStep}>
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Anterior
+                        </Button>
+                        <div className="text-xs text-muted-foreground">
+                            {totalItems} producto(s) · Subtotal ${subtotal.toLocaleString()}
+                        </div>
+                        <Button
+                            type="button"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={goToNextStep}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
                     </div>
-                    <Button
-                        type="button"
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                        onClick={goToNextStep}
-                    >
-                        Siguiente
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                </div>
+                )}
             </section>
             )}
 
             {/* Summary & Actions */}
-            {currentStep === 3 && (
+            {((!isDeliveryMode && currentStep === 3) || (isDeliveryMode && currentStep === 2)) && (
             <section className="bg-card border border-border rounded-xl p-4 md:p-6" aria-labelledby="delivery-section">
                 <h2 id="delivery-section" className="text-base md:text-lg font-semibold text-foreground mb-4">Entrega</h2>
 
@@ -848,6 +1127,28 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         </div>
                     </div>
 
+                    {isDeliveryMode && (
+                        <div>
+                            <p className="text-xs text-muted-foreground mb-1.5">Presets de envío</p>
+                            <div className="flex flex-wrap gap-2">
+                                {DELIVERY_FEE_PRESETS.map((preset) => (
+                                    <button
+                                        key={preset.id}
+                                        type="button"
+                                        onClick={() => setDeliveryFee(preset.value)}
+                                        className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                                            deliveryFee === preset.value
+                                                ? "border-emerald-500/70 bg-emerald-500/15 text-emerald-300"
+                                                : "border-border bg-muted/30 text-foreground hover:bg-muted/50"
+                                        }`}
+                                    >
+                                        {preset.label} · ${preset.value.toLocaleString()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <label htmlFor="delivery-notes" className="text-xs text-muted-foreground mb-1.5 block">Notas de Entrega</label>
                         <textarea
@@ -862,26 +1163,30 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 gap-3">
-                    <Button type="button" variant="outline" onClick={goToPrevStep}>
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Anterior
-                    </Button>
-                    <Button
-                        type="button"
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                        onClick={goToNextStep}
-                    >
-                        Siguiente
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                </div>
+                {!isDeliveryMode && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 gap-3">
+                        <Button type="button" variant="outline" onClick={goToPrevStep}>
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Anterior
+                        </Button>
+                        <Button
+                            type="button"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={goToNextStep}
+                        >
+                            Siguiente
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                    </div>
+                )}
             </section>
             )}
 
-            {currentStep === 4 && (
+            {((!isDeliveryMode && currentStep === 4) || (isDeliveryMode && currentStep === 2)) && (
             <section className="bg-card border border-border rounded-xl p-4 md:p-6" aria-labelledby="summary-section">
-                <h2 id="summary-section" className="text-base md:text-lg font-semibold text-foreground mb-4">Pago y Confirmación</h2>
+                <h2 id="summary-section" className="text-base md:text-lg font-semibold text-foreground mb-4">
+                    {isDeliveryMode ? "Cobro y confirmación" : "Pago y Confirmación"}
+                </h2>
 
                 <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-muted-foreground">
@@ -926,21 +1231,103 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                         )}
                     </div>
 
-                    <div>
-                        <label htmlFor="payment-method" className="text-xs text-muted-foreground mb-1.5 block">Método de Pago</label>
-                        <select
-                            id="payment-method"
-                            className="w-full bg-background border border-input text-foreground rounded-lg px-3 py-2 text-sm"
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                            aria-label="Método de pago"
-                        >
-                            <option value="cash">Efectivo</option>
-                            <option value="card">Tarjeta</option>
-                            <option value="transfer">Transferencia</option>
-                            <option value="credit">Cuenta Corriente</option>
-                        </select>
-                    </div>
+                    {isDeliveryMode ? (
+                        <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium text-muted-foreground">Cobro</p>
+                                <span className="text-xs text-muted-foreground">Total: ${total.toLocaleString()}</span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCollectNow(true);
+                                        if (!paymentAmount) {
+                                            setPaymentAmount(String(Math.max(total, 0)));
+                                        }
+                                    }}
+                                    className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                                        collectNow
+                                            ? "border-emerald-500/70 bg-emerald-500/15 text-emerald-300"
+                                            : "border-border bg-background text-foreground hover:bg-muted/30"
+                                    }`}
+                                >
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <CircleDollarSign className="h-4 w-4" aria-hidden="true" />
+                                        Pagado ahora
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCollectNow(false);
+                                        setPaymentAmount("");
+                                    }}
+                                    className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                                        !collectNow
+                                            ? "border-emerald-500/70 bg-emerald-500/15 text-emerald-300"
+                                            : "border-border bg-background text-foreground hover:bg-muted/30"
+                                    }`}
+                                >
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Truck className="h-4 w-4" aria-hidden="true" />
+                                        Cta. corriente
+                                    </span>
+                                </button>
+                            </div>
+
+                            {collectNow ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label htmlFor="payment-amount-delivery" className="text-xs text-muted-foreground">Monto recibido</label>
+                                        <button
+                                            type="button"
+                                            className="text-xs text-emerald-400 hover:text-emerald-300"
+                                            onClick={() => setPaymentAmount(String(Math.max(total, 0)))}
+                                        >
+                                            Exacto
+                                        </button>
+                                    </div>
+                                    <Input
+                                        id="payment-amount-delivery"
+                                        type="number"
+                                        className="h-9"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                        min="0"
+                                        aria-label="Monto recibido"
+                                    />
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground">Vuelto</span>
+                                        <span className="font-mono text-emerald-400">${changeAmount.toLocaleString()}</span>
+                                    </div>
+                                    {paidAmount < total && (
+                                        <p className="text-xs text-amber-500">Faltan ${(total - paidAmount).toLocaleString()} para completar el cobro.</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Se registrará el pedido como cuenta corriente.</p>
+                            )}
+                        </div>
+                    ) : (
+                        <div>
+                            <label htmlFor="payment-method" className="text-xs text-muted-foreground mb-1.5 block">Método de Pago</label>
+                            <select
+                                id="payment-method"
+                                className="w-full bg-background border border-input text-foreground rounded-lg px-3 py-2 text-sm"
+                                value={paymentMethod}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                aria-label="Método de pago"
+                            >
+                                <option value="cash">Efectivo</option>
+                                <option value="card">Tarjeta</option>
+                                <option value="transfer">Transferencia</option>
+                                <option value="credit">Cuenta Corriente</option>
+                            </select>
+                        </div>
+                    )}
 
                     <div className="h-px bg-border" role="separator"></div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
@@ -953,45 +1340,110 @@ export function NewOrderForm({ onSuccess, redirectAfterCreate = true, className 
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={goToPrevStep}
-                        disabled={loading}
-                        aria-label="Volver al paso anterior"
-                    >
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        Anterior
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="sm:col-span-1"
-                        onClick={handleReset}
-                        disabled={loading}
-                        aria-label="Limpiar formulario"
-                    >
-                        Limpiar
-                    </Button>
-                    <Button
-                        className="sm:col-span-1 bg-emerald-600 hover:bg-emerald-500 text-white"
-                        onClick={handleSubmit}
-                        disabled={loading || !customer || items.length === 0}
-                        aria-label="Crear pedido"
-                    >
-                        {loading ? (
-                            <>
-                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" aria-hidden="true"></div>
-                                Creando...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4 mr-2" aria-hidden="true" />
-                                Crear Pedido
-                            </>
-                        )}
-                    </Button>
-                </div>
+                {!isDeliveryMode && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={goToPrevStep}
+                            disabled={loading}
+                            aria-label="Volver al paso anterior"
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Anterior
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="sm:col-span-1"
+                            onClick={() => handleReset()}
+                            disabled={loading}
+                            aria-label="Limpiar formulario"
+                        >
+                            Limpiar
+                        </Button>
+                        <Button
+                            className="sm:col-span-1 bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={handleSubmit}
+                            disabled={loading || !customer || items.length === 0}
+                            aria-label="Crear pedido"
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" aria-hidden="true"></div>
+                                    Creando...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" aria-hidden="true" />
+                                    Crear Pedido
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                )}
             </section>
+            )}
+
+            {isDeliveryMode && !showDeliverySuccess && (
+                <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/80 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/85">
+                    <div className="mx-auto w-full max-w-3xl px-4 py-3 [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
+                        <div className="flex items-center justify-between text-xs text-slate-300">
+                            <span>{totalItems} {totalItems === 1 ? "producto" : "productos"}</span>
+                            <span className="font-mono text-base text-emerald-300">${total.toLocaleString()}</span>
+                        </div>
+
+                        {currentStep === 1 ? (
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-slate-700 bg-slate-900/60 text-slate-100 hover:bg-slate-800"
+                                    onClick={() => handleReset()}
+                                    disabled={loading}
+                                >
+                                    Limpiar
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    className="bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                                    onClick={goToNextStep}
+                                    disabled={loading || !customer || items.length === 0}
+                                >
+                                    Ir a cobro
+                                    <ChevronRight className="h-4 w-4 ml-2" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="mt-2 space-y-2">
+                                <div className="flex items-center justify-between text-xs text-slate-300">
+                                    <span>Saldo pendiente</span>
+                                    <span className={`font-mono ${pendingAmount > 0 ? "text-amber-300" : "text-emerald-300"}`}>
+                                        ${pendingAmount.toLocaleString()}
+                                    </span>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    className="w-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                                    onClick={handleSubmit}
+                                    disabled={loading || !canConfirmDeliveryOrder}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="animate-spin h-4 w-4 border-2 border-slate-900 border-t-transparent rounded-full mr-2" aria-hidden="true"></div>
+                                            Procesando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4 mr-2" aria-hidden="true" />
+                                            Confirmar pedido
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );
