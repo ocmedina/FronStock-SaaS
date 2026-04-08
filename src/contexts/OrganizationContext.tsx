@@ -261,46 +261,21 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     ): Promise<boolean> => {
         if (!organization?.id) return false;
 
-        // Verificar si existe el registro
-        const existing = permissions.find((p) => p.role === role && p.module === module);
+        try {
+            // Llamar server action que verifica permisos y registra auditoría
+            const { updateRolePermission } = await import('@/actions/permissions');
+            const result = await updateRolePermission({ role, module, updates });
 
-        if (existing) {
-            // Actualizar
-            const { error: updateError } = await supabase
-                .from('organization_permissions')
-                .update({
-                    ...updates,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('organization_id', organization.id)
-                .eq('role', role)
-                .eq('module', module);
-
-            if (updateError) {
-                console.error('Error updating permission:', updateError);
+            if (result.error) {
+                console.error('Error updating permission:', result.error);
                 return false;
             }
-        } else {
-            // Insertar nuevo
-            const { error: insertError } = await supabase
-                .from('organization_permissions')
-                .insert({
-                    organization_id: organization.id,
-                    role,
-                    module,
-                    can_view: updates.can_view ?? false,
-                    can_create: updates.can_create ?? false,
-                    can_edit: updates.can_edit ?? false,
-                    can_delete: updates.can_delete ?? false,
-                });
-
-            if (insertError) {
-                console.error('Error inserting permission:', insertError);
-                return false;
-            }
+        } catch (err) {
+            console.error('Error updating permission:', err);
+            return false;
         }
 
-        // Actualizar estado local
+        // Actualizar estado local optimistamente (UI inmediata)
         setPermissions((prev) => {
             const idx = prev.findIndex((p) => p.role === role && p.module === module);
             if (idx >= 0) {

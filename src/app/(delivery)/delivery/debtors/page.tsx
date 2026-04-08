@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { User, Phone, MapPin, DollarSign, ArrowLeft, CheckCircle } from "lucide-react";
+import { User, Phone, MapPin, DollarSign, ArrowLeft, CheckCircle, Package, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
+import { cn } from "@/lib/utils";
 
 export default function DebtorsPage() {
     const { organizationId } = useOrganization();
@@ -17,7 +19,8 @@ export default function DebtorsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedDebtor, setSelectedDebtor] = useState<any>(null);
-    const supabase = createClient();
+    const pathname = usePathname();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
         if (organizationId) fetchDebtors();
@@ -205,7 +208,25 @@ export default function DebtorsPage() {
             {/* List */}
             <div className="p-4 space-y-3">
                 {loading ? (
-                    <div className="text-slate-500 text-center py-8">Cargando...</div>
+                    <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-slate-900 rounded-xl p-4 border border-slate-800 animate-pulse">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-slate-800" />
+                                        <div className="space-y-2">
+                                            <div className="h-4 w-32 bg-slate-800 rounded" />
+                                            <div className="h-3 w-20 bg-slate-800 rounded" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-right">
+                                        <div className="h-6 w-20 bg-slate-800 rounded inline-block" />
+                                        <div className="h-3 w-24 bg-slate-800 rounded ml-auto" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 ) : filteredDebtors.length === 0 ? (
                     <div className="text-slate-500 text-center py-8">No hay deudores pendientes</div>
                 ) : (
@@ -230,10 +251,10 @@ export default function DebtorsPage() {
                                 </div>
                                 <div className="text-right">
                                     <span className="block text-2xl font-bold text-red-400">
-                                        ${debtor.totalDebt.toLocaleString()}
+                                        ${(debtor.totalDebt || 0).toLocaleString()}
                                     </span>
                                     <span className="text-xs text-slate-500 font-medium">
-                                        {debtor.pendingSales.length} pedidos pendientes
+                                        {debtor.pendingSales?.length || 0} pedidos pendientes
                                     </span>
                                 </div>
                             </div>

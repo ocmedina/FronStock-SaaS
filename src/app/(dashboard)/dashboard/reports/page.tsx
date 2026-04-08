@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -33,6 +33,7 @@ import {
   ArrowDownRight,
   HandCoins,
   Layers,
+  Download,
 } from "lucide-react";
 import {
   AreaChart,
@@ -127,7 +128,7 @@ export default function ReportsPage() {
     paymentMethods: {} as Record<string, number>,
     previousPeriodRevenue: 0,
   });
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const getDateRange = (p: Period) => {
     const now = new Date();
@@ -438,6 +439,42 @@ export default function ReportsPage() {
       .sort((a, b) => b.total_revenue - a.total_revenue)
       .slice(0, 10);
 
+    // ─── Período anterior (comparativo real) ─────────────────────────────────
+    // Calculamos el período equivalente anterior al rango actual
+    let previousPeriodRevenue = 0;
+    try {
+      const currentStart = new Date(startDate);
+      const currentEnd = endDate ? new Date(endDate) : new Date();
+      const periodLengthMs = currentEnd.getTime() - currentStart.getTime();
+
+      const prevEnd = new Date(currentStart.getTime()); // un instante antes del período actual
+      const prevStart = new Date(prevEnd.getTime() - periodLengthMs);
+
+      const [{ data: prevSales }, { data: prevOrders }] = await Promise.all([
+        supabase
+          .from('sales')
+          .select('total')
+          .eq('organization_id', organizationId)
+          .eq('status', 'completed')
+          .gte('created_at', prevStart.toISOString())
+          .lt('created_at', prevEnd.toISOString()),
+        supabase
+          .from('orders')
+          .select('total')
+          .eq('organization_id', organizationId)
+          .neq('status', 'cancelled')
+          .gte('created_at', prevStart.toISOString())
+          .lt('created_at', prevEnd.toISOString()),
+      ]);
+
+      previousPeriodRevenue =
+        (prevSales || []).reduce((s, r) => s + Number(r.total), 0) +
+        (prevOrders || []).reduce((s, r) => s + Number(r.total), 0);
+    } catch {
+      previousPeriodRevenue = 0;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     setStats({
       totalRevenue,
       totalSales,
@@ -445,7 +482,7 @@ export default function ReportsPage() {
       topProducts,
       dailySales,
       paymentMethods,
-      previousPeriodRevenue: totalRevenue * 0.85,
+      previousPeriodRevenue,
     });
 
     setIsLoading(false);
@@ -496,6 +533,63 @@ export default function ReportsPage() {
         stats.previousPeriodRevenue) *
       100
       : 0;
+
+  // ─── Exportar CSV del período actual ──────────────────────────────────────────────
+  const exportCSV = () => {
+    const paymentLabelsLocal: Record<string, string> = {
+      cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia',
+      credit: 'Fiado', mixed: 'Pago Mixto', unknown: 'Sin definir',
+    };
+
+    const rows: string[][] = [];
+
+    // Encabezado general
+    rows.push(['FrontStock - Exportación de Reportes']);
+    rows.push(['Generado', new Date().toLocaleString('es-AR')]);
+    rows.push(['Período', period]);
+    rows.push(['Ingresos Totales', stats.totalRevenue.toFixed(2)]);
+    rows.push(['Ventas Totales', String(stats.totalSales)]);
+    rows.push(['Ticket Promedio', stats.averageTicket.toFixed(2)]);
+    rows.push(['Período Anterior', stats.previousPeriodRevenue.toFixed(2)]);
+    rows.push([]);
+
+    // Ventas diarias
+    rows.push(['--- VENTAS POR DÍA ---']);
+    rows.push(['Fecha', 'Ingresos', 'Cantidad']);
+    stats.dailySales.forEach(day => {
+      rows.push([day.date, day.total.toFixed(2), String(day.count)]);
+    });
+    rows.push([]);
+
+    // Productos top
+    rows.push(['--- TOP PRODUCTOS ---']);
+    rows.push(['Producto', 'Cantidad Vendida', 'Ingresos']);
+    stats.topProducts.forEach(p => {
+      rows.push([p.product_name, String(p.total_quantity), p.total_revenue.toFixed(2)]);
+    });
+    rows.push([]);
+
+    // Métodos de pago
+    rows.push(['--- MÉTODOS DE PAGO ---']);
+    rows.push(['Método', 'Total']);
+    Object.entries(stats.paymentMethods).forEach(([method, amount]) => {
+      rows.push([paymentLabelsLocal[method] || method, amount.toFixed(2)]);
+    });
+
+    // Generar CSV
+    const csv = rows.map(row =>
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte-${period}-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  // ───────────────────────────────────────────────────────────────
 
   // Format chart data
   const chartData = stats.dailySales.map((day) => ({
@@ -549,23 +643,31 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        {/* Period Selector */}
-        <div className="flex gap-1 bg-muted p-1.5 rounded-xl">
-          {(Object.keys(periodLabels) as Period[]).filter(p => p !== "custom").map((p) => (
-            <Button
-              key={p}
-              variant={period === p && !filters.startDate && !filters.endDate ? "default" : "ghost"}
-              size="sm"
-              onClick={() => {
-                setPeriod(p);
-                setFilters(prev => ({ ...prev, startDate: null, endDate: null, quickPeriod: p }));
-              }}
-              className={period === p && !filters.startDate && !filters.endDate ? "shadow-sm" : ""}
-            >
-              <Calendar className="h-4 w-4 mr-1.5" />
-              {periodLabels[p]}
+        <div className="flex items-center gap-2">
+          {/* Export CSV */}
+          {!isLoading && stats.totalSales > 0 && (
+            <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
+              <Download className="h-4 w-4" /> Exportar CSV
             </Button>
-          ))}
+          )}
+          {/* Period Selector */}
+          <div className="flex gap-1 bg-muted p-1.5 rounded-xl">
+            {(Object.keys(periodLabels) as Period[]).filter(p => p !== "custom").map((p) => (
+              <Button
+                key={p}
+                variant={period === p && !filters.startDate && !filters.endDate ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setPeriod(p);
+                  setFilters(prev => ({ ...prev, startDate: null, endDate: null, quickPeriod: p }));
+                }}
+                className={period === p && !filters.startDate && !filters.endDate ? "shadow-sm" : ""}
+              >
+                <Calendar className="h-4 w-4 mr-1.5" />
+                {periodLabels[p]}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 

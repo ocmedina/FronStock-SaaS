@@ -2,6 +2,7 @@
 
 import { requireOrganizationPermission } from '@/actions/_permissions';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEvent } from '@/actions/audit';
 
 type StockMovementInput = {
   product_id: string;
@@ -70,6 +71,23 @@ export async function createStockMovement(input: StockMovementInput) {
   if (updateError) {
     return { error: updateError.message || 'No se pudo actualizar el stock' };
   }
+
+  // Auditoría del movimiento de stock
+  await logAuditEvent({
+    organizationId: guard.organizationId,
+    action: 'custom',
+    entity: 'stock_movements',
+    entityId: product.id,
+    metadata: {
+      event: 'stock_movement',
+      product_name: product.name,
+      movement_type: input.movement_type,
+      quantity: quantityChange,
+      previous_stock: product.stock,
+      new_stock: newStock,
+      reason: input.reason,
+    },
+  });
 
   return { success: true };
 }

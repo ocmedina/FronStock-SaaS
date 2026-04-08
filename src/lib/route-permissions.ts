@@ -23,7 +23,7 @@ export function resolveDashboardModuleFromPath(pathname: string): string | null 
 
   if (path.startsWith("/dashboard/customers")) return "customers";
 
-  if (path.startsWith("/dashboard/sales") || path.startsWith("/dashboard/sales-v2")) return "sales";
+  if (path.startsWith("/dashboard/sales")) return "sales";
   if (path.startsWith("/dashboard/invoices")) return "invoices";
   if (path.startsWith("/dashboard/promotions")) return "promotions";
   if (path.startsWith("/dashboard/orders")) return "orders";

@@ -69,7 +69,7 @@ export function SuspendedSalesPanel({
                     {suspendedSales.map((sale) => {
                         const itemCount = sale.tab.cart.length;
                         const total = sale.tab.cart.reduce(
-                            (sum, item) => sum + item.product.price * item.quantity,
+                            (sum, item) => sum + (item.unitPrice ?? item.product.price) * item.quantity,
                             0
                         );
 
@@ -179,7 +179,7 @@ export function SuspendedSalesPanel({
                                                 x{item.quantity}
                                             </span>
                                             <span className="font-medium">
-                                                ${(item.product.price * item.quantity).toLocaleString()}
+                                                ${((item.unitPrice ?? item.product.price) * item.quantity).toLocaleString()}
                                             </span>
                                         </div>
                                     ))}
@@ -193,7 +193,7 @@ export function SuspendedSalesPanel({
                                         $
                                         {selectedSale.tab.cart
                                             .reduce(
-                                                (sum, item) => sum + item.product.price * item.quantity,
+                                                (sum, item) => sum + (item.unitPrice ?? item.product.price) * item.quantity,
                                                 0
                                             )
                                             .toLocaleString('es-AR')}

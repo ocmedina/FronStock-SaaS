@@ -22,11 +22,14 @@ import {
     CheckCircle2,
     XCircle,
     ArrowLeft,
+    Plus,
+    Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
+import { getDeliveryPaymentLabel, getOrderPaymentSummary } from "@/lib/utils/delivery";
 
 export default function DeliveryOrdersPage() {
     const { profile, organizationId } = useOrganization();
@@ -41,6 +44,8 @@ export default function DeliveryOrdersPage() {
     const [deliveryOrder, setDeliveryOrder] = useState<any | null>(null);
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+    const [paymentMode, setPaymentMode] = useState<"single" | "mixed">("single");
+    const [splitPayments, setSplitPayments] = useState<{ id: string; amount: string; method: string }[]>([]);
     const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
     const [submittingDelivery, setSubmittingDelivery] = useState(false);
     const targetOrderId = searchParams.get("orderId");
@@ -436,6 +441,8 @@ export default function DeliveryOrdersPage() {
         setDeliveryOrder(order);
         setPaymentAmount(String(Number(order.total || 0)));
         setPaymentMethod(order.payment_method || "cash");
+        setPaymentMode("single");
+        setSplitPayments([{ id: crypto.randomUUID(), amount: "", method: "cash" }]);
         setDeliveryConfirmed(false);
     };
 
@@ -444,45 +451,65 @@ export default function DeliveryOrdersPage() {
         setDeliveryOrder(null);
         setPaymentAmount("");
         setPaymentMethod("cash");
+        setPaymentMode("single");
+        setSplitPayments([]);
         setDeliveryConfirmed(false);
     };
 
-    const getPaymentMethodLabel = (method?: string) => {
-        if (!method) return "Sin definir";
-
-        const normalized = method.toLowerCase();
-        const labels: Record<string, string> = {
-            cash: "Efectivo",
-            transfer: "Transferencia",
-            card: "Tarjeta",
-            mixed: "Mixto",
-            fiado: "Fiado",
-            credit: "Cuenta Corriente",
-            current_account: "Cuenta Corriente",
-            cuenta_corriente: "Cuenta Corriente",
-        };
-
-        return labels[normalized] || method;
+    const handleAddSplit = () => {
+        setSplitPayments([...splitPayments, { id: crypto.randomUUID(), amount: "", method: "transfer" }]);
     };
+    
+    const handleUpdateSplit = (id: string, field: string, value: string) => {
+        setSplitPayments(splitPayments.map(p => p.id === id ? { ...p, [field]: value } : p));
+    };
+    
+    const handleRemoveSplit = (id: string) => {
+        if (splitPayments.length <= 1) return;
+        setSplitPayments(splitPayments.filter(p => p.id !== id));
+    };
+
 
     const handleMarkDelivered = async () => {
         if (!deliveryOrder) return;
 
-        const amount = Number(paymentAmount || 0);
         const totalAmount = Number(deliveryOrder.total || 0);
-        const normalizedMethod = String(paymentMethod || "").toLowerCase();
-        const allowsPendingBalance = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(normalizedMethod);
-        const pendingAmount = Math.max(0, totalAmount - amount);
-        const paymentAuditNote = `Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}; Total=${totalAmount}; Saldo=${pendingAmount}`;
+        let paymentsToProcess: { amount: number; method: string }[] = [];
+        let finalStatusMethod = "mixed";
+        let paymentAuditNote = "";
 
-        if (Number.isNaN(amount) || amount < 0) {
-            toast.error("Monto inválido");
-            return;
-        }
+        if (paymentMode === "single") {
+            const amount = Number(paymentAmount || 0);
+            const normalizedMethod = String(paymentMethod || "").toLowerCase();
+            const allowsPendingBalance = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(normalizedMethod);
+            const pendingAmount = Math.max(0, totalAmount - amount);
+            
+            if (Number.isNaN(amount) || amount < 0) {
+                return toast.error("Monto inválido");
+            }
+            if (!allowsPendingBalance && amount < totalAmount) {
+                return toast.error("Para este método debes cobrar el total del pedido");
+            }
+            paymentsToProcess = amount > 0 ? [{ amount, method: paymentMethod }] : [];
+            finalStatusMethod = paymentMethod;
+            paymentAuditNote = `[Unico] Método=${getDeliveryPaymentLabel(paymentMethod)}; Cobrado=${amount}; Total=${totalAmount}; Saldo=${pendingAmount}`;
+        } else {
+            // Mixed mode validation
+            const totalSplit = splitPayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            const totalSplitAmount = Number(totalSplit.toFixed(2));
+            const diff = totalAmount - totalSplitAmount;
+            
+            // Check if sum equals order amount precisely (allow margin 0.01 floating point)
+            if (Math.abs(diff) > 0.05) {
+                return toast.error(`El total de los cobros desglosados debe sumar exactamente el total del pedido ($${totalAmount}). Faltan o sobran $${Math.abs(diff).toFixed(2)}`);
+            }
+            
+            // Collect valid payments
+            paymentsToProcess = splitPayments
+                .filter(p => Number(p.amount) > 0)
+                .map(p => ({ amount: Number(p.amount), method: p.method }));
 
-        if (!allowsPendingBalance && amount < totalAmount) {
-            toast.error("Para este método debes cobrar el total del pedido");
-            return;
+            paymentAuditNote = `[Mixto] Desglose: ${paymentsToProcess.map(p => `${getDeliveryPaymentLabel(p.method)}: $${p.amount}`).join(" | ")}. Total=${totalAmount}`;
         }
 
         if (!deliveryConfirmed) {
@@ -494,24 +521,27 @@ export default function DeliveryOrdersPage() {
         try {
             const { error: methodError } = await supabase
                 .from("orders")
-                .update({ payment_method: paymentMethod })
+                .update({ payment_method: finalStatusMethod })
                 .eq("id", deliveryOrder.id)
                 .eq("organization_id", organizationId);
 
             if (methodError) throw methodError;
 
-            if (amount > 0) {
-                const { data: paymentData, error: paymentError } = await supabase.rpc("register_order_payment", {
-                    p_org_id: organizationId,
-                    p_order_id: deliveryOrder.id,
-                    p_method: paymentMethod,
-                    p_amount: amount,
-                    p_reference: null,
-                    p_notes: `Cobro registrado al entregar. ${paymentAuditNote}`,
-                });
+            // Procesar pagos Múltiples de forma paralela via rpc
+            if (paymentsToProcess.length > 0) {
+                await Promise.all(paymentsToProcess.map(async (payment) => {
+                    const { data: payData, error: payError } = await supabase.rpc("register_order_payment", {
+                        p_org_id: organizationId,
+                        p_order_id: deliveryOrder.id,
+                        p_method: payment.method,
+                        p_amount: payment.amount,
+                        p_reference: null,
+                        p_notes: `Cobro registrado al entregar. ${paymentAuditNote}`,
+                    });
 
-                if (paymentError) throw paymentError;
-                if (paymentData?.success === false) throw new Error(paymentData?.error || "No se pudo registrar el cobro");
+                    if (payError) throw payError;
+                    if (payData?.success === false) throw new Error(payData?.error || "Error al registrar un cobro del desglose");
+                }));
             }
 
             const { data, error } = await supabase.rpc("set_order_status", {
@@ -530,18 +560,18 @@ export default function DeliveryOrdersPage() {
                     .update({
                         visit_status: "visited",
                         visited_at: new Date().toISOString(),
-                        visit_notes: `Entrega registrada. Metodo=${getPaymentMethodLabel(paymentMethod)}; Cobrado=${amount}`,
+                        visit_notes: `Entrega registrada. ${paymentAuditNote}`,
                     })
                     .eq("order_id", deliveryOrder.id)
                     .eq("route_id", activeRoute.id);
             }
 
-            toast.success(amount > 0 ? "Pedido entregado y cobro registrado" : "Pedido marcado como entregado");
+            toast.success("Pedido entregado y cobro registrado");
             closeDeliverDialog();
             fetchMyOrders();
         } catch (error: any) {
             console.error("Error:", error);
-            toast.error("Error al actualizar pedido");
+            toast.error(error.message || "Error al actualizar pedido");
         } finally {
             setSubmittingDelivery(false);
         }
@@ -609,20 +639,6 @@ export default function DeliveryOrdersPage() {
         );
     };
 
-    const getOrderPaymentSummary = (order: any) => {
-        const payments = Array.isArray(order?.order_payments) ? order.order_payments : [];
-        const methods: string[] = Array.from(
-            new Set(
-                payments
-                    .map((p: any) => String(p.method || p.payment_method || "").toLowerCase())
-                    .filter(Boolean)
-            )
-        );
-
-        if (methods.length > 1) return "Mixto";
-        if (methods.length === 1) return getPaymentMethodLabel(methods[0]);
-        return getPaymentMethodLabel(order?.payment_method);
-    };
 
     if (loading) {
         return (
@@ -641,11 +657,24 @@ export default function DeliveryOrdersPage() {
         .slice(0, 8);
 
     const deliveryTotalAmount = Number(deliveryOrder?.total || 0);
-    const currentPaymentAmount = Number(paymentAmount || 0);
-    const currentMethod = String(paymentMethod || "").toLowerCase();
-    const currentMethodAllowsPending = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(currentMethod);
-    const pendingAmount = Math.max(0, deliveryTotalAmount - currentPaymentAmount);
-    const fullPaymentRequiredAndMissing = !currentMethodAllowsPending && currentPaymentAmount < deliveryTotalAmount;
+    
+    // Calcular resúmenes dinámicos según modo
+    let currentPaymentAmount = 0;
+    let pendingAmount = 0;
+    let fullPaymentRequiredAndMissing = false;
+
+    if (paymentMode === "single") {
+        currentPaymentAmount = Number(paymentAmount || 0);
+        const currentMethod = String(paymentMethod || "").toLowerCase();
+        const currentMethodAllowsPending = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(currentMethod);
+        pendingAmount = Math.max(0, deliveryTotalAmount - currentPaymentAmount);
+        fullPaymentRequiredAndMissing = !currentMethodAllowsPending && currentPaymentAmount < deliveryTotalAmount;
+    } else {
+        currentPaymentAmount = splitPayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        pendingAmount = deliveryTotalAmount - currentPaymentAmount;
+        // Para modo mixto la validación es estricta al 100% total
+        fullPaymentRequiredAndMissing = Math.abs(pendingAmount) > 0.05;
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 pb-20">
@@ -859,50 +888,130 @@ export default function DeliveryOrdersPage() {
                             <p className="text-xs text-slate-500">Total pedido: ${Number(deliveryOrder?.total || 0).toLocaleString()}</p>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="payment-amount" className="text-slate-300">Monto cobrado</Label>
-                            <Input
-                                id="payment-amount"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={paymentAmount}
-                                onChange={(e) => setPaymentAmount(e.target.value)}
-                                className="bg-slate-950 border-slate-700"
-                            />
-                            <p className="text-xs text-slate-500">
-                                {currentMethodAllowsPending
-                                    ? "Fiado/Cuenta Corriente: puedes dejar saldo pendiente."
-                                    : "Este método requiere cobrar el total del pedido."}
-                            </p>
+                        {/* Mode Selector */}
+                        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-lg border border-slate-800">
+                            <button
+                                className={`py-1.5 text-xs font-semibold rounded-md transition-colors ${paymentMode === "single" ? "bg-slate-800 text-white" : "text-slate-500 hover:text-slate-300"}`}
+                                onClick={() => setPaymentMode("single")}
+                            >
+                                Pago Único
+                            </button>
+                            <button
+                                className={`py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-1.5 ${paymentMode === "mixed" ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" : "text-slate-500 hover:text-slate-300"}`}
+                                onClick={() => setPaymentMode("mixed")}
+                            >
+                                Pagos Múltiples
+                            </button>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label className="text-slate-300">Método elegido por cliente</Label>
-                            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                <SelectTrigger className="bg-slate-950 border-slate-700">
-                                    <SelectValue placeholder="Seleccionar método" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="cash">Efectivo</SelectItem>
-                                    <SelectItem value="transfer">Transferencia</SelectItem>
-                                    <SelectItem value="card">Tarjeta</SelectItem>
-                                    <SelectItem value="mixed">Mixto</SelectItem>
-                                    <SelectItem value="fiado">Fiado</SelectItem>
-                                    <SelectItem value="credit">Cuenta Corriente</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {paymentMode === "single" ? (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="payment-amount" className="text-slate-300">Monto cobrado</Label>
+                                    <Input
+                                        id="payment-amount"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                        className="bg-slate-950 border-slate-700"
+                                    />
+                                </div>
+        
+                                <div className="space-y-2">
+                                    <Label className="text-slate-300">Método elegido por cliente</Label>
+                                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                        <SelectTrigger className="bg-slate-950 border-slate-700">
+                                            <SelectValue placeholder="Seleccionar método" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="cash">Efectivo</SelectItem>
+                                            <SelectItem value="transfer">Transferencia</SelectItem>
+                                            <SelectItem value="card">Tarjeta</SelectItem>
+                                            <SelectItem value="mixed">Mixto</SelectItem>
+                                            <SelectItem value="fiado">Fiado</SelectItem>
+                                            <SelectItem value="credit">Cuenta Corriente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-3 p-3 bg-slate-950 border border-slate-800 rounded-lg">
+                                <Label className="text-slate-300 text-xs">Desglose de cobro</Label>
+                                {splitPayments.map((split, index) => (
+                                    <div key={split.id} className="flex gap-2 items-center">
+                                        <div className="flex-1">
+                                            <Select value={split.method} onValueChange={(v) => handleUpdateSplit(split.id, "method", v)}>
+                                                <SelectTrigger className="bg-slate-900 border-slate-700 h-9 shrink-0 text-xs text-slate-300 focus:ring-0">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="cash">Efectivo</SelectItem>
+                                                    <SelectItem value="transfer">Transf.</SelectItem>
+                                                    <SelectItem value="card">Tarjeta</SelectItem>
+                                                    <SelectItem value="fiado">📝 Cta Cte</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="relative w-[130px] shrink-0">
+                                            <span className="absolute left-2.5 top-2.5 text-slate-500 font-mono text-xs">$</span>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={split.amount}
+                                                onChange={(e) => handleUpdateSplit(split.id, "amount", e.target.value)}
+                                                className="bg-slate-900 border-slate-700 pl-6 h-9 font-mono text-xs text-emerald-400 placeholder:text-slate-600 focus-visible:ring-0"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-9 w-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 shrink-0"
+                                            onClick={() => handleRemoveSplit(split.id)}
+                                            disabled={splitPayments.length <= 1}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full mt-2 h-8 border-dashed border-slate-700 bg-transparent text-slate-400 hover:text-indigo-300 hover:border-indigo-500/50 hover:bg-indigo-500/10"
+                                    onClick={handleAddSplit}
+                                >
+                                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Fracción
+                                </Button>
+                            </div>
+                        )}
 
-                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
-                            <p className="text-slate-200">Método: <span className="font-semibold text-emerald-300">{getPaymentMethodLabel(paymentMethod)}</span></p>
-                            <p className="text-slate-200">Cobro: <span className="font-semibold text-emerald-300">${Number(paymentAmount || 0).toLocaleString()}</span></p>
-                            <p className="text-slate-200">Saldo: <span className="font-semibold text-emerald-300">${pendingAmount.toLocaleString()}</span></p>
+                        <div className={`rounded-lg border p-3 text-sm flex items-center justify-between ${
+                            paymentMode === "single" 
+                                ? "border-emerald-500/30 bg-emerald-500/10" 
+                                : Math.abs(pendingAmount) <= 0.05 
+                                    ? "border-indigo-500/30 bg-indigo-500/10" 
+                                    : "border-amber-500/30 bg-amber-500/10"
+                        }`}>
+                            <div>
+                                <p className="text-slate-200">Total Ingresado:</p>
+                                <span className={`font-black text-lg ${paymentMode === "single" ? "text-emerald-400" : "text-indigo-400"}`}>${currentPaymentAmount.toLocaleString()}</span>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-slate-200">{paymentMode === "single" ? "Saldo Restante:" : "Diferencia:"}</p>
+                                <span className={`font-bold ${pendingAmount > 0.05 ? "text-amber-400" : pendingAmount < -0.05 ? "text-red-400" : "text-slate-400"}`}>
+                                    ${pendingAmount.toLocaleString()}
+                                </span>
+                            </div>
                         </div>
 
                         {fullPaymentRequiredAndMissing && (
                             <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                                Para confirmar entrega con este método debes cobrar el total (${deliveryTotalAmount.toLocaleString()}).
+                                {paymentMode === "single" 
+                                    ? `Para confirmar entrega debes cobrar el total ($${deliveryTotalAmount.toLocaleString()}).`
+                                    : `El desglose múltiple debe sumar exactamente $${deliveryTotalAmount.toLocaleString()}.`}
                             </div>
                         )}
 

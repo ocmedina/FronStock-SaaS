@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ResponsiveModal } from "@/components/ui/responsive-modal";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { DownloadRemitoButton } from "@/components/orders/DownloadRemitoButton";
 import { DownloadOrderInvoiceButton } from "@/components/orders/DownloadOrderInvoiceButton";
+import { getDeliveryPaymentLabel, normalizeDeliveryStatus } from "@/lib/utils/delivery";
+import { useRouter } from "next/navigation";
 
 interface OrderDetailsModalProps {
     orderId: string | null;
@@ -27,7 +29,8 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState(false);
-    const supabase = createClient();
+    const router = useRouter();
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
         if (open && orderId) {
@@ -151,23 +154,7 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
         );
     };
 
-    const getPaymentMethodLabel = (method?: string) => {
-        if (!method) return 'Sin definir';
-
-        const normalized = method.toLowerCase();
-        const labels: Record<string, string> = {
-            cash: 'Efectivo',
-            transfer: 'Transferencia',
-            card: 'Tarjeta',
-            mixed: 'Mixto',
-            fiado: 'Fiado',
-            credit: 'Cuenta Cte.',
-            current_account: 'Cuenta Cte.',
-            cuenta_corriente: 'Cuenta Cte.',
-        };
-
-        return labels[normalized] || method;
-    };
+    const getPaymentMethodLabel = (method?: string) => getDeliveryPaymentLabel(method);
 
     const getPaymentStatusBadge = (paymentStatus: string, paymentAmount: number, total: number) => {
         if (paymentStatus === 'paid' || paymentAmount >= total) {
@@ -414,7 +401,7 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
                                             className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg"
                                             onClick={() => {
                                                 onOpenChange(false);
-                                                window.location.href = `/delivery/orders?orderId=${orderId}`;
+                                                router.push(`/delivery/orders?orderId=${orderId}`);
                                             }}
                                             disabled={updating}
                                         >

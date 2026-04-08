@@ -138,7 +138,9 @@ export function useSupabaseTable<T extends TenantEntity>({
     }, [supabase, table, ensureOrganizationId]);
 
     /**
-     * Crear un nuevo registro (inyecta organization_id automáticamente)
+     * @deprecated Usar server actions con `requireOrganizationPermission` en su lugar.
+     * Este método escribe directo desde el cliente sin guard de permisos en el servidor.
+     * Ejemplo: `/src/actions/products.ts` → `createProduct()`
      */
     const create = useCallback(async (
         insertData: Omit<T, keyof TenantEntity>
@@ -176,7 +178,9 @@ export function useSupabaseTable<T extends TenantEntity>({
     }, [supabase, table, ensureOrganizationId]);
 
     /**
-     * Actualizar un registro (verifica organization_id)
+     * @deprecated Usar server actions con `requireOrganizationPermission` en su lugar.
+     * Este método escribe directo desde el cliente sin guard de permisos en el servidor.
+     * Ejemplo: `/src/actions/products.ts` → `updateProduct()`
      */
     const update = useCallback(async (
         id: string,
@@ -219,7 +223,9 @@ export function useSupabaseTable<T extends TenantEntity>({
     }, [supabase, table, ensureOrganizationId]);
 
     /**
-     * Eliminar un registro (verifica organization_id)
+     * @deprecated Usar server actions con `requireOrganizationPermission` en su lugar.
+     * Este método escribe directo desde el cliente sin guard de permisos en el servidor.
+     * Ejemplo: `/src/actions/products.ts` → `deleteProduct()`
      */
     const remove = useCallback(async (id: string): Promise<boolean> => {
         try {

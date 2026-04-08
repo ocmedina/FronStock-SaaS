@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export function ShiftControl({ className }: ShiftControlProps) {
     const [initialCash, setInitialCash] = useState("");
     const [returnedCash, setReturnedCash] = useState("");
     const [open, setOpen] = useState(false);
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
 
     const fetchActiveShift = async () => {
         setLoading(true);
@@ -53,7 +53,10 @@ export function ShiftControl({ className }: ShiftControlProps) {
     }, [open, profile?.id]);
 
     const handleStartShift = async () => {
-        if (!initialCash) return toast.error("Ingresa el monto inicial");
+        const cashValue = parseFloat(initialCash);
+        if (!initialCash || isNaN(cashValue) || cashValue < 0) {
+            return toast.error("Ingresa un monto inicial válido mayor o igual a cero");
+        }
 
         setLoading(true);
         try {
@@ -79,7 +82,10 @@ export function ShiftControl({ className }: ShiftControlProps) {
     };
 
     const handleEndShift = async () => {
-        if (!returnedCash) return toast.error("Ingresa el monto a rendir");
+        const cashValue = parseFloat(returnedCash);
+        if (!returnedCash || isNaN(cashValue) || cashValue < 0) {
+            return toast.error("Ingresa un monto válido mayor o igual a cero");
+        }
 
         setLoading(true);
         try {

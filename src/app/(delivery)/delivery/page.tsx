@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     Truck, MapPin, User, LogOut, Clock,
     CheckCircle2, Package, ChevronRight,
@@ -15,10 +16,24 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { formatDistanceToNow, isToday, differenceInMinutes } from "date-fns";
 import { es } from "date-fns/locale";
+import { DeliveryBottomNav } from "@/components/delivery/DeliveryBottomNav";
+import { SwipeableOrderCard } from "@/components/delivery/SwipeableOrderCard";
 import { ShiftControl } from "@/components/delivery/ShiftControl";
 import { OrderDetailsModal } from "@/components/delivery/OrderDetailsModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { updateOrderStatus } from "@/actions/delivery";
+import { getDeliveryPaymentLabel } from "@/lib/utils/delivery";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type DeliveryOrder = {
     id: string;
@@ -29,6 +44,7 @@ type DeliveryOrder = {
     payment_status: string;
     payment_method: string;
     created_at: string;
+    out_for_delivery_at?: string | null;  // ← timestamp real de salida
     assigned_route_id?: string | null;
     order_items?: { quantity: number; product_name: string }[];
 };
@@ -68,6 +84,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 const PENDING_STATUSES = ["confirmed", "assigned", "rescheduled"];
 
 export default function DeliveryHomePage() {
+    const router = useRouter();
     const { profile, organization } = useOrganization();
     const [orders, setOrders] = useState<DeliveryOrder[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,7 +98,19 @@ export default function DeliveryHomePage() {
     const [now, setNow] = useState(new Date());
     const [showSummary, setShowSummary] = useState(false);
     const prevOrderIds = useRef<Set<string>>(new Set());
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
+
+    // ─── CONFIRM DIALOG STATE ──────────────────────────────────────────────────
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        description: string;
+        onConfirm: () => void;
+    }>({ open: false, title: '', description: '', onConfirm: () => {} });
+
+    const openConfirm = useCallback((title: string, description: string, onConfirm: () => void) => {
+        setConfirmDialog({ open: true, title, description, onConfirm });
+    }, []);
 
     // ─── LIVE CLOCK (para el timer en camino) ──────────────────────────────────
     useEffect(() => {
@@ -123,8 +152,11 @@ export default function DeliveryHomePage() {
                 prevOrderIds.current = incomingIds;
                 setOrders(incoming);
             }
-        } catch (e) {
-            console.error("Error fetching orders", e);
+        } catch (e: any) {
+            // PostgrestError no extiende Error, por eso aparece como {} en console.error
+            const msg = e?.message || e?.error_description || JSON.stringify(e) || 'Error desconocido';
+            const code = e?.code ? ` [${e.code}]` : '';
+            console.error(`Error fetching orders${code}:`, msg, e?.details || '');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -150,16 +182,10 @@ export default function DeliveryHomePage() {
     const handleUpdateStatus = async (orderId: string, newStatus: string) => {
         setUpdatingId(orderId);
         try {
-            const { data, error } = await supabase.rpc("set_order_status", {
-                p_org_id: organization?.id,
-                p_order_id: orderId,
-                p_new_status: newStatus,
-                p_notes: "Actualizado desde panel de reparto",
-            });
-            if (error) throw error;
-            if (data?.success === false) throw new Error(data?.error || "No se pudo actualizar estado");
+            // ★ Server action — no RPC directo desde el cliente
+            const result = await updateOrderStatus({ orderId, newStatus });
+            if (!result.success) throw new Error(result.error);
             toast.success(newStatus === "in_delivery" ? "¡En camino! 🚚" : "Estado actualizado");
-            // Optimistic: switch to in_delivery tab
             if (newStatus === "in_delivery") setActiveTab("in_delivery");
             await fetchOrders(true);
         } catch (e: any) {
@@ -215,11 +241,17 @@ export default function DeliveryHomePage() {
 
     // ─── RENDER ────────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-slate-950 pb-24">
-            <div className="mx-auto w-full max-w-lg">
+        <div className="relative min-h-screen overflow-hidden bg-slate-950 pb-24">
+            <div className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+                <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.12),transparent_55%)]" />
+            </div>
+
+            <div className="relative mx-auto w-full max-w-2xl">
 
                 {/* ── HEADER ────────────────────────────────────────────────── */}
-                <div className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/60 px-4 pt-4 pb-3">
+                <div className="sticky top-0 z-20 border-b border-slate-800/40 bg-slate-950/70 px-4 pt-4 pb-3 backdrop-blur-xl">
                     <div className="flex items-center justify-between gap-3">
                         {/* Left: org + user */}
                         <div className="min-w-0">
@@ -238,8 +270,8 @@ export default function DeliveryHomePage() {
                                 className={cn(
                                     "h-8 px-2.5 rounded-full border flex items-center gap-1.5 text-[11px] font-bold transition-colors",
                                     showSummary
-                                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                                        : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                                        ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                                        : "border-slate-700 bg-slate-900/70 text-slate-400 hover:text-white"
                                 )}
                                 title="Resumen de turno"
                             >
@@ -262,30 +294,34 @@ export default function DeliveryHomePage() {
                             <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">
                                 Progreso del día
                             </span>
-                            <span className="text-[11px] font-bold text-emerald-400">
+                            <span className="text-[11px] font-bold text-cyan-300">
                                 {deliveredTodayOrders.length}
                                 <span className="text-slate-600 font-normal"> / {totalActive} entregas</span>
                             </span>
                         </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                             <div
-                                className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full transition-all duration-700 ease-out"
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 transition-all duration-700 ease-out"
                                 style={{ width: `${progressPct}%` }}
                             />
                         </div>
                     </div>
 
                     {/* ── TABS ─────────────────────────────────────────────── */}
-                    <div className="flex gap-1 mt-3 bg-slate-900/60 rounded-xl p-1">
+                    <div className="mt-3 flex gap-1 rounded-2xl border border-slate-700/60 bg-slate-900/70 p-1">
                         {(Object.entries(tabData) as [TabId, typeof tabData[TabId]][]).map(([id, tab]) => (
                             <button
                                 key={id}
                                 onClick={() => setActiveTab(id)}
                                 className={cn(
-                                    "flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[11px] font-bold transition-all duration-200",
+                                    "flex-1 rounded-xl px-1 py-2 text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 border",
                                     activeTab === id
-                                        ? "bg-slate-800 text-white shadow-sm"
-                                        : "text-slate-500 hover:text-slate-300"
+                                        ? id === "pending"
+                                            ? "border-amber-400/30 bg-amber-500/15 text-amber-100 shadow-[0_0_16px_rgba(251,191,36,0.15)]"
+                                            : id === "in_delivery"
+                                                ? "border-cyan-400/30 bg-cyan-500/15 text-cyan-100 shadow-[0_0_16px_rgba(6,182,212,0.15)]"
+                                                : "border-emerald-400/30 bg-emerald-500/15 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.12)]"
+                                        : "border-transparent text-slate-500 hover:text-slate-300"
                                 )}
                             >
                                 <span>{tab.label}</span>
@@ -294,7 +330,7 @@ export default function DeliveryHomePage() {
                                         "inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-black",
                                         activeTab === id
                                             ? id === "pending" ? "bg-amber-500 text-slate-950"
-                                                : id === "in_delivery" ? "bg-purple-500 text-white"
+                                                : id === "in_delivery" ? "bg-cyan-500 text-slate-950"
                                                     : "bg-emerald-500 text-slate-950"
                                             : "bg-slate-700 text-slate-300"
                                     )}>
@@ -308,7 +344,7 @@ export default function DeliveryHomePage() {
 
                 {/* ── TURNO SUMMARY PANEL ────────────────────────────────── */}
                 {showSummary && (
-                    <div className="mx-4 mt-2 mb-0 rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+                    <div className="mx-4 mt-2 mb-0 overflow-hidden rounded-3xl border border-slate-700/60 bg-slate-900/85 shadow-[0_12px_30px_rgba(2,6,23,0.35)]">
                         <div className="grid grid-cols-3 divide-x divide-slate-800">
                             <div className="p-3 text-center">
                                 <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium">Entregado hoy</p>
@@ -322,7 +358,7 @@ export default function DeliveryHomePage() {
                             </div>
                             <div className="p-3 text-center">
                                 <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium">Efectivo esperado</p>
-                                <p className="text-base font-black text-blue-400 mt-0.5">${totalCashExpected.toLocaleString()}</p>
+                                    <p className="text-base font-black text-cyan-300 mt-0.5">${totalCashExpected.toLocaleString()}</p>
                                 <p className="text-[10px] text-slate-600">en caja</p>
                             </div>
                         </div>
@@ -330,7 +366,7 @@ export default function DeliveryHomePage() {
                 )}
 
                 {/* ── CONTENT ───────────────────────────────────────────────── */}
-                <div className="px-4 py-3 space-y-3">
+                    <div className="space-y-3 px-4 py-3">
 
                     {/* Refresh indicator */}
                     {refreshing && (
@@ -348,8 +384,8 @@ export default function DeliveryHomePage() {
                                 className={cn(
                                     "h-7 px-3 rounded-full text-[11px] font-semibold border transition-colors",
                                     !zoneFilter
-                                        ? "bg-slate-700 border-slate-600 text-white"
-                                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300"
+                                        ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-100"
+                                        : "border-slate-800 bg-slate-900 text-slate-500 hover:text-slate-300"
                                 )}
                             >
                                 Todas
@@ -361,8 +397,8 @@ export default function DeliveryHomePage() {
                                     className={cn(
                                         "h-7 px-3 rounded-full text-[11px] font-semibold border transition-colors flex items-center gap-1",
                                         zoneFilter === zone
-                                            ? "bg-indigo-600 border-indigo-500 text-white"
-                                            : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                                            ? "border-cyan-500 bg-cyan-600 text-white"
+                                            : "border-slate-800 bg-slate-900 text-slate-400 hover:text-white"
                                     )}
                                 >
                                     <MapPin className="h-2.5 w-2.5" />
@@ -402,8 +438,8 @@ export default function DeliveryHomePage() {
                             )}
                             {activeTab === "in_delivery" && (
                                 <>
-                                    <div className="h-16 w-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
-                                        <Truck className="h-8 w-8 text-purple-400" />
+                                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500/10">
+                                        <Truck className="h-8 w-8 text-cyan-300" />
                                     </div>
                                     <p className="text-white font-semibold text-base">Ninguno en camino</p>
                                     <p className="text-slate-500 text-sm mt-1">Asigná pedidos desde Pendientes</p>
@@ -424,15 +460,55 @@ export default function DeliveryHomePage() {
                         visibleOrders.map((order) => {
                             const status = getStatus(order);
                             const isUpdating = updatingId === order.id;
-                            const paymentLabel = PAYMENT_LABELS[order.payment_method?.toLowerCase()] ?? order.payment_method;
+                            const paymentLabel = getDeliveryPaymentLabel(order.payment_method);
                             const itemCount = order.order_items?.length ?? 0;
                             const isPaid = order.payment_status === "paid";
                             const isRescheduled = status === "rescheduled";
                             const hasRoute = !!order.assigned_route_id;
                             const isNew = newOrderIds.has(order.id);
+                            const timerStart = order.out_for_delivery_at || order.created_at;
                             const elapsedMins = activeTab === "in_delivery"
-                                ? differenceInMinutes(now, new Date(order.created_at))
+                                ? differenceInMinutes(now, new Date(timerStart))
                                 : 0;
+                            // If order is actively out for delivery, use the new Swipeable Premium Component!
+                            if (activeTab === "in_delivery") {
+                                return (
+                                    <SwipeableOrderCard
+                                        key={order.id}
+                                        order={order}
+                                        onSwipeRight={(id) => router.push(`/delivery/orders?orderId=${id}`)}
+                                        onViewDetails={(id) => { setSelectedOrderId(id); setDetailsOpen(true); }}
+                                    >
+                                        <div className="flex flex-wrap gap-2">
+                                            {/* Mapa */}
+                                            {order.customer?.address && (
+                                                <a
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.customer.address)}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors text-[11px] font-semibold"
+                                                >
+                                                    <Navigation className="h-3 w-3" />
+                                                    Mapa
+                                                </a>
+                                            )}
+
+                                            {/* WhatsApp */}
+                                            {order.customer?.phone && (
+                                                <a
+                                                    href={`https://wa.me/${order.customer.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-colors text-[11px] font-semibold"
+                                                >
+                                                    <MessageCircle className="h-3 w-3" />
+                                                    WhatsApp
+                                                </a>
+                                            )}
+                                        </div>
+                                    </SwipeableOrderCard>
+                                );
+                            }
 
                             return (
                                 <div
@@ -442,12 +518,8 @@ export default function DeliveryHomePage() {
                                         isNew && "ring-2 ring-blue-500/60",
                                         isRescheduled
                                             ? "border-yellow-500/40"
-                                            : activeTab === "in_delivery"
-                                                ? elapsedMins > 45
-                                                    ? "border-red-500/40"
-                                                    : "border-purple-500/30"
-                                                : activeTab === "delivered"
-                                                    ? "border-emerald-500/20"
+                                            : activeTab === "delivered"
+                                                ? "border-emerald-500/20"
                                                     : hasRoute
                                                         ? "border-slate-700"
                                                         : "border-amber-500/30"
@@ -471,8 +543,8 @@ export default function DeliveryHomePage() {
                                         )}>
                                             {hasRoute ? (
                                                 <>
-                                                    <Route className="h-3 w-3 text-indigo-400" />
-                                                    <span className="text-[11px] font-semibold text-indigo-400">Con ruta asignada</span>
+                                                    <Route className="h-3 w-3 text-cyan-300" />
+                                                    <span className="text-[11px] font-semibold text-cyan-300">Con ruta asignada</span>
                                                 </>
                                             ) : (
                                                 <>
@@ -522,18 +594,7 @@ export default function DeliveryHomePage() {
                                             <Package className="h-3 w-3" />
                                             <span>{itemCount} ítem{itemCount !== 1 ? "s" : ""}</span>
                                             {/* Elapsed timer for in_delivery */}
-                                            {activeTab === "in_delivery" && (
-                                                <>
-                                                    <span className="text-slate-700">•</span>
-                                                    <span className={cn(
-                                                        "flex items-center gap-0.5 font-semibold",
-                                                        elapsedMins > 45 ? "text-red-400" : elapsedMins > 20 ? "text-amber-400" : "text-slate-500"
-                                                    )}>
-                                                        <Clock className="h-3 w-3" />
-                                                        {elapsedMins}m en camino
-                                                    </span>
-                                                </>
-                                            )}
+
                                             {order.customer?.phone && (
                                                 <>
                                                     <span className="text-slate-700">•</span>
@@ -554,7 +615,7 @@ export default function DeliveryHomePage() {
                                             {/* PENDING → start delivery */}
                                             {activeTab === "pending" && (
                                                 <Button
-                                                    className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-xl"
+                                                    className="h-10 flex-1 rounded-xl bg-cyan-600 text-sm font-bold text-white hover:bg-cyan-500"
                                                     onClick={() => handleUpdateStatus(order.id, "in_delivery")}
                                                     disabled={isUpdating}
                                                 >
@@ -566,17 +627,7 @@ export default function DeliveryHomePage() {
                                             )}
 
                                             {/* IN DELIVERY → confirm delivery */}
-                                            {activeTab === "in_delivery" && (
-                                                <Link href={`/delivery/orders?orderId=${order.id}`} className="flex-1">
-                                                    <Button
-                                                        className="w-full h-10 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl"
-                                                        disabled={isUpdating}
-                                                    >
-                                                        <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                                                        Entregar + Cobrar
-                                                    </Button>
-                                                </Link>
-                                            )}
+
 
                                             {/* DELIVERED → just view */}
                                             {activeTab === "delivered" && (
@@ -639,11 +690,13 @@ export default function DeliveryHomePage() {
                                                 {activeTab === "pending" && (
                                                     <button
                                                         className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20 transition-colors text-[11px] font-semibold"
-                                                        onClick={() => {
-                                                            if (confirm(`¿Reprogramar pedido de ${order.customer?.name || 'este cliente'}?`)) {
-                                                                handleUpdateStatus(order.id, 'rescheduled');
-                                                            }
-                                                        }}
+                                                        onClick={() =>
+                                                            openConfirm(
+                                                                'Reprogramar pedido',
+                                                                `¿Reprogramar el pedido de ${order.customer?.name || 'este cliente'}? Quedará marcado para una próxima visita.`,
+                                                                () => handleUpdateStatus(order.id, 'rescheduled')
+                                                            )
+                                                        }
                                                         disabled={isUpdating}
                                                     >
                                                         <RotateCcw className="h-3 w-3" />
@@ -655,11 +708,13 @@ export default function DeliveryHomePage() {
                                                 {activeTab === "pending" && (
                                                     <button
                                                         className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors text-[11px] font-semibold ml-auto"
-                                                        onClick={() => {
-                                                            if (confirm(`¿Cancelar pedido de ${order.customer?.name || 'este cliente'}?`)) {
-                                                                handleUpdateStatus(order.id, 'cancelled');
-                                                            }
-                                                        }}
+                                                        onClick={() =>
+                                                            openConfirm(
+                                                                'Cancelar pedido',
+                                                                `¿Cancelar el pedido de ${order.customer?.name || 'este cliente'}? Esta acción no se puede deshacer.`,
+                                                                () => handleUpdateStatus(order.id, 'cancelled')
+                                                            )
+                                                        }
                                                         disabled={isUpdating}
                                                     >
                                                         <XCircle className="h-3 w-3" />
@@ -675,43 +730,41 @@ export default function DeliveryHomePage() {
                     )}
                 </div>
             </div>
-
-            {/* ── FAB: Tomar Pedido ─────────────────────────────────────────── */}
-            <Link href="/delivery/order">
-                <button className="fixed bottom-20 right-4 z-40 flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-sm px-5 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/30 transition-all duration-150">
-                    <Plus className="h-5 w-5" />
-                    Tomar Pedido
-                </button>
-            </Link>
-
-            {/* ── BOTTOM NAV ────────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800/80 h-16 flex items-center justify-around px-2 z-50">
-                <NavItem href="/delivery" icon={<Package className="h-5 w-5" />} label="Pedidos" active />
-                <NavItem href="/delivery/debtors" icon={<User className="h-5 w-5" />} label="Deudores" />
-                <NavItem href="/delivery/history" icon={<Clock className="h-5 w-5" />} label="Historial" />
-            </div>
-
             <OrderDetailsModal
                 orderId={selectedOrderId}
                 open={detailsOpen}
                 onOpenChange={setDetailsOpen}
                 onSuccess={() => fetchOrders(true)}
             />
-        </div>
-    );
-}
 
-function NavItem({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active?: boolean }) {
-    return (
-        <Link
-            href={href}
-            className={cn(
-                "flex flex-col items-center gap-1 min-w-12 transition-colors",
-                active ? "text-emerald-400" : "text-slate-500 hover:text-slate-200"
-            )}
-        >
-            {icon}
-            <span className="text-[10px] font-semibold">{label}</span>
-        </Link>
+            {/* ── CONFIRM DIALOG ────────────────────────────────────────────── */}
+            <AlertDialog
+                open={confirmDialog.open}
+                onOpenChange={(open) => setConfirmDialog((d) => ({ ...d, open }))}
+            >
+                <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">{confirmDialog.title}</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-400">
+                            {confirmDialog.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-500 text-white"
+                            onClick={() => {
+                                confirmDialog.onConfirm();
+                                setConfirmDialog((d) => ({ ...d, open: false }));
+                            }}
+                        >
+                            Confirmar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
     );
 }

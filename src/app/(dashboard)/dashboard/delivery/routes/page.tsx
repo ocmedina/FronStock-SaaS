@@ -51,11 +51,12 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
+import { updateDeliveryRoute, assignOrdersToRoute } from "@/actions/delivery";
 
 export default function RoutesManagementPage() {
   const { organizationId } = useOrganization();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [routes, setRoutes] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
@@ -193,19 +194,17 @@ export default function RoutesManagementPage() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("routes")
-        .update({
-          name: formData.name,
-          zone: formData.zone || null,
-          visit_day: parseInt(formData.visit_day),
-          driver_id: formData.driver_id && formData.driver_id !== "none" ? formData.driver_id : null,
-          notes: formData.notes || null,
-        })
-        .eq("id", editingRoute.id)
-        .eq("organization_id", organizationId);
+      // ★ Server action — reemplaza el update directo del cliente
+      const result = await updateDeliveryRoute({
+        routeId: editingRoute.id,
+        name: formData.name,
+        zone: formData.zone || null,
+        visit_day: parseInt(formData.visit_day),
+        driver_id: formData.driver_id && formData.driver_id !== "none" ? formData.driver_id : null,
+        notes: formData.notes || null,
+      });
 
-      if (error) throw error;
+      if (result.error) throw new Error(result.error);
 
       toast.success("Ruta actualizada");
       setShowModal(false);
@@ -370,28 +369,13 @@ export default function RoutesManagementPage() {
 
     setSendingOrdersRouteId(route.id);
     try {
-      let rpcResult = await supabase.rpc("assign_orders_to_route", {
-        p_org_id: organizationId,
-        p_order_ids: orderIds,
-        p_route_id: route.id,
-      });
+      // ★ Server action — reemplaza el RPC directo del cliente
+      const result = await assignOrdersToRoute({ routeId: route.id, orderIds });
 
-      if (rpcResult.error && /p_org_id|function assign_orders_to_route\(uuid\[\], uuid\)/i.test(rpcResult.error.message || "")) {
-        rpcResult = await supabase.rpc("assign_orders_to_route", {
-          p_order_ids: orderIds,
-          p_route_id: route.id,
-        });
-      }
+      if (!result.success) throw new Error(result.error);
 
-      const { data, error } = rpcResult;
-      if (error) throw error;
-
-      if (data?.success) {
-        toast.success(`${data.assigned_count} pedido(s) enviado(s) a la ruta`);
-        fetchData();
-      } else {
-        toast.error(data?.error || "No se pudieron enviar pedidos a la ruta");
-      }
+      toast.success(`${result.assignedCount} pedido(s) enviado(s) a la ruta`);
+      fetchData();
     } catch (error: any) {
       toast.error("Error: " + error.message);
     } finally {

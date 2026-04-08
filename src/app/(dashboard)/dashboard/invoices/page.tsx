@@ -20,7 +20,6 @@ import {
     InvoiceDetailModal,
     InvoiceFilters,
     InvoiceFilterValues,
-    EditInvoiceModal,
 } from "@/components/invoices";
 
 export default function InvoicesPage() {
@@ -39,7 +38,6 @@ export default function InvoicesPage() {
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-    const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
     const [filters, setFilters] = useState<InvoiceFilterValues>({});
 
     const supabase = createClient();
@@ -232,7 +230,7 @@ export default function InvoicesPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
             ) : (
-                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} onEdit={setInvoiceToEdit} organization={orgWithBase64Logo} />
+                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} organization={orgWithBase64Logo} />
             )}
 
             {/* Create Modal */}
@@ -251,16 +249,6 @@ export default function InvoicesPage() {
                 onClose={() => setSelectedInvoice(null)}
                 organization={orgWithBase64Logo}
             />
-            {/* Edit Modal */}
-            {organizationId && (
-                <EditInvoiceModal
-                    open={!!invoiceToEdit}
-                    onOpenChange={(open) => !open && setInvoiceToEdit(null)}
-                    invoice={invoiceToEdit}
-                    onSuccess={fetchInvoices}
-                    organizationId={organizationId}
-                />
-            )}
         </div>
     );
 }

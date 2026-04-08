@@ -1,9 +1,10 @@
 'use server';
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { requireOrganizationPermission } from "@/actions/_permissions";
 import { Role, canAssignRole } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
+import { logAuditEvent } from "@/actions/audit";
 
 interface CreateUserData {
     email: string;
@@ -13,45 +14,27 @@ interface CreateUserData {
 }
 
 export async function createUser(data: CreateUserData) {
-    const supabase = await createClient();
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-    if (!currentUser) {
-        return { error: "No autorizado" };
+    // Usar el guard centralizado para verificar permiso de crear usuarios
+    const guard = await requireOrganizationPermission('users', 'create');
+    if (!guard.allowed || !guard.organizationId || !guard.userId || !guard.role) {
+        return { error: guard.error || 'No autorizado' };
     }
 
-    // Get current user's role and organization
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, organization_id')
-        .eq('id', currentUser.id)
-        .single();
-
-    if (!profile) {
-        return { error: "Perfil no encontrado" };
-    }
-
-    if (!profile.organization_id) {
-        return { error: "Error de integridad: Tu usuario no pertenece a ninguna organización. Contacta a soporte." };
-    }
-
-    // Verify permissions
-    if (!canAssignRole(profile.role as Role, data.role)) {
+    // Verificar que el rol actual puede asignar el rol pedido (jerarquía)
+    if (!canAssignRole(guard.role, data.role)) {
         return { error: "No tienes permisos para asignar este rol" };
     }
 
-    // --- CHECK PLAN LIMITS ---
+    // --- VERIFICAR LÍMITE DE PLAN ---
     const { checkOrganizationLimit } = await import('@/lib/plans/limits');
-    const limitCheck = await checkOrganizationLimit(profile.organization_id, 'users');
-
+    const limitCheck = await checkOrganizationLimit(guard.organizationId, 'users');
     if (!limitCheck.allowed) {
         return { error: limitCheck.error };
     }
-    // -------------------------
+    // --------------------------------
 
     const supabaseAdmin = createAdminClient();
 
-    // 1. Create the user in Auth
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
         password: data.password,
@@ -59,7 +42,7 @@ export async function createUser(data: CreateUserData) {
         user_metadata: {
             full_name: data.fullName,
             role: data.role,
-            organization_id: profile.organization_id,
+            organization_id: guard.organizationId,
         }
     });
 
@@ -71,55 +54,50 @@ export async function createUser(data: CreateUserData) {
         return { error: "Error al crear usuario" };
     }
 
-    // 2. Upsert the profile with role and organization
-    // Using upsert ensures that if the trigger hasn't run yet, we create the profile.
-    // If it has run, we update it with the correct values.
     const { error: profileError } = await supabaseAdmin
         .from('profiles')
         .upsert({
             id: newUser.user.id,
             full_name: data.fullName,
             role: data.role,
-            organization_id: profile.organization_id,
+            organization_id: guard.organizationId,
             updated_at: new Date().toISOString(),
         })
         .select()
         .single();
 
     if (profileError) {
-        // If update failed, maybe try to insert (though triggers usually handle it)
-        // But for now, let's treat it as an error but the user exists
         return { error: "Usuario creado pero hubo error al actualizar perfil: " + profileError.message };
     }
 
     revalidatePath('/dashboard/users');
+
+    await logAuditEvent({
+        organizationId: guard.organizationId,
+        action: 'custom',
+        entity: 'users',
+        entityId: newUser.user.id,
+        metadata: {
+            event: 'user_created',
+            role: data.role,
+            email: data.email,
+            created_by_role: guard.role,
+        },
+    });
+
     return { success: true, userId: newUser.user.id };
 }
 
 export async function deleteUser(userId: string) {
-    const supabase = await createClient();
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-    if (!currentUser) return { error: "No autorizado" };
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, organization_id')
-        .eq('id', currentUser.id)
-        .single();
-
-    if (!profile) return { error: "Perfil no encontrado" };
-
-    // Permissions: Only owner or admin should be able to delete users
-    // Assuming 'owner' or 'admin' role check here.
-    const canDelete = profile.role === 'owner' || profile.role === 'admin';
-    if (!canDelete) {
-        return { error: "No tienes permisos para eliminar usuarios" };
+    // El guard ya verifica auth, perfil y permisos del módulo 'users' → 'delete'
+    const guard = await requireOrganizationPermission('users', 'delete');
+    if (!guard.allowed || !guard.organizationId || !guard.userId) {
+        return { error: guard.error || 'No autorizado' };
     }
 
     const supabaseAdmin = createAdminClient();
 
-    // Verify target user belongs to same organization (security)
+    // Verificar que el usuario objetivo pertenece a la misma organización
     const { data: targetProfile } = await supabaseAdmin
         .from('profiles')
         .select('organization_id, role')
@@ -128,22 +106,20 @@ export async function deleteUser(userId: string) {
 
     if (!targetProfile) return { error: "Usuario a eliminar no encontrado" };
 
-    if (targetProfile.organization_id !== profile.organization_id) {
+    if (targetProfile.organization_id !== guard.organizationId) {
         return { error: "No puedes eliminar usuarios de otra organización" };
     }
 
-    // Prevent deleting yourself
-    if (userId === currentUser.id) {
+    // Prevenir auto-eliminación
+    if (userId === guard.userId) {
         return { error: "No puedes eliminar tu propio usuario" };
     }
 
-    // Prevent deleting an owner if you are not an owner (optional, depending on hierarchy)
-    if (targetProfile.role === 'owner' && profile.role !== 'owner') {
-        return { error: "Solo un dueño puede eliminar a otro dueño" };
+    // Solo owner puede eliminar a otro owner
+    if (targetProfile.role === 'owner' && guard.role !== 'owner') {
+        return { error: "Solo un propietario puede eliminar a otro propietario" };
     }
 
-
-    // Delete from Auth (cascades to profiles usually, or we can manual delete profile first)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
@@ -151,5 +127,18 @@ export async function deleteUser(userId: string) {
     }
 
     revalidatePath('/dashboard/users');
+
+    await logAuditEvent({
+        organizationId: guard.organizationId,
+        action: 'custom',
+        entity: 'users',
+        entityId: userId,
+        metadata: {
+            event: 'user_deleted',
+            deleted_role: targetProfile.role,
+            deleted_by_role: guard.role,
+        },
+    });
+
     return { success: true };
 }

@@ -27,6 +27,8 @@ export interface Customer {
 export interface CartItem {
     product: Product;
     quantity: number;
+    unitPrice: number;
+    customPrice?: boolean;
     discount: number;
 }
 

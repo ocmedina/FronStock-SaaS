@@ -262,3 +262,100 @@ export async function reuseDeliveryRoute(input: {
 
   return { success: true, routeId: newRoute.id };
 }
+
+// ─── Actualizar estado de pedido (RPC set_order_status) ───────────────────────
+// Reemplaza la llamada directa desde el repartidor
+
+export async function updateOrderStatus(input: {
+  orderId: string;
+  newStatus: string;
+  notes?: string;
+}) {
+  const guard = await requireOrganizationPermission('delivery', 'edit');
+  if (!guard.allowed || !guard.organizationId) {
+    return { success: false, error: guard.error || 'No autorizado' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('set_order_status', {
+    p_org_id: guard.organizationId,
+    p_order_id: input.orderId,
+    p_new_status: input.newStatus,
+    p_notes: input.notes || 'Actualizado desde panel de reparto',
+  });
+
+  if (error) return { success: false, error: error.message || 'No se pudo actualizar estado' };
+  if (data?.success === false) return { success: false, error: data?.error || 'Error al actualizar estado' };
+
+  return { success: true };
+}
+
+// ─── Asignar pedidos a ruta (RPC assign_orders_to_route) ──────────────────────
+// Reemplaza la llamada directa desde el dashboard
+
+export async function assignOrdersToRoute(input: {
+  routeId: string;
+  orderIds: string[];
+}) {
+  const guard = await requireOrganizationPermission('delivery', 'edit');
+  if (!guard.allowed || !guard.organizationId) {
+    return { success: false, error: guard.error || 'No autorizado' };
+  }
+
+  if (!input.orderIds.length) return { success: false, error: 'No hay pedidos para asignar' };
+
+  const supabase = await createClient();
+
+  // Intentamos primero con org_id, fallback sin él (compatibilidad de esquemas)
+  let rpcResult = await supabase.rpc('assign_orders_to_route', {
+    p_org_id: guard.organizationId,
+    p_order_ids: input.orderIds,
+    p_route_id: input.routeId,
+  });
+
+  if (rpcResult.error && /p_org_id|function assign_orders_to_route\(uuid\[\], uuid\)/i.test(rpcResult.error.message || '')) {
+    rpcResult = await supabase.rpc('assign_orders_to_route', {
+      p_order_ids: input.orderIds,
+      p_route_id: input.routeId,
+    });
+  }
+
+  const { data, error } = rpcResult;
+  if (error) return { success: false, error: error.message || 'Error al asignar pedidos' };
+  if (!data?.success) return { success: false, error: data?.error || 'No se pudieron asignar pedidos' };
+
+  return { success: true, assignedCount: data.assigned_count };
+}
+
+// ─── Editar ruta (sin RPC, update directo protegido) ─────────────────────────
+
+export async function updateDeliveryRoute(input: {
+  routeId: string;
+  name: string;
+  zone?: string | null;
+  visit_day: number;
+  driver_id?: string | null;
+  notes?: string | null;
+}) {
+  const guard = await requireOrganizationPermission('delivery', 'edit');
+  if (!guard.allowed || !guard.organizationId) {
+    return { error: guard.error || 'No autorizado' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('routes')
+    .update({
+      name: input.name,
+      zone: input.zone || null,
+      visit_day: input.visit_day,
+      driver_id: input.driver_id || null,
+      notes: input.notes || null,
+    })
+    .eq('id', input.routeId)
+    .eq('organization_id', guard.organizationId);
+
+  if (error) return { error: error.message || 'No se pudo actualizar la ruta' };
+  return { success: true };
+}
+

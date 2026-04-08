@@ -22,11 +22,13 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineSales } from "@/hooks/useOfflineSales";
 import { offlineDB } from "@/lib/offline/db";
 import { ensureOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
+import { processSaleAction } from "@/actions/sales";
 import type { Product, Customer, CartItem } from "@/components/sales/types";
 
 export default function POSPage() {
   const { organizationId, organization, profile, isLoading: orgLoading } = useOrganization();
-  const { canCreate, canEdit } = usePermissions();
+  const { canCreate, canEdit, canView } = usePermissions();
+  const canOverridePrice = canView("sales:override_price");
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string; current_balance?: number | null }>>([]);
@@ -69,7 +71,7 @@ export default function POSPage() {
   // Suspended Sales
   const { suspendedSales, suspendSale, resumeSale, deleteSuspendedSale } = useSuspendedSales();
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Offline Support
   const { isOnline, wasOffline } = useOnlineStatus();
@@ -79,6 +81,39 @@ export default function POSPage() {
   useEffect(() => {
     console.log(`[NET] Sales Page: isOnline = ${isOnline}, wasOffline = ${wasOffline}`);
   }, [isOnline, wasOffline]);
+
+  // ─── Alerta si la sesión expira mientras el POS está abierto ───────────────────
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        if (event === 'SIGNED_OUT') {
+          toast.error('Tu sesión ha expirado', {
+            description: 'Por favor recargá la página para continuar',
+            duration: 0,
+            action: {
+              label: 'Recargar',
+              onClick: () => window.location.reload(),
+            },
+          });
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  // ─── Aviso antes de cerrar con carrito lleno ────────────────────────────────
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasItems = Object.values(tabsData).some((tab) => tab.cart.length > 0);
+      if (hasItems) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [tabsData]);
+  // ──────────────────────────────────────────────────────────────────────────────
 
   // Fetch Data (only once on mount)
   const fetchData = useCallback(async () => {
@@ -255,6 +290,8 @@ export default function POSPage() {
         {
           product: { ...product, price: productPrice },
           quantity: 1,
+          unitPrice: productPrice,
+          customPrice: false,
           discount: 0,
         },
       ];
@@ -283,6 +320,27 @@ export default function POSPage() {
     updateTabData({ cart: cart.filter((item) => item.product.id !== productId) });
   };
 
+  const updateUnitPrice = (productId: string, nextUnitPrice: number) => {
+    if (!canOverridePrice) {
+      toast.error("No tienes permiso para modificar precios en la venta");
+      return;
+    }
+
+    if (!Number.isFinite(nextUnitPrice) || nextUnitPrice < 0) {
+      toast.error("El precio debe ser un número mayor o igual a 0");
+      return;
+    }
+
+    const roundedPrice = Math.round(nextUnitPrice * 100) / 100;
+    updateTabData({
+      cart: cart.map((item) =>
+        item.product.id === productId
+          ? { ...item, unitPrice: roundedPrice, customPrice: true }
+          : item
+      ),
+    });
+  };
+
   const clearCart = () => {
     updateTabData({ cart: [], discount: 0, surcharge: 0 });
   };
@@ -301,10 +359,7 @@ export default function POSPage() {
 
       return {
         ...item,
-        product: {
-          ...item.product,
-          price: basePrice,
-        },
+        unitPrice: item.customPrice ? item.unitPrice : basePrice,
       };
     });
 
@@ -316,13 +371,8 @@ export default function POSPage() {
     payments?: Array<{ method: string; amount: number }>,
     options?: { supplierSettlement?: { supplierId: string; amount: number } }
   ) => {
-    if (!canCreate("sales")) {
-      toast.error("No tienes permisos para registrar ventas");
-      return;
-    }
-
     if (cart.length === 0 || !organizationId) {
-      toast.error("El carrito está vacío");
+      toast.error('El carrito está vacío');
       return;
     }
 
@@ -331,23 +381,18 @@ export default function POSPage() {
     try {
       const items = cart.map((item) => ({
         product_id: item.product.id,
-        product_name: item.product.name || "Sin nombre",
+        product_name: item.product.name || 'Sin nombre',
         quantity: item.quantity,
-        unit_price: item.product.price ?? 0,
+        unit_price: item.unitPrice ?? item.product.price ?? 0,
         discount: 0,
-        subtotal: (item.product.price ?? 0) * item.quantity
+        subtotal: (item.unitPrice ?? item.product.price ?? 0) * item.quantity,
       }));
 
-      const finalPayments = payments || [{ method: "cash", amount: total }];
-      const paymentMethod = finalPayments[0]?.method || "cash";
-      const normalizedMethods = finalPayments.map((p) => String(p.method || "").toLowerCase());
-      const primaryMethod = finalPayments.length === 1 ? (normalizedMethods[0] || "cash") : "mixed";
-      const hasCredit = normalizedMethods.includes("credit") || normalizedMethods.includes("fiado") || normalizedMethods.includes("current_account") || normalizedMethods.includes("cuenta_corriente");
-
-      // Get customer name if exists
-      const customer = customers.find(c => c.id === selectedCustomerId);
+      const finalPayments = payments || [{ method: 'cash', amount: total }];
 
       if (isOnline) {
+        const normalizedMethods = finalPayments.map((p) => String(p.method || '').toLowerCase());
+
         const requiresOpenSession = shouldRequireOpenCashSession({
           organization,
           profile,
@@ -356,104 +401,58 @@ export default function POSPage() {
 
         if (requiresOpenSession) {
           const hasOpenSession = await ensureOpenCashSession(supabase, organizationId);
-          if (!hasOpenSession) {
-            return;
-          }
+          if (!hasOpenSession) return;
         }
 
-        // ONLINE: Process sale via Supabase
-        const { data, error } = await supabase.rpc("process_sale", {
-          p_org_id: organizationId,
-          p_customer_id: selectedCustomerId || null,
-          p_payments: finalPayments,
-          p_items: items,
-          p_discount: discount || 0,
-          p_surcharge: surcharge || 0,
+        // ★ Llamada al servidor — no al cliente directo
+        const result = await processSaleAction({
+          customerId: selectedCustomerId,
+          payments: finalPayments,
+          items,
+          discount: discount || 0,
+          surcharge: surcharge || 0,
+          supplierSettlement: options?.supplierSettlement,
         });
-
-        if (error) throw error;
-
-        const result = data as {
-          success: boolean;
-          sale_id?: string;
-          sale_number?: number;
-          error?: string;
-          total?: number;
-        };
 
         if (!result.success) {
-          throw new Error(result.error || "Error al procesar la venta");
+          throw new Error(result.error);
         }
 
-        if (result.sale_id) {
-          const { error: paymentMethodUpdateError } = await supabase
-            .from("sales")
-            .update({
-              payment_method: primaryMethod,
-              payment_status: hasCredit ? "pending" : "paid",
-            })
-            .eq("id", result.sale_id)
-            .eq("organization_id", organizationId);
-
-          if (paymentMethodUpdateError) {
-            console.warn("No se pudo actualizar payment_method de la venta:", paymentMethodUpdateError.message);
-          }
-        }
-
-        toast.success(`¡Venta #${result.sale_number} procesada exitosamente!`, {
-          description: `Total: $${total.toLocaleString("es-AR")}`,
+        toast.success(`¡Venta #${result.saleNumber} procesada!`, {
+          description: `Total: $${total.toLocaleString('es-AR')}`,
         });
-
-        if (options?.supplierSettlement?.supplierId && options.supplierSettlement.amount > 0) {
-          try {
-            const { registerSupplierPayment } = await import('@/actions/suppliers');
-            const supplierPayment = await registerSupplierPayment({
-              supplierId: options.supplierSettlement.supplierId,
-              amount: options.supplierSettlement.amount,
-              paymentMethod: 'cash_from_sales',
-              paymentDate: new Date().toISOString().split('T')[0],
-              notes: `Pago aplicado desde venta #${result.sale_number || result.sale_id || ''} (método venta: ${paymentMethod})`,
-            });
-
-            if (supplierPayment.error) {
-              toast.error(`Venta registrada, pero no se pudo saldar proveedor: ${supplierPayment.error}`);
-            } else {
-              toast.success('Deuda de proveedor saldada con esta venta');
-            }
-          } catch (supplierPaymentError: any) {
-            toast.error(`Venta registrada, pero no se pudo saldar proveedor: ${supplierPaymentError?.message || 'Error desconocido'}`);
-          }
-        }
 
         clearCart();
         fetchData();
       } else {
-        // OFFLINE: Save sale locally
+        // OFFLINE: guardar localmente
+        const customer = customers.find((c) => c.id === selectedCustomerId);
         await saveSaleOffline({
           customer_id: selectedCustomerId || undefined,
           customer_name: customer?.name,
           service_type: 'counter',
-          payment_method: paymentMethod,
-          items: items,
-          subtotal: subtotal,
+          payment_method: finalPayments[0]?.method || 'cash',
+          items,
+          subtotal,
           discount: discount || 0,
-          total: total
+          total,
         });
 
-        toast.success("Venta guardada offline", {
-          description: `Se sincronizará cuando vuelva la conexión. Total: $${total.toLocaleString("es-AR")}`,
-          duration: 5000
+        toast.success('Venta guardada offline', {
+          description: `Se sincronizará cuando vuelva la conexión. Total: $${total.toLocaleString('es-AR')}`,
+          duration: 5000,
         });
 
         clearCart();
       }
     } catch (error: any) {
-      console.error("Error processing sale:", error);
-      toast.error(`Error: ${error.message || "Error desconocido"}`);
+      console.error('Error processing sale:', error);
+      toast.error(`Error: ${error.message || 'Error desconocido'}`);
     } finally {
       setIsProcessing(false);
     }
   };
+
 
   // Suspend Sale
   const handleSuspendSale = () => {
@@ -525,7 +524,7 @@ export default function POSPage() {
 
   // Calculations (memoized for performance)
   const subtotal = useMemo(
-    () => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    () => cart.reduce((sum, item) => sum + (item.unitPrice ?? item.product.price) * item.quantity, 0),
     [cart]
   );
 
@@ -580,6 +579,8 @@ export default function POSPage() {
             <Cart
               items={cart}
               onUpdateQuantity={updateQuantity}
+              onUpdatePrice={updateUnitPrice}
+              canEditPrice={canOverridePrice}
               onRemove={removeFromCart}
               onClear={clearCart}
               subtotal={subtotal}

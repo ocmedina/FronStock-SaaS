@@ -2,6 +2,7 @@
 
 import { requireOrganizationPermission } from '@/actions/_permissions';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEvent } from '@/actions/audit';
 
 type SupplierInput = {
   name: string;
@@ -32,7 +33,8 @@ type SupplierInput = {
 };
 
 export async function saveSupplier(input: { supplierId?: string; data: SupplierInput }) {
-  const guard = await requireOrganizationPermission('suppliers', input.supplierId ? 'edit' : 'create');
+  const isEdit = !!input.supplierId;
+  const guard = await requireOrganizationPermission('suppliers', isEdit ? 'edit' : 'create');
   if (!guard.allowed || !guard.organizationId) {
     return { error: guard.error || 'No autorizado' };
   }
@@ -50,19 +52,41 @@ export async function saveSupplier(input: { supplierId?: string; data: SupplierI
 
   const supabase = await createClient();
 
-  if (input.supplierId) {
+  if (isEdit) {
     const { error } = await supabase
       .from('suppliers')
       .update(payload)
-      .eq('id', input.supplierId)
+      .eq('id', input.supplierId!)
       .eq('organization_id', guard.organizationId);
 
     if (error) return { error: error.message || 'No se pudo actualizar proveedor' };
+
+    await logAuditEvent({
+      organizationId: guard.organizationId,
+      action: 'update',
+      entity: 'suppliers',
+      entityId: input.supplierId,
+      metadata: { name, event: 'supplier_updated' },
+    });
+
     return { success: true };
   }
 
-  const { error } = await supabase.from('suppliers').insert([payload]);
+  const { data: newSupplier, error } = await supabase
+    .from('suppliers')
+    .insert([payload])
+    .select('id')
+    .single();
+
   if (error) return { error: error.message || 'No se pudo crear proveedor' };
+
+  await logAuditEvent({
+    organizationId: guard.organizationId,
+    action: 'insert',
+    entity: 'suppliers',
+    entityId: newSupplier?.id ?? null,
+    metadata: { name, event: 'supplier_created' },
+  });
 
   return { success: true };
 }
@@ -74,6 +98,15 @@ export async function deleteSupplier(supplierId: string) {
   }
 
   const supabase = await createClient();
+
+  // Obtener nombre antes de eliminar para el log
+  const { data: supplier } = await supabase
+    .from('suppliers')
+    .select('name')
+    .eq('id', supplierId)
+    .eq('organization_id', guard.organizationId)
+    .single();
+
   const { error } = await supabase
     .from('suppliers')
     .delete()
@@ -83,6 +116,14 @@ export async function deleteSupplier(supplierId: string) {
   if (error) {
     return { error: error.message || 'No se pudo eliminar proveedor' };
   }
+
+  await logAuditEvent({
+    organizationId: guard.organizationId,
+    action: 'delete',
+    entity: 'suppliers',
+    entityId: supplierId,
+    metadata: { name: supplier?.name ?? 'desconocido', event: 'supplier_deleted' },
+  });
 
   return { success: true };
 }
@@ -122,6 +163,19 @@ export async function registerSupplierPayment(input: {
   if (error) {
     return { error: error.message || 'No se pudo registrar el pago' };
   }
+
+  await logAuditEvent({
+    organizationId: guard.organizationId,
+    action: 'custom',
+    entity: 'suppliers',
+    entityId: input.supplierId,
+    metadata: {
+      event: 'supplier_payment_registered',
+      amount,
+      payment_method: input.paymentMethod,
+      purchase_order_id: input.purchaseOrderId ?? null,
+    },
+  });
 
   return { success: true, data };
 }

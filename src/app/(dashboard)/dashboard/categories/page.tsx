@@ -13,6 +13,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Loader2, Tags } from 'lucide-react';
+import { toast } from 'sonner';
+import { saveCategory, deleteCategory } from '@/actions/categories';
 
 interface Category {
     id: string;
@@ -57,26 +59,17 @@ export default function CategoriesPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!organizationId) return;
-
         setSaving(true);
-
-        if (editingCategory) {
-            await supabase
-                .from('categories')
-                .update({ name: formData.name, description: formData.description || null })
-                .eq('id', editingCategory.id);
-        } else {
-            await supabase
-                .from('categories')
-                .insert({
-                    organization_id: organizationId,
-                    name: formData.name,
-                    description: formData.description || null,
-                });
-        }
-
+        const result = await saveCategory({
+            categoryId: editingCategory?.id,
+            data: { name: formData.name, description: formData.description || null },
+        });
         setSaving(false);
+        if (result.error) {
+            toast.error(result.error);
+            return;
+        }
+        toast.success(editingCategory ? 'Categoría actualizada' : 'Categoría creada');
         setShowModal(false);
         setEditingCategory(null);
         setFormData({ name: '', description: '' });
@@ -84,10 +77,14 @@ export default function CategoriesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('¿Estás seguro de eliminar esta categoría?')) {
-            await supabase.from('categories').delete().eq('id', id);
-            fetchCategories();
+        if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
+        const result = await deleteCategory(id);
+        if (result.error) {
+            toast.error(result.error);
+            return;
         }
+        toast.success('Categoría eliminada');
+        fetchCategories();
     };
 
     const openEditModal = (category: Category) => {

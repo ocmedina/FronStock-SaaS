@@ -40,6 +40,9 @@ export const SUB_MODULES = [
     // Sales
     'sales:view_all', // Ver ventas de todos. Si falso, solo ve las suyas
     'sales:view_metrics', // Ver métricas financieras
+    'sales:override_price', // Editar precio en punto de venta
+    // Audit
+    'audit:view', // Ver historial de auditoría
     // Users
     'users:manage_roles',
 ] as const;
@@ -52,6 +55,8 @@ export const subModuleLabels: Record<SubModule, string> = {
     'products:export': 'Exportar Productos',
     'sales:view_all': 'Ver Todas las Ventas',
     'sales:view_metrics': 'Ver Métricas Financieras',
+    'sales:override_price': 'Editar Precio en Venta',
+    'audit:view': 'Ver Historial de Auditoría',
     'users:manage_roles': 'Gestionar Roles',
 };
 
@@ -80,6 +85,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: true, create: false, edit: false, delete: false },
         'sales:view_all': { view: true, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: true, create: false, edit: false, delete: false },
+        'sales:override_price': { view: true, create: false, edit: false, delete: false },
+        'audit:view': { view: true, create: false, edit: false, delete: false },
         'users:manage_roles': { view: true, create: false, edit: false, delete: false },
     },
     admin: {
@@ -105,6 +112,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: true, create: false, edit: false, delete: false },
         'sales:view_all': { view: true, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: true, create: false, edit: false, delete: false },
+        'sales:override_price': { view: true, create: false, edit: false, delete: false },
+        'audit:view': { view: true, create: false, edit: false, delete: false },
         'users:manage_roles': { view: true, create: false, edit: false, delete: false },
     },
     manager: {
@@ -130,6 +139,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: true, create: false, edit: false, delete: false },
         'sales:view_all': { view: true, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: true, create: false, edit: false, delete: false },
+        'sales:override_price': { view: true, create: false, edit: false, delete: false },
+        'audit:view': { view: false, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
     employee: {
@@ -155,6 +166,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: false, create: false, edit: false, delete: false },
         'sales:view_all': { view: false, create: false, edit: false, delete: false }, // Solo sus ventas
         'sales:view_metrics': { view: false, create: false, edit: false, delete: false },
+        'sales:override_price': { view: false, create: false, edit: false, delete: false },
+        'audit:view': { view: false, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
     delivery: {
@@ -180,6 +193,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: false, create: false, edit: false, delete: false },
         'sales:view_all': { view: false, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: false, create: false, edit: false, delete: false },
+        'sales:override_price': { view: false, create: false, edit: false, delete: false },
+        'audit:view': { view: false, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
     viewer: {
@@ -205,6 +220,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: false, create: false, edit: false, delete: false },
         'sales:view_all': { view: true, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: true, create: false, edit: false, delete: false },
+        'sales:override_price': { view: false, create: false, edit: false, delete: false },
+        'audit:view': { view: false, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
     billing: {
@@ -230,6 +247,8 @@ export const defaultRolePermissions: Record<Role, Record<string, PermissionActio
         'products:export': { view: false, create: false, edit: false, delete: false },
         'sales:view_all': { view: false, create: false, edit: false, delete: false },
         'sales:view_metrics': { view: false, create: false, edit: false, delete: false },
+        'sales:override_price': { view: false, create: false, edit: false, delete: false },
+        'audit:view': { view: false, create: false, edit: false, delete: false },
         'users:manage_roles': { view: false, create: false, edit: false, delete: false },
     },
 };

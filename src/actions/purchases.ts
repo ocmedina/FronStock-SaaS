@@ -2,6 +2,7 @@
 
 import { requireOrganizationPermission } from '@/actions/_permissions';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEvent } from '@/actions/audit';
 
 type PurchaseOrderItemInput = {
   product_id: string;
@@ -39,7 +40,7 @@ export async function createPurchaseOrder(input: {
       total,
       notes: input.notes || null,
     })
-    .select('id')
+    .select('id, order_number')
     .single();
 
   if (orderError || !order) {
@@ -59,6 +60,20 @@ export async function createPurchaseOrder(input: {
   if (itemsError) {
     return { error: itemsError.message || 'No se pudieron crear los ítems de la orden' };
   }
+
+  await logAuditEvent({
+    organizationId: guard.organizationId,
+    action: 'insert',
+    entity: 'purchase_orders',
+    entityId: order.id,
+    metadata: {
+      event: 'purchase_order_created',
+      order_number: order.order_number,
+      supplier_id: input.supplierId,
+      total,
+      items_count: items.length,
+    },
+  });
 
   return { success: true, orderId: order.id };
 }

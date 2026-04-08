@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import { Toaster } from 'sonner';
+import { DeliveryBottomNav } from '@/components/delivery/DeliveryBottomNav';
 
 export const metadata = {
     title: 'FrontStock Reparto',
@@ -23,9 +24,10 @@ export default async function DeliveryLayout({
     return (
         <OrganizationProvider>
             <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-                <main className="flex-1 overflow-y-auto pb-20">
+                <main className="flex-1 overflow-y-auto pb-24">
                     {children}
                 </main>
+                <DeliveryBottomNav />
                 <Toaster position="top-center" theme="dark" />
             </div>
         </OrganizationProvider>

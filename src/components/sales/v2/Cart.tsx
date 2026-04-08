@@ -2,12 +2,15 @@
 
 import { ShoppingCart, Trash2, Minus, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { CartItem } from '../types';
 import { cn } from '@/lib/utils';
 
 interface CartProps {
     items: CartItem[];
     onUpdateQuantity: (productId: string, quantity: number) => void;
+    onUpdatePrice: (productId: string, unitPrice: number) => void;
+    canEditPrice?: boolean;
     onRemove: (productId: string) => void;
     onClear: () => void;
     subtotal: number;
@@ -17,6 +20,8 @@ interface CartProps {
 export function Cart({
     items,
     onUpdateQuantity,
+    onUpdatePrice,
+    canEditPrice = true,
     onRemove,
     onClear,
     subtotal,
@@ -66,7 +71,8 @@ export function Cart({
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {items.map((item) => {
-                    const itemTotal = item.product.price * item.quantity;
+                    const unitPrice = item.unitPrice ?? item.product.price;
+                    const itemTotal = unitPrice * item.quantity;
 
                     return (
                         <div
@@ -81,9 +87,27 @@ export function Cart({
                             {/* Product Info */}
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate">{item.product.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    ${item.product.price.toLocaleString()} c/u
-                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-sm text-muted-foreground">$</span>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        disabled={!canEditPrice}
+                                        value={Number.isFinite(unitPrice) ? unitPrice : 0}
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            if (!Number.isNaN(value)) {
+                                                onUpdatePrice(item.product.id, value);
+                                            }
+                                        }}
+                                        className="h-8 w-28"
+                                        aria-label={`Precio unitario de ${item.product.name}`}
+                                    />
+                                    <span className="text-xs text-muted-foreground">
+                                        {canEditPrice ? 'suelto' : 'bloqueado'}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Quantity Controls */}
