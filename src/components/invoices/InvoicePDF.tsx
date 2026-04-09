@@ -181,6 +181,11 @@ export const InvoicePDF = ({ invoice, organization, logoBase64, showIva = invoic
                                 <Image src={logoBase64} style={styles.logo} />
                                 <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization?.name}</Text>
                             </View>
+                        ) : organization?.logo_url ? (
+                            <View>
+                                <Image src={organization.logo_url} style={styles.logo} cache={false} />
+                                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>{organization?.name}</Text>
+                            </View>
                         ) : (
                             <Text style={styles.logoPlaceholder}>{organization?.name || "EMPRESA"}</Text>
                         )}

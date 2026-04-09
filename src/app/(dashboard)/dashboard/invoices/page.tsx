@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useImageToBase64 } from "@/hooks/useImageToBase64";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineSales } from "@/hooks/useOfflineSales";
 import { offlineDB } from "@/lib/offline/db";
@@ -29,7 +28,6 @@ export default function InvoicesPage() {
         isLoading: orgLoading,
     } = useOrganization();
     const { canView, canCreate, canDelete } = usePermissions();
-    const { base64: logoBase64 } = useImageToBase64(organization?.logo_url);
     const { isOnline } = useOnlineStatus();
     const { cacheInvoices } = useOfflineSales(organizationId ?? undefined);
 
@@ -40,16 +38,8 @@ export default function InvoicesPage() {
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [filters, setFilters] = useState<InvoiceFilterValues>({});
 
+    // La conversión del logo para PDF se realiza dentro de InvoiceDetailModal al momento de descargar
     const supabase = createClient();
-
-    // Crear una versión de organization con el logo en base64
-    const orgWithBase64Logo = useMemo(() => {
-        if (!organization) return null;
-        return {
-            ...organization,
-            logo_url: logoBase64 || organization.logo_url
-        };
-    }, [organization, logoBase64]);
 
     const fetchInvoices = useCallback(async () => {
         if (!organizationId) return;
@@ -230,7 +220,7 @@ export default function InvoicesPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
             ) : (
-                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} organization={orgWithBase64Logo} />
+                <InvoiceList invoices={filteredInvoices} onView={setSelectedInvoice} organization={organization} />
             )}
 
             {/* Create Modal */}
@@ -247,7 +237,7 @@ export default function InvoicesPage() {
             <InvoiceDetailModal
                 invoice={selectedInvoice}
                 onClose={() => setSelectedInvoice(null)}
-                organization={orgWithBase64Logo}
+                organization={organization}
             />
         </div>
     );

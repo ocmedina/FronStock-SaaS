@@ -12,6 +12,13 @@ export function useImageToBase64(imageUrl: string | null | undefined) {
 
         setLoading(true);
 
+        // If it's already a data URL (base64), use it directly
+        if (imageUrl.startsWith('data:')) {
+            setBase64(imageUrl);
+            setLoading(false);
+            return;
+        }
+
         // Use server-side proxy to avoid CORS issues with Supabase Storage
         fetch(`/api/logo-base64?url=${encodeURIComponent(imageUrl)}`)
             .then(response => {
@@ -44,12 +51,19 @@ export function useImageToBase64(imageUrl: string | null | undefined) {
  */
 export async function fetchLogoBase64(url: string | null | undefined): Promise<string | null> {
     if (!url) return null;
+    // If it's already a data URL (base64), return it directly — no need to proxy
+    if (url.startsWith('data:')) return url;
     try {
         const res = await fetch(`/api/logo-base64?url=${encodeURIComponent(url)}`);
-        if (!res.ok) return null;
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error('[fetchLogoBase64] API error:', res.status, errData);
+            return null;
+        }
         const data = await res.json();
         return data.base64 || null;
-    } catch {
+    } catch (e) {
+        console.error('[fetchLogoBase64] Network/parse error:', e);
         return null;
     }
 }

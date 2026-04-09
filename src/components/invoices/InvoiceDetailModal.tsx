@@ -10,8 +10,6 @@ import { Invoice } from "./types";
 import { pdf } from "@react-pdf/renderer";
 import { InvoicePDF } from "./InvoicePDF";
 import { useState, useEffect } from "react";
-import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
-
 import { Organization } from "@/types/database.types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -20,6 +18,63 @@ interface InvoiceDetailModalProps {
     invoice: Invoice | null;
     onClose: () => void;
     organization?: Organization | null;
+}
+
+/**
+ * Converts any image source (data URL or HTTP URL) to a PNG data URL
+ * using a canvas element. This ensures compatibility with react-pdf
+ * which only supports PNG and JPEG, and may struggle with WebP or large images.
+ */
+async function convertImageToPNG(logoUrl: string | null | undefined): Promise<string | null> {
+    if (!logoUrl) return null;
+
+    let dataUrl: string;
+
+    try {
+        if (logoUrl.startsWith('data:')) {
+            // Already a data URL — use directly (no HTTP request needed)
+            dataUrl = logoUrl;
+        } else {
+            // Supabase Storage URL — fetch via server-side proxy to avoid CORS
+            const res = await fetch(`/api/logo-base64?url=${encodeURIComponent(logoUrl)}`);
+            if (!res.ok) {
+                console.error('[Logo PDF] Proxy fetch failed:', res.status);
+                return null;
+            }
+            const json = await res.json();
+            dataUrl = json.base64;
+        }
+    } catch (e) {
+        console.error('[Logo PDF] Error fetching logo:', e);
+        return null;
+    }
+
+    // Use a canvas to normalize the image to PNG format for react-pdf
+    return new Promise((resolve) => {
+        const img = new window.Image();
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                // Cap at 300px to avoid bloated PDFs
+                const MAX_PX = 300;
+                const scale = Math.min(1, MAX_PX / Math.max(img.naturalWidth, img.naturalHeight, 1));
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { resolve(null); return; }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/png'));
+            } catch (e) {
+                console.error('[Logo PDF] Canvas conversion failed:', e);
+                resolve(null);
+            }
+        };
+        img.onerror = (e) => {
+            console.error('[Logo PDF] Image load failed:', e);
+            resolve(null);
+        };
+        img.src = dataUrl;
+    });
 }
 
 export function InvoiceDetailModal({
@@ -39,13 +94,20 @@ export function InvoiceDetailModal({
     if (!invoice) return null;
 
     const handleDownloadPDF = async () => {
-        if (!invoice) return;
         setPdfLoading(true);
         try {
-            const logoBase64 = await fetchLogoBase64(organization?.logo_url);
+            // Convert logo to a react-pdf compatible PNG
+            const logoPng = await convertImageToPNG(organization?.logo_url);
+
             const blob = await pdf(
-                <InvoicePDF invoice={invoice} organization={organization} logoBase64={logoBase64} showIva={showIva} />
+                <InvoicePDF
+                    invoice={invoice}
+                    organization={organization}
+                    logoBase64={logoPng}
+                    showIva={showIva}
+                />
             ).toBlob();
+
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -53,7 +115,7 @@ export function InvoiceDetailModal({
             a.click();
             URL.revokeObjectURL(url);
         } catch (error) {
-            console.error('Error generando PDF:', error);
+            console.error('[InvoiceDetailModal] Error generating PDF:', error);
         } finally {
             setPdfLoading(false);
         }
@@ -177,7 +239,7 @@ export function InvoiceDetailModal({
                         </div>
                     </div>
 
-                    {/* Footer / CAEA */}
+                    {/* Footer / CAE */}
                     {invoice.cae ? (
                         <div className="border-t pt-4 flex justify-between items-center">
                             <div>
@@ -185,7 +247,6 @@ export function InvoiceDetailModal({
                                 <p className="text-gray-500">Vto. CAE: {new Date(invoice.cae_expiration!).toLocaleDateString("es-AR")}</p>
                             </div>
                             <div className="text-right">
-                                {/* QR Placeholder */}
                                 <div className="bg-gray-200 w-24 h-24 inline-flex items-center justify-center text-xs text-center p-2">
                                     QR AFIP
                                 </div>
