@@ -179,7 +179,7 @@ export default function OnboardingPage() {
                 .from('profiles')
                 .update({
                     organization_id: org.id,
-                    role: 'admin',
+                    role: 'owner',
                 })
                 .eq('id', user.id);
 

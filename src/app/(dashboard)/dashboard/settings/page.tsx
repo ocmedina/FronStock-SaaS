@@ -102,6 +102,11 @@ export default function SettingsPage() {
     const [permissionsPassword, setPermissionsPassword] = useState('');
     const [savingPermissionsPassword, setSavingPermissionsPassword] = useState(false);
 
+    // Delete Account State
+    const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
+    const [deleteAccountConfirmText, setDeleteAccountConfirmText] = useState('');
+    const [deletingAccount, setDeletingAccount] = useState(false);
+
     const saveSecurityPreferences = async (payload: {
         sessionTimeoutMinutes: number;
         notifyNewDevice: boolean;
@@ -467,6 +472,48 @@ export default function SettingsPage() {
         window.location.href = '/login';
     };
 
+    const handleDeleteAccountAndOrganization = async () => {
+        const confirmText = deleteAccountConfirmText.trim().toUpperCase();
+        
+        if (confirmText !== 'ELIMINAR DEFINITIVAMENTE') return;
+
+        if (!organization?.name) {
+            setMessage({ type: 'error', text: 'Error: No se pudo cargar el nombre de tu organización. Intenta recargar la página.' });
+            return;
+        }
+
+        setDeletingAccount(true);
+        setMessage(null);
+
+        try {
+            const { deleteAccountAndOrganization } = await import('@/actions/organization');
+            const result = await deleteAccountAndOrganization(deleteAccountConfirmText);
+
+            if (result.error) {
+                setShowDeleteAccountDialog(false);
+                setMessage({ type: 'error', text: result.error });
+                setDeletingAccount(false);
+                return;
+            }
+
+            if (profile?.organization_id) {
+                await clearOfflineOrganizationData(profile.organization_id);
+            }
+
+            // Successfully deleted, log out and redirect
+            setShowDeleteAccountDialog(false);
+            await supabase.auth.signOut();
+            window.location.href = '/login?status=account_deleted';
+        } catch (error: any) {
+            setShowDeleteAccountDialog(false);
+            setMessage({
+                type: 'error',
+                text: error?.message || 'Error crítico durante la eliminación',
+            });
+            setDeletingAccount(false);
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto pb-10 px-2 sm:px-0">
             <div>
@@ -534,6 +581,37 @@ export default function SettingsPage() {
                             <OrganizationSettingsForm />
                         </CardContent>
                     </Card>
+                    {/* Danger Zone */}
+                    {(profile?.role === 'owner' || profile?.role === 'admin') && (
+                        <Card className="border-red-500/20 bg-red-500/5 mt-8">
+                            <CardHeader>
+                                <CardTitle className="text-red-600 flex items-center gap-2">
+                                    <Shield className="h-5 w-5" />
+                                    Zona de Peligro
+                                </CardTitle>
+                                <CardDescription>
+                                    Acciones destructivas para tu organización. Estas acciones son irreversibles.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-red-500/20 rounded-lg bg-background/50">
+                                    <div>
+                                        <h4 className="font-semibold text-sm">Eliminar Organización y Cuenta</h4>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Elimina de forma permanente la organización, todos los datos operativos y todos los usuarios asociados.
+                                        </p>
+                                    </div>
+                                    <Button 
+                                        variant="destructive" 
+                                        onClick={() => setShowDeleteAccountDialog(true)}
+                                        className="shrink-0 w-full sm:w-auto"
+                                    >
+                                        Eliminar Definitivamente
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 {/* Appearance Settings */}
@@ -1134,6 +1212,43 @@ export default function SettingsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-600">¿Eliminar Definitivamente la Organización y Cuenta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción es <strong className="text-foreground">irreversible</strong>. Se eliminará permanentemente la organización, absolutamente todos los datos operativos y comerciales, y todos los usuarios asociados a la misma de nuestra plataforma.
+                            <br /><br />
+                            Para confirmar, escribe exactamente: <span className="font-bold text-foreground">ELIMINAR DEFINITIVAMENTE</span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Palabra de confirmación</label>
+                        <Input
+                            value={deleteAccountConfirmText}
+                            onChange={(e) => setDeleteAccountConfirmText(e.target.value)}
+                            placeholder="ELIMINAR DEFINITIVAMENTE"
+                            disabled={deletingAccount}
+                        />
+                    </div>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deletingAccount} onClick={() => setDeleteAccountConfirmText('')}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDeleteAccountAndOrganization();
+                            }}
+                            disabled={deletingAccount || deleteAccountConfirmText.trim().toUpperCase() !== 'ELIMINAR DEFINITIVAMENTE'}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {deletingAccount ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                            Eliminar para siempre
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

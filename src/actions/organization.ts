@@ -128,3 +128,92 @@ export async function resetOrganizationData(confirmOrganizationName: string) {
     };
   }
 }
+
+export async function deleteAccountAndOrganization(confirmText: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'No autorizado' };
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('organization_id, role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile?.organization_id) {
+    return { error: 'No se pudo validar tu organización' };
+  }
+
+  if (profile.role !== 'owner' && profile.role !== 'admin') {
+    return { error: 'Solo el propietario o administrador pueden eliminar la cuenta y la organización' };
+  }
+
+  if (confirmText.trim().toUpperCase() !== 'ELIMINAR DEFINITIVAMENTE') {
+    return { error: 'La frase de confirmación no es correcta' };
+  }
+
+  const organizationId = profile.organization_id;
+
+  // Re-use the resetOrganizationData to clean up foreign keys safely
+  // We'll bypass the exact name check since they already typed the confirm text
+  // but to reuse the code, it's easier to just do it here or call a refactored version.
+  // We'll just fetch the org name to pass to resetOrganizationData:
+  const { data: org } = await supabase.from('organizations').select('name').eq('id', organizationId).single();
+  if (!org) {
+    return { error: 'Organización no encontrada' };
+  }
+
+  const resetResult = await resetOrganizationData(org.name);
+  if (resetResult.error) {
+    return { error: `Error al limpiar datos operativos: ${resetResult.error}` };
+  }
+
+  const admin = createAdminClient();
+
+  try {
+    // Buscar a todos los usuarios de esta organización para eliminarlos de Auth
+    const { data: usersData, error: usersError } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', organizationId);
+
+    if (usersError) throw new Error(`Error buscando usuarios: ${usersError.message}`);
+
+    const userIds = (usersData || []).map(u => u.id);
+
+    // 1. Clean up remaining cross-references manually before deleting organization
+    await admin.from('user_security_preferences').delete().in('user_id', userIds);
+    await admin.from('organization_permissions').delete().eq('organization_id', organizationId);
+    await admin.from('audit_logs').delete().eq('organization_id', organizationId);
+
+    const { error: profilesDelError } = await admin
+      .from('profiles')
+      .delete()
+      .eq('organization_id', organizationId);
+    
+    if (profilesDelError) throw new Error(`Error eliminando perfiles: ${profilesDelError.message}`);
+
+    // 2. Finally delete the organization
+    const { error: orgDelError } = await admin.from('organizations').delete().eq('id', organizationId);
+    if (orgDelError) throw new Error(`Error eliminando organización: ${orgDelError.message}`);
+
+    // 3. Delete each user from Supabase Auth so they are completely wiped
+    for (const uId of userIds) {
+      const { error: deleteUserError } = await admin.auth.admin.deleteUser(uId);
+      if (deleteUserError) {
+         throw new Error(`No se pudo eliminar el usuario ${uId} de autenticación: ${deleteUserError.message}`);
+      }
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return {
+      error: error?.message || 'Error crítico durante la eliminación',
+    };
+  }
+}
