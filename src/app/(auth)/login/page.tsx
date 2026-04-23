@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,6 +28,7 @@ function LoginForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -47,17 +49,71 @@ function LoginForm() {
 
             if (authError) {
                 setError(authError.message);
+                setIsLoading(false);
                 return;
             }
+
+            // Show branded transition screen
+            setIsTransitioning(true);
+
+            // Brief flash so the user sees the loading screen
+            await new Promise((resolve) => setTimeout(resolve, 1000));
 
             router.push(redirectTo);
             router.refresh();
         } catch {
             setError('Error inesperado. Intente nuevamente.');
-        } finally {
             setIsLoading(false);
         }
     };
+
+    // Fullscreen branded transition (portal to body to escape auth layout container)
+    if (isTransitioning) {
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                {/* Animated logo */}
+                <div className="relative flex items-center justify-center">
+                    <div className="absolute h-28 w-28 rounded-full border-2 border-blue-500/20" style={{ animation: 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+                    <div className="absolute h-24 w-24 rounded-full border border-blue-500/10 animate-pulse" />
+                    <div className="relative h-20 w-20" style={{ animation: 'bounce-subtle 2s ease-in-out infinite' }}>
+                        <Image
+                            src="/logo.png"
+                            alt="FrontStock"
+                            fill
+                            className="object-contain drop-shadow-lg"
+                            priority
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-8 flex flex-col items-center gap-2">
+                    <h2 className="text-xl font-bold text-white tracking-wide">FrontStock</h2>
+                    <p className="text-sm text-slate-400 animate-pulse">Preparando tu espacio de trabajo...</p>
+                </div>
+
+                {/* Loading bar */}
+                <div className="mt-6 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 rounded-full" style={{ animation: 'loading-bar 1.5s ease-in-out infinite' }} />
+                </div>
+
+                <style jsx>{`
+                    @keyframes ping-slow {
+                        75%, 100% { transform: scale(1.4); opacity: 0; }
+                    }
+                    @keyframes bounce-subtle {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-6px); }
+                    }
+                    @keyframes loading-bar {
+                        0% { width: 0%; margin-left: 0%; }
+                        50% { width: 60%; margin-left: 20%; }
+                        100% { width: 0%; margin-left: 100%; }
+                    }
+                `}</style>
+            </div>,
+            document.body
+        );
+    }
 
     return (
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-2xl">
