@@ -1,16 +1,66 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { createOrganizationSchema, type CreateOrganizationInput } from '@/lib/validations';
-import { Building2 } from 'lucide-react';
+import {
+    createOrganizationSchema,
+    organizationTaxConditions,
+    type CreateOrganizationInput,
+} from '@/lib/validations';
+import {
+    ArrowLeft,
+    ArrowRight,
+    Building2,
+    Calendar,
+    CheckCircle2,
+    FileText,
+    Hash,
+    MapPin,
+} from 'lucide-react';
+
+const onboardingSteps = [
+    { id: 1, title: 'Negocio', description: 'Datos principales de tu empresa' },
+    { id: 2, title: 'Fiscal', description: 'Informacion impositiva (opcional)' },
+    { id: 3, title: 'Confirmar', description: 'Revisa y crea tu organizacion' },
+] as const;
+
+const stepFieldMap: Record<number, Array<keyof CreateOrganizationInput>> = {
+    1: ['name', 'address', 'city'],
+    2: ['cuit', 'tax_condition', 'gross_income_number', 'activity_start_date'],
+    3: [],
+};
+
+function mapValidationErrors(input: CreateOrganizationInput): Record<string, string> {
+    const result = createOrganizationSchema.safeParse(input);
+
+    if (result.success) {
+        return {};
+    }
+
+    const fieldErrors: Record<string, string> = {};
+    result.error.issues.forEach((issue) => {
+        const field = issue.path[0];
+        if (field && !fieldErrors[String(field)]) {
+            fieldErrors[String(field)] = issue.message;
+        }
+    });
+
+    return fieldErrors;
+}
 
 export default function OnboardingPage() {
     const [formData, setFormData] = useState<CreateOrganizationInput>({
         name: '',
         plan_type: 'free',
+        address: '',
+        city: '',
+        cuit: '',
+        tax_condition: 'Responsable Inscripto',
+        gross_income_number: '',
+        activity_start_date: '',
     });
+    const [currentStep, setCurrentStep] = useState(1);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [generalError, setGeneralError] = useState<string | null>(null);
@@ -21,7 +71,9 @@ export default function OnboardingPage() {
     // Verificar si el usuario ya tiene organización
     useEffect(() => {
         const checkExistingOrg = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/login');
                 return;
@@ -41,45 +93,79 @@ export default function OnboardingPage() {
         checkExistingOrg();
     }, [supabase, router]);
 
-    const validateForm = () => {
-        const result = createOrganizationSchema.safeParse(formData);
-
-        if (!result.success) {
-            const fieldErrors: Record<string, string> = {};
-            result.error.issues.forEach((issue) => {
-                const field = issue.path[0];
-                if (field) {
-                    fieldErrors[String(field)] = issue.message;
-                }
-            });
-            setErrors(fieldErrors);
-            return false;
-        }
-
-        setErrors({});
-        return true;
+    const setFieldValue = (field: keyof CreateOrganizationInput, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+        setErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const validateCurrentStep = () => {
+        const validationErrors = mapValidationErrors(formData);
+        const stepFields = stepFieldMap[currentStep] ?? [];
+
+        if (stepFields.length === 0) {
+            setErrors({});
+            return true;
+        }
+
+        const stepErrors: Record<string, string> = {};
+        stepFields.forEach((field) => {
+            const message = validationErrors[field];
+            if (message) {
+                stepErrors[field] = message;
+            }
+        });
+
+        setErrors(stepErrors);
+        return Object.keys(stepErrors).length === 0;
+    };
+
+    const validateForm = () => {
+        const validationErrors = mapValidationErrors(formData);
+        setErrors(validationErrors);
+        return Object.keys(validationErrors).length === 0;
+    };
+
+    const handleNextStep = () => {
+        if (!validateCurrentStep()) return;
+        setCurrentStep((prev) => Math.min(prev + 1, onboardingSteps.length));
+    };
+
+    const handlePreviousStep = () => {
+        setErrors({});
+        setCurrentStep((prev) => Math.max(prev - 1, 1));
+    };
+
+    const handleCreateOrganization = async () => {
         if (!validateForm()) return;
 
         setIsLoading(true);
         setGeneralError(null);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/login');
                 return;
             }
 
-            // 1. Crear la organización
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert({
-                    name: formData.name,
+                    name: formData.name.trim(),
                     plan_type: formData.plan_type,
+                    address: formData.address.trim() || null,
+                    city: formData.city.trim() || null,
+                    cuit: formData.cuit.trim() || null,
+                    tax_condition: formData.tax_condition.trim() || null,
+                    gross_income_number: formData.gross_income_number.trim() || null,
+                    activity_start_date: formData.activity_start_date || null,
                 })
                 .select()
                 .single();
@@ -89,7 +175,6 @@ export default function OnboardingPage() {
                 return;
             }
 
-            // 2. Actualizar el perfil del usuario con la nueva organización
             const { error: profileError } = await supabase
                 .from('profiles')
                 .update({
@@ -103,7 +188,6 @@ export default function OnboardingPage() {
                 return;
             }
 
-            // 3. Redirigir al dashboard
             router.push('/dashboard');
             router.refresh();
         } catch {
@@ -113,10 +197,23 @@ export default function OnboardingPage() {
         }
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (currentStep < onboardingSteps.length) {
+            handleNextStep();
+            return;
+        }
+
+        void handleCreateOrganization();
+    };
+
+    const progressPercent = (currentStep / onboardingSteps.length) * 100;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                <div className="backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="w-full max-w-3xl">
+                <div className="backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 sm:p-8">
                     <div className="text-center mb-8">
                         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <Building2 className="h-8 w-8 text-white" />
@@ -125,8 +222,39 @@ export default function OnboardingPage() {
                             Configura tu negocio
                         </h1>
                         <p className="text-slate-400">
-                            Ingresa el nombre de tu organización para comenzar
+                            Completa estos pasos para dejar tu cuenta lista desde el primer ingreso.
                         </p>
+                    </div>
+
+                    <div className="mb-8">
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                            {onboardingSteps.map((step) => {
+                                const isActive = currentStep === step.id;
+                                const isCompleted = currentStep > step.id;
+
+                                return (
+                                    <div
+                                        key={step.id}
+                                        className={`rounded-lg border px-3 py-2 text-left transition ${isCompleted
+                                            ? 'border-emerald-400/40 bg-emerald-500/10'
+                                            : isActive
+                                                ? 'border-blue-400/40 bg-blue-500/10'
+                                                : 'border-white/10 bg-white/5'
+                                            }`}
+                                    >
+                                        <p className="text-xs font-semibold text-slate-300">Paso {step.id}</p>
+                                        <p className="text-sm text-white">{step.title}</p>
+                                        <p className="text-xs text-slate-400">{step.description}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
                     </div>
 
                     {generalError && (
@@ -136,40 +264,227 @@ export default function OnboardingPage() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
-                                Nombre del Negocio
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                                placeholder="Ej: Mi Tienda"
-                                autoFocus
-                            />
-                            {errors.name && (
-                                <p className="mt-1 text-sm text-red-400">{errors.name}</p>
-                            )}
-                        </div>
+                        {currentStep === 1 && (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Nombre del Negocio *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFieldValue('name', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        placeholder="Ej: Distribuidora Central"
+                                        autoFocus
+                                    />
+                                    {errors.name && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+                                    )}
+                                </div>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
-                                    Creando...
-                                </span>
-                            ) : (
-                                'Crear Organización'
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <span className="inline-flex items-center gap-2">
+                                            <MapPin className="h-4 w-4" />
+                                            Direccion Comercial
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.address}
+                                        onChange={(e) => setFieldValue('address', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        placeholder="Ej: Av. Corrientes 1234"
+                                    />
+                                    {errors.address && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.address}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Ciudad / Localidad
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.city}
+                                        onChange={(e) => setFieldValue('city', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        placeholder="Ej: Mendoza, Argentina"
+                                    />
+                                    {errors.city && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.city}</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {currentStep === 2 && (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <span className="inline-flex items-center gap-2">
+                                            <Hash className="h-4 w-4" />
+                                            CUIT
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.cuit}
+                                        onChange={(e) => setFieldValue('cuit', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        placeholder="Ej: 30-12345678-9"
+                                    />
+                                    {errors.cuit && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.cuit}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <span className="inline-flex items-center gap-2">
+                                            <FileText className="h-4 w-4" />
+                                            Condicion Fiscal
+                                        </span>
+                                    </label>
+                                    <select
+                                        value={formData.tax_condition}
+                                        onChange={(e) => setFieldValue('tax_condition', e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                    >
+                                        {organizationTaxConditions.map((option) => (
+                                            <option key={option} value={option} className="bg-slate-800">
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.tax_condition && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.tax_condition}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Ingresos Brutos (IIBB)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.gross_income_number}
+                                        onChange={(e) => setFieldValue('gross_income_number', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        placeholder="N° IIBB o Convenio Mult."
+                                    />
+                                    {errors.gross_income_number && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.gross_income_number}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        <span className="inline-flex items-center gap-2">
+                                            <Calendar className="h-4 w-4" />
+                                            Inicio de Actividades
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData.activity_start_date}
+                                        onChange={(e) => setFieldValue('activity_start_date', e.target.value)}
+                                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                    />
+                                    {errors.activity_start_date && (
+                                        <p className="mt-1 text-sm text-red-400">{errors.activity_start_date}</p>
+                                    )}
+                                </div>
+
+                                <p className="text-xs text-slate-400">
+                                    Estos datos son opcionales y podras editarlos luego en Configuracion.
+                                </p>
+                            </div>
+                        )}
+
+                        {currentStep === 3 && (
+                            <div className="space-y-4">
+                                <div className="rounded-xl border border-white/15 bg-white/5 p-4 space-y-3">
+                                    <h2 className="text-white font-semibold flex items-center gap-2">
+                                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                                        Resumen de configuracion inicial
+                                    </h2>
+
+                                    <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">Negocio</p>
+                                            <p className="text-white font-medium">{formData.name || 'Sin definir'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">Ciudad</p>
+                                            <p className="text-white font-medium">{formData.city || 'No especificada'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">Direccion</p>
+                                            <p className="text-white font-medium">{formData.address || 'No especificada'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">CUIT</p>
+                                            <p className="text-white font-medium">{formData.cuit || 'No especificado'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">Condicion Fiscal</p>
+                                            <p className="text-white font-medium">{formData.tax_condition || 'No especificada'}</p>
+                                        </div>
+                                        <div className="bg-white/5 rounded-lg p-3">
+                                            <p className="text-slate-400">IIBB</p>
+                                            <p className="text-white font-medium">
+                                                {formData.gross_income_number || 'No especificado'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-sm text-slate-400">
+                                    Despues de crear la organizacion podras cargar logo, usuarios y politicas desde Configuracion.
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            {currentStep > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={handlePreviousStep}
+                                    className="w-full sm:w-auto py-3 px-4 bg-white/5 border border-white/20 hover:bg-white/10 text-white font-medium rounded-lg transition"
+                                >
+                                    <span className="inline-flex items-center justify-center gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                        Atras
+                                    </span>
+                                </button>
                             )}
-                        </button>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        Creando...
+                                    </span>
+                                ) : currentStep < onboardingSteps.length ? (
+                                    <span className="inline-flex items-center justify-center gap-2">
+                                        Continuar
+                                        <ArrowRight className="h-4 w-4" />
+                                    </span>
+                                ) : (
+                                    'Crear Organizacion'
+                                )}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
