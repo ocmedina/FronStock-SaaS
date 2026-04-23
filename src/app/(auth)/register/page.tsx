@@ -12,6 +12,7 @@ function RegisterForm() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [invitationInfo, setInvitationInfo] = useState<{
         organizationName: string;
@@ -55,6 +56,7 @@ function RegisterForm() {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+        setSuccessMessage(null);
 
         if (password !== confirmPassword) {
             setError('Las contraseñas no coinciden');
@@ -77,11 +79,21 @@ function RegisterForm() {
                     data: {
                         full_name: fullName,
                     },
+                    emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/verify-email?status=success`
                 },
             });
 
             if (authError) {
                 setError(authError.message);
+                return;
+            }
+
+            // If a user was returned but no session, it means email confirmation is required
+            if (authData.user && !authData.session) {
+                setSuccessMessage('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta antes de iniciar sesión.');
+                // We clear the form to avoid confusion
+                setPassword('');
+                setConfirmPassword('');
                 return;
             }
 
@@ -132,8 +144,14 @@ function RegisterForm() {
                         {error}
                     </div>
                 )}
+                
+                {successMessage && (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg text-sm">
+                        {successMessage}
+                    </div>
+                )}
 
-                {invitationInfo && (
+                {invitationInfo && !successMessage && (
                     <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg text-sm">
                         Te unirás como <strong>{invitationInfo.role}</strong>
                     </div>
