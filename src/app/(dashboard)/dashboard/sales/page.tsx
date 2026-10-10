@@ -547,13 +547,19 @@ export default function POSPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-[100dvh] lg:h-[100vh] -m-3 md:-m-6 bg-background">
+    <div className="flex flex-col min-h-[100dvh] lg:h-[100vh] -m-3 md:-m-6 bg-muted/20">
       {/* Header */}
-      <div className="h-14 md:h-16 border-b border-border bg-background px-3 md:px-6 flex items-center justify-between">
+      <div className="h-14 md:h-16 border-b border-border/70 bg-background px-3 md:px-6 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <h1 className="text-base sm:text-lg md:text-2xl font-bold truncate"><Store className="h-5 w-5 inline mr-1" />FrontStock POS</h1>
-          <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground shrink-0">v2.0</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Store className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold tracking-tight sm:text-lg md:text-xl truncate">Punto de venta</h1>
+            <p className="hidden text-xs text-muted-foreground sm:block truncate">{organization?.name || 'FrontStock'} · Caja activa</p>
+          </div>
         </div>
+        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Operativo</span>
       </div>
 
       {/* Sales Tabs */}
@@ -568,14 +574,14 @@ export default function POSPage() {
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
         {/* Left Column - Search & Cart */}
-        <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-border">
+        <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-border/70 bg-background">
           {/* Search Bar */}
-          <div className="p-3 md:p-6 md:pb-4">
+          <div className="p-3 md:p-5 md:pb-4">
             <SearchBar products={products} onProductSelect={addToCart} />
           </div>
 
           {/* Cart */}
-          <div className="flex-1 min-h-0 border-t border-border">
+          <div className="flex-1 min-h-0 border-t border-border/70">
             <Cart
               items={cart}
               onUpdateQuantity={updateQuantity}
@@ -590,7 +596,7 @@ export default function POSPage() {
         </div>
 
         {/* Right Column - Payment Panel Only */}
-        <div className="w-full lg:w-[440px] xl:w-[480px] flex flex-col lg:min-h-0">
+        <div className="w-full lg:w-[440px] xl:w-[480px] flex flex-col lg:min-h-0 bg-background">
           <PaymentPanel
             customers={customers}
             suppliers={suppliers}

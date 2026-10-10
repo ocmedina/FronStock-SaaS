@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { createClient } from '@/lib/supabase/client';
 import { roleLabels, type Role } from '@/lib/permissions';
 import { resolveDashboardModuleFromPath } from '@/lib/route-permissions';
 import { Button } from '@/components/ui/button';
@@ -36,8 +38,6 @@ import {
     ChevronDown,
     LucideIcon,
     X,
-    Bell,
-    Search,
     FileText,
     Truck,
     MapPin,
@@ -141,7 +141,6 @@ export function Navbar() {
         .filter((section) => section.items.length > 0);
 
     const handleLogout = async () => {
-        const { createClient } = require('@/lib/supabase/client');
         const supabase = createClient();
         await supabase.auth.signOut();
         window.location.href = '/login';
@@ -157,11 +156,14 @@ export function Navbar() {
                 <div className="h-full flex items-center px-4 gap-2">
                     {/* Logo */}
                     <Link href="/dashboard" className="flex items-center gap-3 mr-6">
-                        <div
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm shadow-lg bg-sidebar-primary"
-                        >
-                            FS
-                        </div>
+                        <Image
+                            src="/logo.png"
+                            alt="FrontStock"
+                            width={36}
+                            height={36}
+                            className="h-9 w-9 object-contain"
+                            priority
+                        />
                         <div className="hidden sm:block">
                             <span className="text-sidebar-foreground font-bold text-lg">FrontStock</span>
                             {organization && (

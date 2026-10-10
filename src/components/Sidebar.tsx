@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, createContext, useContext, useEffect, useMemo } from 'react';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -228,11 +229,16 @@ export function Sidebar() {
     const sidebarContent = (
         <>
             {/* Logo/Brand */}
-            <div className={`h-16 flex items-center border-b border-sidebar-border ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : 'px-5'}`}>
+            <div className={`h-[4.5rem] flex items-center border-b border-sidebar-border/70 ${isCollapsed && !isMobileOpen ? 'justify-center px-0' : 'px-5'}`}>
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sidebar-primary-foreground font-bold text-lg shrink-0 shadow-lg shadow-sidebar-primary/20 bg-sidebar-primary">
-                        FS
-                    </div>
+                    <Image
+                        src="/logo.png"
+                        alt="FrontStock"
+                        width={38}
+                        height={38}
+                        className="h-9 w-9 shrink-0 object-contain"
+                        priority
+                    />
                     {(!isCollapsed || isMobileOpen) && (
                         <div className="overflow-hidden">
                             <h1 className="text-base font-bold text-sidebar-foreground tracking-wide">FrontStock</h1>
@@ -254,8 +260,8 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-2 py-4 overflow-y-auto no-scrollbar">
-                <div className="space-y-4">
+            <nav className="flex-1 px-3 py-5 overflow-y-auto no-scrollbar">
+                <div className="space-y-5">
                     {menuSections.map((section) => {
                         const visibleItems = section.items.filter((item) => {
                             const requiredModule = resolveDashboardModuleFromPath(item.href);
@@ -270,7 +276,7 @@ export function Sidebar() {
                         <div key={section.title}>
                             {/* Section Header */}
                             {(!isCollapsed || isMobileOpen) && (
-                                <h3 className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50 mb-1">
+                                <h3 className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/40 mb-1">
                                     {section.title}
                                 </h3>
                             )}
@@ -287,10 +293,10 @@ export function Sidebar() {
                                     const linkContent = (
                                         <Link
                                             href={item.href}
-                                            className={`flex items-center gap-3 rounded-lg transition-all duration-200 group relative ${isCollapsed && !isMobileOpen ? 'p-2.5 justify-center' : 'px-3 py-2'
+                                            className={`flex items-center gap-3 rounded-xl transition-all duration-200 group relative ${isCollapsed && !isMobileOpen ? 'p-2.5 justify-center' : 'px-3 py-2.5'
                                                 } ${isActive
-                                                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                                                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
+                                                    ? 'bg-sidebar-primary/12 text-sidebar-foreground shadow-sm ring-1 ring-sidebar-primary/20'
+                                                    : 'text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60'
                                                 }`}
                                         >
                                             <Icon size={18} className={`shrink-0 transition-colors ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/70 group-hover:text-sidebar-foreground'}`} />
@@ -298,7 +304,7 @@ export function Sidebar() {
                                                 <span className="text-sm font-medium truncate">{item.label}</span>
                                             )}
                                             {isActive && (!isCollapsed || isMobileOpen) && (
-                                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-sidebar-primary rounded-l-full" />
+                                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-sidebar-primary rounded-r-full" />
                                             )}
                                         </Link>
                                     );
@@ -327,12 +333,12 @@ export function Sidebar() {
             </nav>
 
             {/* Footer / User Profile */}
-            <div className="p-3 border-t border-sidebar-border bg-sidebar-accent/5">
+            <div className="p-3 border-t border-sidebar-border/70 bg-sidebar-accent/5">
                 <div className={`flex flex-col gap-2 ${isCollapsed && !isMobileOpen ? 'items-center' : ''}`}>
 
                     {/* User Info (Expanded) */}
                     {(!isCollapsed || isMobileOpen) && (
-                        <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border mb-1">
+                        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-sidebar-accent/45 border border-sidebar-border/70 mb-1">
                             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center border border-sidebar-border text-sidebar-primary font-bold text-xs">
                                 {userEmail?.charAt(0).toUpperCase()}
                             </div>
@@ -428,7 +434,7 @@ export function Sidebar() {
 
             {/* Desktop Sidebar */}
             <aside
-                className={`hidden md:flex h-screen sticky top-0 flex-col transition-all duration-300 z-40 border-r border-sidebar-border bg-sidebar ${isCollapsed ? 'w-16' : 'w-64'
+                className={`hidden md:flex h-screen sticky top-0 flex-col transition-all duration-300 z-40 border-r border-sidebar-border/70 bg-sidebar ${isCollapsed ? 'w-16' : 'w-64'
                     }`}
             >
                 {/* Collapse Toggle Button - Positioned on right edge */}

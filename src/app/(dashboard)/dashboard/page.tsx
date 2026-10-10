@@ -31,7 +31,6 @@ import {
   TrendingDown,
   Loader2,
   Clock,
-  Sparkles,
   Target,
   Zap,
 } from "lucide-react";
@@ -131,13 +130,13 @@ export default function DashboardPage() {
           .eq("organization_id", organization.id),
         supabase
           .from("sales")
-          .select("total")
+          .select("total, created_at")
           .eq("organization_id", organization.id)
           .eq("status", "completed")
           .gte("created_at", today.toISOString()),
         supabase
           .from("sales")
-          .select("total")
+          .select("total, created_at")
           .eq("organization_id", organization.id)
           .eq("status", "completed")
           .gte("created_at", weekAgo.toISOString()),
@@ -183,15 +182,14 @@ export default function DashboardPage() {
         last7Days.push(dateStr);
       }
       weekSalesRes.data?.forEach((sale) => {
-        const dateStr = sale.total
-          ? new Date(now).toISOString().split("T")[0]
-          : "";
-        // We need the created_at from weekSalesRes which we don't have, so simulate
+        const dateStr = new Date(sale.created_at).toISOString().split("T")[0];
+        if (dateStr in dailyMap) {
+          dailyMap[dateStr] += Number(sale.total);
+        }
       });
-      // Simulate some chart data based on week revenue
-      const dailyRevenue = last7Days.map((day, i) => ({
+      const dailyRevenue = last7Days.map((day) => ({
         day: new Date(day).toLocaleDateString("es-AR", { weekday: "short" }),
-        revenue: Math.random() * (weekRevenue / 5) + weekRevenue / 10,
+        revenue: dailyMap[day],
       }));
 
       const salesWithItems: RecentSale[] = [];
@@ -300,19 +298,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-primary-foreground relative overflow-hidden bg-gradient-to-r from-primary via-purple-600 to-pink-600 dark:from-primary dark:via-purple-700 dark:to-pink-700 shadow-xl shadow-primary/20">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-5 w-5" />
-            <span className="text-sm opacity-90">Panel de Control</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-            ¡Hola, {profile?.full_name?.split(" ")[0] || "Usuario"}!
+    <div className="mx-auto max-w-[1600px] space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-2 text-sm font-medium text-primary">Resumen operativo</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Hola, {profile?.full_name?.split(" ")[0] || "Usuario"}
           </h1>
-          <p className="opacity-90 text-sm sm:text-base md:text-lg">
-            {organization?.name} •{" "}
+          <p className="mt-1 text-sm text-muted-foreground capitalize">
+            {organization?.name} ·{" "}
             {new Date().toLocaleDateString("es-AR", {
               weekday: "long",
               day: "numeric",
@@ -320,31 +314,34 @@ export default function DashboardPage() {
             })}
           </p>
         </div>
-        <div className="absolute right-0 top-0 w-72 h-72 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-        <div className="absolute right-20 bottom-0 w-40 h-40 bg-white/10 rounded-full translate-y-1/2 blur-2xl" />
-        <div className="absolute left-1/2 top-1/2 w-24 h-24 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <Link href="/dashboard/sales">
+          <Button className="w-full gap-2 sm:w-auto">
+            <CreditCard className="h-4 w-4" />
+            Nueva venta
+          </Button>
+        </Link>
       </div>
 
       {/* Revenue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg shadow-emerald-500/20 overflow-hidden">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-emerald-200/70 bg-emerald-50/70 shadow-none dark:border-emerald-900/60 dark:bg-emerald-950/20">
           <CardContent className="p-5 relative">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="opacity-80 text-sm font-medium">Hoy</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Ventas de hoy</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-emerald-950 dark:text-emerald-50">
                   ${stats.todayRevenue.toLocaleString("es-AR")}
                 </p>
-                <p className="opacity-80 text-sm mt-1 flex items-center gap-1">
+                <p className="mt-1 flex items-center gap-1 text-sm text-emerald-700/80 dark:text-emerald-300/80">
                   <ShoppingCart className="h-3.5 w-3.5" />
                   {stats.todaySales} ventas
                 </p>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <DollarSign className="h-7 w-7" />
+              <div className="rounded-xl bg-emerald-500/15 p-3 text-emerald-600 dark:text-emerald-300">
+                <DollarSign className="h-6 w-6" />
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-12 opacity-30">
+            <div className="absolute bottom-0 left-0 right-0 h-10 opacity-20">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={stats.dailyRevenue.slice(-3)}>
                   <Area
@@ -360,34 +357,34 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg shadow-blue-500/20 overflow-hidden">
+        <Card className="border-blue-200/70 bg-blue-50/70 shadow-none dark:border-blue-900/60 dark:bg-blue-950/20">
           <CardContent className="p-5 relative">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="opacity-80 text-sm font-medium">Esta Semana</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Esta semana</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-blue-950 dark:text-blue-50">
                   ${stats.weekRevenue.toLocaleString("es-AR")}
                 </p>
-                <div className="flex items-center gap-1.5 text-sm mt-1">
+                <div className="mt-1 flex items-center gap-1.5 text-sm">
                   {weekChange >= 0 ? (
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20">
                       <TrendingUp className="h-3.5 w-3.5" />
-                      <span className="font-medium">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">
                         +{weekChange.toFixed(0)}%
                       </span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20">
                       <TrendingDown className="h-3.5 w-3.5" />
-                      <span className="font-medium">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">
                         {weekChange.toFixed(0)}%
                       </span>
                     </div>
                   )}
                 </div>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <TrendingUp className="h-7 w-7" />
+              <div className="rounded-xl bg-blue-500/15 p-3 text-blue-600 dark:text-blue-300">
+                <TrendingUp className="h-6 w-6" />
               </div>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-12 opacity-30">
@@ -406,21 +403,21 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg shadow-purple-500/20 overflow-hidden">
+        <Card className="border-violet-200/70 bg-violet-50/70 shadow-none dark:border-violet-900/60 dark:bg-violet-950/20">
           <CardContent className="p-5 relative">
             <div className="flex items-center justify-between relative z-10">
               <div>
-                <p className="opacity-80 text-sm font-medium">Este Mes</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">
+                <p className="text-sm font-medium text-violet-700 dark:text-violet-300">Este mes</p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-violet-950 dark:text-violet-50">
                   ${stats.monthRevenue.toLocaleString("es-AR")}
                 </p>
-                <p className="opacity-80 text-sm mt-1 flex items-center gap-1">
+                <p className="mt-1 flex items-center gap-1 text-sm text-violet-700/80 dark:text-violet-300/80">
                   <Target className="h-3.5 w-3.5" />
                   Objetivo mensual
                 </p>
               </div>
-              <div className="p-3 bg-white/20 rounded-xl">
-                <BarChart3 className="h-7 w-7" />
+              <div className="rounded-xl bg-violet-500/15 p-3 text-violet-600 dark:text-violet-300">
+                <BarChart3 className="h-6 w-6" />
               </div>
             </div>
           </CardContent>

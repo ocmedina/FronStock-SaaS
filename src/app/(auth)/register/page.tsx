@@ -125,40 +125,40 @@ function RegisterForm() {
     };
 
     return (
-        <div className="backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-8">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">FrontStock</h1>
+                <h1 className="text-3xl font-bold text-slate-900 mb-2">FrontStock</h1>
                 {invitationInfo ? (
                     <div className="text-center">
-                        <p className="text-slate-300">¡Has sido invitado!</p>
-                        <p className="text-blue-400 font-medium">{invitationInfo.organizationName}</p>
+                        <p className="text-slate-600">¡Has sido invitado!</p>
+                        <p className="text-blue-600 font-medium">{invitationInfo.organizationName}</p>
                     </div>
                 ) : (
-                    <p className="text-slate-400">Crea tu cuenta</p>
+                    <p className="text-slate-500">Crea tu cuenta</p>
                 )}
             </div>
 
             <form onSubmit={handleRegister} className="space-y-5">
                 {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                         {error}
                     </div>
                 )}
                 
                 {successMessage && (
-                    <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg text-sm">
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
                         {successMessage}
                     </div>
                 )}
 
                 {invitationInfo && !successMessage && (
-                    <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-3 rounded-lg text-sm">
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
                         Te unirás como <strong>{invitationInfo.role}</strong>
                     </div>
                 )}
 
                 <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-2">
                         Nombre Completo
                     </label>
                     <input
@@ -167,13 +167,13 @@ function RegisterForm() {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                         placeholder="Juan Pérez"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
                         Email
                     </label>
                     <input
@@ -183,13 +183,13 @@ function RegisterForm() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={!!invitationInfo}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
                         placeholder="tu@email.com"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
                         Contraseña
                     </label>
                     <input
@@ -198,13 +198,13 @@ function RegisterForm() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                         placeholder="••••••••"
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
                         Confirmar Contraseña
                     </label>
                     <input
@@ -213,7 +213,7 @@ function RegisterForm() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                         placeholder="••••••••"
                     />
                 </div>
@@ -227,9 +227,9 @@ function RegisterForm() {
                 </button>
             </form>
 
-            <p className="mt-6 text-center text-slate-400 text-sm">
+            <p className="mt-6 text-center text-slate-500 text-sm">
                 ¿Ya tienes cuenta?{' '}
-                <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
+                <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
                     Inicia sesión
                 </Link>
             </p>
@@ -240,7 +240,7 @@ function RegisterForm() {
 export default function RegisterPage() {
     return (
         <Suspense fallback={
-            <div className="flex items-center justify-center p-8 text-white">
+            <div className="flex items-center justify-center p-8 text-slate-700">
                 <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />

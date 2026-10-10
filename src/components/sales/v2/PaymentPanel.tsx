@@ -162,8 +162,9 @@ export function PaymentPanel({
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Header */}
-            <div className="p-3 md:p-4 border-b border-border bg-muted/20">
-                <h2 className="text-lg md:text-xl font-bold"><CreditCard className="h-5 w-5 inline mr-1" />Panel de Pago</h2>
+            <div className="p-3 md:p-4 border-b border-border/70 bg-background">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">Finalizar operación</p>
+                <h2 className="text-lg md:text-xl font-semibold tracking-tight"><CreditCard className="h-5 w-5 inline mr-1 text-primary" />Panel de pago</h2>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">

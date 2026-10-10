@@ -30,16 +30,18 @@ export function Cart({
     if (items.length === 0) {
         return (
             <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-between p-4 border-b border-border/70">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
                         <ShoppingCart className="h-5 w-5" />
                         Carrito
                     </h2>
                 </div>
 
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-muted-foreground">
-                    <ShoppingCart className="h-16 w-16 mb-4 opacity-20" />
-                    <p className="text-sm">El carrito está vacío</p>
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                        <ShoppingCart className="h-8 w-8 text-primary/50" />
+                    </div>
+                    <p className="text-sm font-medium">El carrito está vacío</p>
                     <p className="text-xs mt-1">Busca productos para comenzar</p>
                 </div>
             </div>
@@ -49,8 +51,8 @@ export function Cart({
     return (
         <div className="flex flex-col h-full bg-background">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/20">
-                <h2 className="text-xl font-bold flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 border-b border-border/70 bg-background">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5 text-primary" />
                     Carrito
                     <span className="text-sm font-normal text-muted-foreground">
@@ -79,8 +81,8 @@ export function Cart({
                             key={item.product.id}
                             className={cn(
                                 'flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-lg',
-                                'bg-muted/50 hover:bg-muted transition-colors',
-                                'border border-transparent hover:border-border',
+                                'bg-muted/35 hover:bg-muted/70 transition-colors',
+                                'border border-border/60 hover:border-primary/20',
                                 'group'
                             )}
                         >
@@ -152,10 +154,10 @@ export function Cart({
             </div>
 
             {/* Subtotal */}
-            <div className="p-4 border-t border-border bg-muted/20">
+            <div className="p-4 border-t border-border/70 bg-background">
                 <div className="flex justify-between items-center">
                     <span className="text-lg font-medium text-muted-foreground">Subtotal:</span>
-                    <span className="text-2xl font-bold text-primary">
+                    <span className="text-2xl font-semibold tracking-tight text-primary">
                         ${subtotal.toLocaleString('es-AR')}
                     </span>
                 </div>

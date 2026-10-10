@@ -48,11 +48,11 @@ export function ProductTable({
     canViewCost,
 }: ProductTableProps) {
     return (
-        <div className="rounded-lg border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-sm">
             <div className="overflow-x-auto">
                 <Table className="min-w-[920px]">
                     <TableHeader>
-                        <TableRow>
+                        <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
                             <TableHead className="w-12">
                                 <Checkbox
                                     checked={selectedIds.size === products.length && products.length > 0}
@@ -89,7 +89,7 @@ export function ProductTable({
                             products.map((product) => (
                                 <TableRow
                                     key={product.id}
-                                    className={selectedIds.has(product.id) ? "bg-muted/50" : ""}
+                                    className={`transition-colors hover:bg-slate-50 ${selectedIds.has(product.id) ? "bg-primary/5" : ""}`}
                                 >
                                     <TableCell>
                                         <Checkbox

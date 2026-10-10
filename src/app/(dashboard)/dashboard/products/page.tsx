@@ -207,16 +207,20 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-[1600px] mx-auto">
+    <div className="mx-auto max-w-[1600px] space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Inventario</h1>
-          <p className="text-muted-foreground">Gestión de productos, combos y stock.</p>
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Catálogo e inventario
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Productos</h1>
+          <p className="mt-1 text-muted-foreground">Gestioná tu catálogo, precios y niveles de stock.</p>
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex w-full items-center gap-2 md:w-auto">
           {canCreate("products") && (
-            <div className="flex gap-2 w-full md:w-auto">
+            <div className="flex w-full gap-2 md:w-auto">
               <Button
                 variant="outline"
                 onClick={() => setShowImportModal(true)}
@@ -237,7 +241,7 @@ export default function ProductsPage() {
                   setEditingProduct(null);
                   setShowModal(true);
                 }}
-                className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all flex-1 md:flex-none"
+                className="flex-1 shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30 md:flex-none"
               >
                 <Plus className="mr-2 h-4 w-4" /> Nuevo Producto
               </Button>
@@ -302,8 +306,8 @@ export default function ProductsPage() {
 
       {/* Pagination Controls */}
       {filteredProducts.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between border-t pt-4 px-2 gap-4 sm:gap-0">
-          <div className="text-sm text-muted-foreground text-center sm:text-left">
+        <div className="flex flex-col items-center justify-between gap-4 border-t px-2 pt-4 sm:flex-row sm:gap-0">
+          <div className="text-center text-sm text-muted-foreground sm:text-left">
             Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredProducts.length)} de {filteredProducts.length} productos
           </div>
           <div className="flex items-center gap-2">

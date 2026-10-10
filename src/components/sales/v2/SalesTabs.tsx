@@ -25,17 +25,17 @@ export function SalesTabs({
     onTabAdd,
 }: SalesTabsProps) {
     return (
-        <div className="flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 border-b border-border bg-muted/20">
+        <div className="flex items-center gap-2 px-3 md:px-5 py-2 md:py-3 border-b border-border/70 bg-background">
             {/* Tabs */}
             <div className="flex items-center gap-1 flex-1 overflow-x-auto">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
                         className={cn(
-                            'group flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors cursor-pointer',
+                            'group flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl transition-colors cursor-pointer border',
                             activeTabId === tab.id
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-background hover:bg-accent'
+                                ? 'bg-primary/10 border-primary/20 text-primary'
+                                : 'bg-transparent border-transparent hover:bg-muted'
                         )}
                         onClick={() => onTabChange(tab.id)}
                     >

@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { SidebarProvider, Sidebar, MobileMenuButton, useSidebar } from '@/components/Sidebar';
+import Image from 'next/image';
+import { SidebarProvider, Sidebar } from '@/components/Sidebar';
 import { Navbar } from '@/components/Navbar';
 import { MobileNav } from '@/components/MobileNav';
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext';
@@ -15,14 +16,18 @@ function MobileHeader() {
     const { organization } = useOrganization();
 
     return (
-        <header className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-sm supports-[backdrop-filter]:bg-sidebar/80">
+        <header className="md:hidden sticky top-0 z-30 h-16 flex items-center justify-between px-4 border-b border-sidebar-border/70 bg-sidebar/95 backdrop-blur-sm supports-[backdrop-filter]:bg-sidebar/80">
             <div className="flex items-center gap-3">
                 {/* MobileMenuButton removed - moved to BottomNav */}
                 <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sidebar-primary-foreground font-bold text-xs shrink-0"
-                        style={{ background: 'var(--gradient-primary)' }}>
-                        FS
-                    </div>
+                    <Image
+                        src="/logo.png"
+                        alt="FrontStock"
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 shrink-0 object-contain"
+                        priority
+                    />
                     <div>
                         <h1 className="text-sm font-bold text-sidebar-foreground leading-none">FrontStock</h1>
                         {organization && (

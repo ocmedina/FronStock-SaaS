@@ -34,10 +34,10 @@ export function ProductGrid({
                 return (
                     <div
                         key={product.id}
-                        className={`group relative flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+                        className={`group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${isSelected ? 'border-primary ring-2 ring-primary' : ''}`}
                     >
-                        <div className="p-5 flex flex-col h-full gap-4">
-                            <div className="flex justify-between items-start">
+                        <div className="flex h-full flex-col gap-4 p-5">
+                            <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-2">
                                     <Checkbox
                                         checked={isSelected}

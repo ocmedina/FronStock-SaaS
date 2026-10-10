@@ -47,8 +47,8 @@ export function MobileNav() {
     });
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-sidebar/95 backdrop-blur-lg border-t border-sidebar-border pb-safe supports-[backdrop-filter]:bg-sidebar/80">
-            <div className="flex justify-around items-center h-16">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-sidebar/95 backdrop-blur-lg border-t border-sidebar-border/70 pb-safe supports-[backdrop-filter]:bg-sidebar/80">
+            <div className="flex justify-around items-center h-[4.5rem] px-2">
                 {visibleNavItems.map((item) => {
                     const active = isActive(item.href, item.exact);
                     const Icon = item.icon;
@@ -57,10 +57,12 @@ export function MobileNav() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'
+                            className={`flex flex-col items-center justify-center w-full h-full gap-1 ${active ? 'text-sidebar-primary' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'
                                 }`}
                         >
-                            <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                            <span className={`flex h-8 w-12 items-center justify-center rounded-xl transition-colors ${active ? 'bg-sidebar-primary/15' : ''}`}>
+                                <Icon size={19} strokeWidth={active ? 2.5 : 2} />
+                            </span>
                             <span className="text-[10px] font-medium">{item.label}</span>
                         </Link>
                     );
@@ -68,9 +70,11 @@ export function MobileNav() {
 
                 <button
                     onClick={() => setIsMobileOpen(true)}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                    className="flex flex-col items-center justify-center w-full h-full gap-1 text-sidebar-foreground/60 hover:text-sidebar-foreground"
                 >
-                    <Menu size={20} />
+                    <span className="flex h-8 w-12 items-center justify-center rounded-xl">
+                        <Menu size={19} />
+                    </span>
                     <span className="text-[10px] font-medium">Menú</span>
                 </button>
             </div>

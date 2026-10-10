@@ -1,4 +1,4 @@
-export interface CreatePreferenceInput {
+﻿export interface CreatePreferenceInput {
     title: string;
     unitPrice: number;
     quantity?: number;
@@ -27,9 +27,14 @@ function getAccessToken() {
     return token;
 }
 
-export async function createCheckoutPreference(input: CreatePreferenceInput) {
-    const token = getAccessToken();
+function getHeaders() {
+    return {
+        Authorization: `Bearer ${getAccessToken()}`,
+        'Content-Type': 'application/json',
+    };
+}
 
+export async function createCheckoutPreference(input: CreatePreferenceInput) {
     const hasBackUrls = Boolean(input.successUrl && input.failureUrl && input.pendingUrl);
     const canUseAutoReturn = hasBackUrls && input.successUrl.startsWith('https://');
 
@@ -69,10 +74,7 @@ export async function createCheckoutPreference(input: CreatePreferenceInput) {
 
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify(payload),
     });
 
@@ -94,13 +96,8 @@ export async function getPaymentById(paymentId: string) {
         throw new Error('paymentId inválido: debe ser numérico.');
     }
 
-    const token = getAccessToken();
-
     const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         cache: 'no-store',
     });
 
@@ -117,8 +114,6 @@ export async function getPaymentById(paymentId: string) {
 }
 
 export async function searchLatestPaymentByExternalReference(externalReference: string) {
-    const token = getAccessToken();
-
     const url = new URL('https://api.mercadopago.com/v1/payments/search');
     url.searchParams.set('external_reference', externalReference);
     url.searchParams.set('sort', 'date_created');
@@ -126,10 +121,7 @@ export async function searchLatestPaymentByExternalReference(externalReference: 
     url.searchParams.set('limit', '1');
 
     const response = await fetch(url.toString(), {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         cache: 'no-store',
     });
 
@@ -151,18 +143,13 @@ export async function searchLatestPaymentByExternalReference(externalReference: 
 }
 
 export async function searchPaymentsByOrgAndPlan(organizationId: string, planId: string) {
-    const token = getAccessToken();
-
     const url = new URL('https://api.mercadopago.com/v1/payments/search');
     url.searchParams.set('sort', 'date_created');
     url.searchParams.set('criteria', 'desc');
     url.searchParams.set('limit', '5');
 
     const response = await fetch(url.toString(), {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         cache: 'no-store',
     });
 
@@ -239,8 +226,6 @@ export interface MercadoPagoSubscriptionResponse {
 }
 
 export async function createSubscription(input: CreateSubscriptionInput): Promise<MercadoPagoSubscriptionResponse> {
-    const token = getAccessToken();
-
     const payload: Record<string, unknown> = {
         reason: input.reason,
         external_reference: input.externalReference,
@@ -260,10 +245,7 @@ export async function createSubscription(input: CreateSubscriptionInput): Promis
 
     const response = await fetch('https://api.mercadopago.com/preapproval', {
         method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify(payload),
     });
 
@@ -276,13 +258,8 @@ export async function createSubscription(input: CreateSubscriptionInput): Promis
 }
 
 export async function getSubscription(subscriptionId: string): Promise<MercadoPagoSubscriptionResponse> {
-    const token = getAccessToken();
-
     const response = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(subscriptionId)}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         cache: 'no-store',
     });
 
@@ -298,14 +275,9 @@ export async function updateSubscriptionStatus(
     subscriptionId: string,
     status: 'authorized' | 'paused' | 'cancelled',
 ): Promise<MercadoPagoSubscriptionResponse> {
-    const token = getAccessToken();
-
     const response = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(subscriptionId)}`, {
         method: 'PUT',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify({ status }),
     });
 
