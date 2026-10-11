@@ -27,7 +27,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Wallet, Banknote, ArrowRightLeft, HandCoins, ReceiptText, TrendingUp, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { getOpenCashSession } from "@/lib/cash-session";
+import {
+  getCashRegisters,
+  getOpenCashSessions,
+  type CashRegisterInfo,
+} from "@/lib/cash-session";
 
 type CashSessionPolicy = "always" | "cash_only" | "off";
 type CashSessionScope = "all_users" | "assigned_users";
@@ -54,6 +58,7 @@ interface CashClosingData {
 
 interface SavedCashClosing {
   id: string;
+  cash_session_id?: string | null;
   closure_date: string;
   sold_total: number;
   sold_local: number;
@@ -186,6 +191,8 @@ export default function CashClosingPage() {
   const [history, setHistory] = useState<SavedCashClosing[]>([]);
   const [selectedClosing, setSelectedClosing] = useState<SavedCashClosing | null>(null);
   const [activeSession, setActiveSession] = useState<ActiveCashSession | null>(null);
+  const [cashRegisters, setCashRegisters] = useState<CashRegisterInfo[]>([]);
+  const [selectedRegisterId, setSelectedRegisterId] = useState("");
   const [openingAmount, setOpeningAmount] = useState<string>("0");
   const [openingNotes, setOpeningNotes] = useState<string>("");
   const [countedCash, setCountedCash] = useState<string>("");
@@ -498,6 +505,7 @@ export default function CashClosingPage() {
         .upsert(
           {
             organization_id: organizationId,
+            cash_session_id: activeSession?.id || null,
             closure_date: dateKey,
             sold_total: data.soldTotal,
             sold_local: data.soldLocal,
@@ -517,7 +525,7 @@ export default function CashClosingPage() {
             updated_at: new Date().toISOString(),
           },
           {
-            onConflict: "organization_id,closure_date",
+            onConflict: "cash_session_id",
           },
         );
 
@@ -534,17 +542,29 @@ export default function CashClosingPage() {
 
   const fetchActiveSession = useCallback(async () => {
     if (!organizationId) return;
-    const session = await getOpenCashSession(supabase, organizationId);
+    const [registers, sessions] = await Promise.all([
+      getCashRegisters(supabase, organizationId),
+      getOpenCashSessions(supabase, organizationId),
+    ]);
+    setCashRegisters(registers);
+    const registerId = selectedRegisterId || registers[0]?.id || "";
+    setSelectedRegisterId(registerId);
+    const session = sessions.find((item) => item.register_id === registerId) || null;
     setActiveSession(session as ActiveCashSession | null);
-  }, [organizationId, supabase]);
+  }, [organizationId, supabase, selectedRegisterId]);
 
   const handleOpenSession = useCallback(async () => {
     if (!organizationId || isOpening) return;
 
     setIsOpening(true);
     try {
-      const { data: result, error: openError } = await supabase.rpc("open_cash_session", {
+      if (!selectedRegisterId) {
+        throw new Error("Seleccioná una caja para abrir");
+      }
+
+      const { data: result, error: openError } = await supabase.rpc("open_cash_session_for_register", {
         p_org_id: organizationId,
+        p_register_id: selectedRegisterId,
         p_opening_amount: Number(openingAmount || 0),
         p_notes: openingNotes || null,
       });
@@ -560,7 +580,7 @@ export default function CashClosingPage() {
     } finally {
       setIsOpening(false);
     }
-  }, [organizationId, isOpening, supabase, openingAmount, openingNotes, fetchActiveSession]);
+  }, [organizationId, isOpening, supabase, openingAmount, openingNotes, selectedRegisterId, fetchActiveSession]);
 
   const handleCloseSession = useCallback(async () => {
     if (!organizationId || !activeSession || isClosing) return;
@@ -573,8 +593,9 @@ export default function CashClosingPage() {
 
     setIsClosing(true);
     try {
-      const { data: result, error: closeError } = await supabase.rpc("close_cash_session", {
+      const { data: result, error: closeError } = await supabase.rpc("close_cash_session_for_register", {
         p_org_id: organizationId,
+        p_session_id: activeSession.id,
         p_counted_cash: countedValue,
         p_notes: closeNotes || null,
       });
@@ -642,6 +663,25 @@ export default function CashClosingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {cashRegisters.length > 0 ? (
+            <div className="max-w-sm space-y-2">
+              <p className="text-sm font-medium">Caja</p>
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={selectedRegisterId}
+                onChange={(event) => {
+                  setSelectedRegisterId(event.target.value);
+                  setActiveSession(null);
+                }}
+              >
+                {cashRegisters.map((register) => (
+                  <option key={register.id} value={register.id}>
+                    {register.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           {!activeSession ? (
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2">

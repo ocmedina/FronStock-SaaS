@@ -17,6 +17,15 @@ type AcceptInvitationData = {
   fullName: string;
 };
 
+type InvitationRpcResult = {
+  success?: boolean;
+  error?: string;
+};
+
+function isInvitationRpcResult(value: unknown): value is InvitationRpcResult {
+  return typeof value === "object" && value !== null;
+}
+
 export async function createInvitation(data: InviteUserData) {
   const supabase = await createClient();
   const {
@@ -129,7 +138,7 @@ export async function acceptInvitationForRegisteredUser(data: AcceptInvitationDa
   });
 
   if (!rpcResult.error) {
-    const dataResult = rpcResult.data as any;
+    const dataResult = isInvitationRpcResult(rpcResult.data) ? rpcResult.data : null;
     if (dataResult?.success === false) {
       return { error: dataResult.error || "No se pudo aceptar la invitación" };
     }

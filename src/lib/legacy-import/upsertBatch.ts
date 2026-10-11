@@ -166,7 +166,7 @@ export async function upsertBatch(input: UpsertBatchInput): Promise<UpsertBatchR
   const relationPairs: Array<{ table: string; legacyId: string; newId: string }> = [];
   let inserted = 0;
   let updated = 0;
-  let skipped = 0;
+  const skipped = 0;
   let failed = 0;
   const errors: RowError[] = [];
 

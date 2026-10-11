@@ -38,9 +38,18 @@ export async function updateSession(request: NextRequest) {
     let user = null;
     let authErrorType: 'none' | 'network' | 'invalid_token' | 'no_session' | 'unknown' = 'none';
 
-    const isInvalidRefreshTokenError = (error: any) => {
-        const message = (error?.message || '').toString();
-        const code = (error?.code || '').toString();
+    const getErrorField = (error: unknown, field: 'message' | 'code' | 'name'): string => {
+        if (typeof error !== 'object' || error === null || !(field in error)) {
+            return '';
+        }
+
+        const value = (error as Record<string, unknown>)[field];
+        return typeof value === 'string' ? value : String(value ?? '');
+    };
+
+    const isInvalidRefreshTokenError = (error: unknown) => {
+        const message = getErrorField(error, 'message');
+        const code = getErrorField(error, 'code');
         return (
             code === 'refresh_token_not_found' ||
             message.includes('Invalid Refresh Token') ||
@@ -48,8 +57,8 @@ export async function updateSession(request: NextRequest) {
         );
     };
 
-    const isNetworkAuthError = (error: any) => {
-        const message = (error?.message || '').toString().toLowerCase();
+    const isNetworkAuthError = (error: unknown) => {
+        const message = getErrorField(error, 'message').toLowerCase();
         return (
             message.includes('failed to fetch') ||
             message.includes('fetch failed') ||
@@ -59,10 +68,10 @@ export async function updateSession(request: NextRequest) {
         );
     };
 
-    const isMissingSessionError = (error: any) => {
-        const message = (error?.message || '').toString();
+    const isMissingSessionError = (error: unknown) => {
+        const message = getErrorField(error, 'message');
         return (
-            error?.name === 'AuthSessionMissingError' ||
+            getErrorField(error, 'name') === 'AuthSessionMissingError' ||
             message.includes('Auth session missing')
         );
     };

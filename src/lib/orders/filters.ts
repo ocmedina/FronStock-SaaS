@@ -1,5 +1,18 @@
+interface FilterableOrder {
+    id?: string | null;
+    customer?: {
+        name?: string | null;
+        phone?: string | null;
+        address?: string | null;
+    } | null;
+    service_type?: string | null;
+    lifecycle_status?: string | null;
+    delivery_status?: string | null;
+    total?: number | null;
+}
+
 export const filterOrders = (
-    orders: any[],
+    orders: FilterableOrder[],
     searchTerm: string,
     serviceTypeFilter: string,
     statusFilter: string = "all"
@@ -12,7 +25,7 @@ export const filterOrders = (
                 o.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 o.customer?.phone?.includes(searchTerm) ||
                 o.customer?.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                o.id.toLowerCase().includes(searchTerm.toLowerCase())
+                o.id?.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }
 
@@ -37,7 +50,7 @@ export const filterOrders = (
     return filtered;
 };
 
-export const getOrderStatus = (order: any): string => {
+export const getOrderStatus = (order: FilterableOrder): string => {
     const lifecycle = String(order?.lifecycle_status || "").toLowerCase();
     if (lifecycle) return lifecycle;
 
@@ -49,7 +62,7 @@ export const getOrderStatus = (order: any): string => {
 };
 
 export const filterOrdersByStatus = (
-    orders: any[],
+    orders: FilterableOrder[],
     statuses: string[]
 ) => {
     return orders.filter((o) =>
@@ -57,7 +70,7 @@ export const filterOrdersByStatus = (
     );
 };
 
-export const calculateOrderStats = (orders: any[]) => {
+export const calculateOrderStats = (orders: FilterableOrder[]) => {
     const total = orders.length;
     const pending = orders.filter((o) =>
         ["pending", "draft"].includes(getOrderStatus(o))

@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Organization, Profile } from "@/types/database.types";
 
 export type CashSessionPolicy = "always" | "cash_only" | "off";
@@ -9,7 +10,15 @@ export interface OpenCashSessionInfo {
   opened_at: string;
   opening_amount: number;
   register_id: string;
+  register_name?: string;
   status: "open" | "closed";
+}
+
+export interface CashRegisterInfo {
+  id: string;
+  name: string;
+  code: string | null;
+  is_active: boolean;
 }
 
 export function normalizeCashSessionPolicy(value?: string | null): CashSessionPolicy {
@@ -56,16 +65,18 @@ export function shouldRequireOpenCashSession(options: {
 }
 
 export async function getOpenCashSession(
-  supabase: any,
+  supabase: SupabaseClient,
   organizationId?: string | null,
+  registerId?: string | null,
 ): Promise<OpenCashSessionInfo | null> {
   if (!organizationId) return null;
 
   const { data, error } = await supabase
     .from("cash_sessions")
-    .select("id, opened_at, opening_amount, register_id, status")
+    .select("id, opened_at, opening_amount, register_id, status, cash_registers(name)")
     .eq("organization_id", organizationId)
     .eq("status", "open")
+    .eq(registerId ? "register_id" : "organization_id", registerId || organizationId)
     .order("opened_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -74,11 +85,60 @@ export async function getOpenCashSession(
     return null;
   }
 
-  return (data as OpenCashSessionInfo | null) || null;
+  if (!data) return null;
+
+  const row = data as OpenCashSessionInfo & {
+    cash_registers?: { name?: string } | null;
+  };
+
+  return {
+    ...row,
+    register_name: row.cash_registers?.name,
+  };
+}
+
+export async function getOpenCashSessions(
+  supabase: SupabaseClient,
+  organizationId?: string | null,
+): Promise<OpenCashSessionInfo[]> {
+  if (!organizationId) return [];
+
+  const { data, error } = await supabase
+    .from("cash_sessions")
+    .select("id, opened_at, opening_amount, register_id, status, cash_registers(name)")
+    .eq("organization_id", organizationId)
+    .eq("status", "open")
+    .order("opened_at", { ascending: false });
+
+  if (error) return [];
+
+  return ((data || []) as Array<OpenCashSessionInfo & {
+    cash_registers?: { name?: string } | null;
+  }>).map((row) => ({
+    ...row,
+    register_name: row.cash_registers?.name,
+  }));
+}
+
+export async function getCashRegisters(
+  supabase: SupabaseClient,
+  organizationId?: string | null,
+): Promise<CashRegisterInfo[]> {
+  if (!organizationId) return [];
+
+  const { data, error } = await supabase
+    .from("cash_registers")
+    .select("id, name, code, is_active")
+    .eq("organization_id", organizationId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (error) return [];
+  return (data || []) as CashRegisterInfo[];
 }
 
 export async function ensureOpenCashSession(
-  supabase: any,
+  supabase: SupabaseClient,
   organizationId?: string | null,
   options?: { silent?: boolean },
 ): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 // Rutas que no requieren autenticación
@@ -8,12 +8,14 @@ const authRoutes = ['/login', '/register'];
 export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
+    // The login and registration screens must remain reachable even when an
+    // expired refresh token makes Supabase auth temporarily unavailable.
+    if (authRoutes.includes(pathname)) {
+        return NextResponse.next();
+    }
+
     // Actualizar sesión y obtener usuario
     const { user, supabaseResponse, authErrorType } = await updateSession(request);
-    const hasSupabaseAuthCookie = request.cookies
-        .getAll()
-        .some((cookie) => cookie.name.startsWith('sb-') && cookie.value);
-
     // Rutas públicas: permitir acceso sin autenticación
     if (publicRoutes.some((route) => pathname === route || pathname.startsWith('/visor'))) {
         // Si está en ruta de auth y ya tiene sesión, redirigir al dashboard

@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { getOpenCashSession, shouldRequireOpenCashSession } from "@/lib/cash-session";
+import {
+  getCashRegisters,
+  getOpenCashSessions,
+  shouldRequireOpenCashSession,
+  type CashRegisterInfo,
+} from "@/lib/cash-session";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +28,8 @@ export function CashSessionStartupPrompt() {
   const [isOpening, setIsOpening] = useState(false);
   const [openingAmount, setOpeningAmount] = useState("0");
   const [openingNotes, setOpeningNotes] = useState("");
+  const [registers, setRegisters] = useState<CashRegisterInfo[]>([]);
+  const [selectedRegisterId, setSelectedRegisterId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -50,10 +57,19 @@ export function CashSessionStartupPrompt() {
         return;
       }
 
-      const session = await getOpenCashSession(supabase, organizationId);
+      const [availableRegisters, openSessions] = await Promise.all([
+        getCashRegisters(supabase, organizationId),
+        getOpenCashSessions(supabase, organizationId),
+      ]);
       if (cancelled) {
         return;
       }
+
+      setRegisters(availableRegisters);
+      const availableRegisterIds = new Set(availableRegisters.map((register) => register.id));
+      const hasOpenAvailableSession = openSessions.some((session) =>
+        availableRegisterIds.has(session.register_id)
+      );
 
       const shouldPrompt = shouldRequireOpenCashSession({
         organization,
@@ -68,12 +84,15 @@ export function CashSessionStartupPrompt() {
         return;
       }
 
-      if (session) {
+      if (hasOpenAvailableSession) {
         sessionStorage.setItem(storageKey, "handled");
         setIsChecking(false);
         return;
       }
 
+      if (availableRegisters.length > 0) {
+        setSelectedRegisterId(availableRegisters[0].id);
+      }
       setOpen(true);
       setIsChecking(false);
     };
@@ -93,6 +112,10 @@ export function CashSessionStartupPrompt() {
 
   const handleOpenCash = async () => {
     if (!organizationId || isOpening) return;
+    if (!selectedRegisterId) {
+    toast.error("No hay una caja activa disponible para abrir");
+    return;
+    }
 
     const opening = Number(openingAmount || 0);
     if (!Number.isFinite(opening) || opening < 0) {
@@ -102,8 +125,9 @@ export function CashSessionStartupPrompt() {
 
     setIsOpening(true);
     try {
-      const { data: result, error } = await supabase.rpc("open_cash_session", {
+      const { data: result, error } = await supabase.rpc("open_cash_session_for_register", {
         p_org_id: organizationId,
+        p_register_id: selectedRegisterId,
         p_opening_amount: opening,
         p_notes: openingNotes || null,
       });
@@ -138,6 +162,22 @@ export function CashSessionStartupPrompt() {
         </DialogHeader>
 
         <div className="space-y-3">
+          {registers.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Caja</p>
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                value={selectedRegisterId}
+                onChange={(event) => setSelectedRegisterId(event.target.value)}
+              >
+                {registers.map((register) => (
+                  <option key={register.id} value={register.id}>
+                    {register.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div className="space-y-2">
             <p className="text-sm font-medium">Monto de apertura</p>
             <Input

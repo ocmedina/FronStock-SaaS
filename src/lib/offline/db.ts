@@ -78,9 +78,9 @@ export interface OfflineOrder {
   status: string;
   total: number;
   created_at: string;
-  customer?: any;
-  order_items?: any[];
-  routes?: any;
+  customer?: Record<string, unknown>;
+  order_items?: Array<Record<string, unknown>>;
+  routes?: Record<string, unknown>;
   last_synced: number;
 }
 
