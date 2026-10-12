@@ -37,6 +37,7 @@ import {
     CreditCard,
     Truck,
     MapPin,
+    WalletCards,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ const menuSections: MenuSection[] = [
         title: 'Administración',
         items: [
             { href: '/dashboard/users', label: 'Usuarios', icon: UserCog },
+            { href: '/dashboard/cash-registers', label: 'Cajas', icon: WalletCards },
             { href: '/dashboard/permissions', label: 'Permisos', icon: Shield },
             { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
         ],
