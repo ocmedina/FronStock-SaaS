@@ -12,6 +12,15 @@ import {
   Loader2,
   UserPlus
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   User,
   Invitation,
@@ -58,6 +67,10 @@ export default function UsersPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [inviteData, setInviteData] = useState({ email: "", role: "employee" });
+  const [cashRegisters, setCashRegisters] = useState<Array<{ id: string; name: string; code: string | null }>>([]);
+  const [cashRegisterAssignments, setCashRegisterAssignments] = useState<Record<string, string[]>>({});
+  const [assigningUser, setAssigningUser] = useState<User | null>(null);
+  const [selectedCashRegisterIds, setSelectedCashRegisterIds] = useState<string[]>([]);
 
   const supabase = createClient();
   const currentRole = profile?.role as Role;
@@ -75,6 +88,29 @@ export default function UsersPage() {
       .order("role");
 
     if (usersData) setUsers(usersData);
+
+    const { data: registersData } = await supabase
+      .from("cash_registers")
+      .select("id, name, code")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .order("name");
+
+    if (registersData) setCashRegisters(registersData);
+
+    const { data: assignmentsData } = await supabase
+      .from("cash_register_users")
+      .select("user_id, register_id")
+      .eq("organization_id", organizationId);
+
+    if (assignmentsData) {
+      setCashRegisterAssignments(
+        assignmentsData.reduce<Record<string, string[]>>((result, assignment) => {
+          result[assignment.user_id] = [...(result[assignment.user_id] || []), assignment.register_id];
+          return result;
+        }, {})
+      );
+    }
 
     // Fetch pending invitations
     const { data: invitationsData } = await supabase
@@ -96,6 +132,33 @@ export default function UsersPage() {
   const handleEditRole = (user: User) => {
     setEditingUser(user);
     setNewRole(user.role);
+  };
+
+  const handleAssignCashRegisters = (user: User) => {
+    setAssigningUser(user);
+    setSelectedCashRegisterIds(cashRegisterAssignments[user.id] || []);
+  };
+
+  const handleSaveCashRegisters = async () => {
+    if (!assigningUser || !organizationId) return;
+
+    setSaving(true);
+    const { error } = await supabase.rpc("replace_cash_register_user_assignments", {
+      p_org_id: organizationId,
+      p_user_id: assigningUser.id,
+      p_register_ids: selectedCashRegisterIds,
+    });
+
+    if (error) {
+      toast.error("No se pudieron guardar las cajas: " + error.message);
+      setSaving(false);
+      return;
+    }
+
+    toast.success("Cajas asignadas correctamente");
+    setAssigningUser(null);
+    await fetchData();
+    setSaving(false);
   };
 
   const handleSaveRole = async () => {
@@ -249,6 +312,7 @@ export default function UsersPage() {
         canEdit={canEdit("users")}
         canDelete={canDeleteUsers}
         onEditRole={handleEditRole}
+        onAssignCashRegisters={handleAssignCashRegisters}
         onRemoveUser={handleRemoveUserClick}
       />
 
@@ -287,6 +351,51 @@ export default function UsersPage() {
           toast.success("Usuario creado correctamente");
         }}
       />
+
+      <Dialog open={!!assigningUser} onOpenChange={(open) => !open && setAssigningUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar cajas</DialogTitle>
+            <DialogDescription>
+              Seleccioná las cajas que podrá utilizar {assigningUser?.full_name || "este vendedor"}.
+              Si no seleccionás ninguna, podrá utilizar las cajas sin asignación específica.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            {cashRegisters.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay cajas activas configuradas. Creá una caja antes de asignarla.
+              </p>
+            ) : (
+              cashRegisters.map((register) => (
+                <label key={register.id} className="flex items-center gap-3 rounded-md border p-3 cursor-pointer">
+                  <Checkbox
+                    checked={selectedCashRegisterIds.includes(register.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedCashRegisterIds((current) =>
+                        checked
+                          ? [...current, register.id]
+                          : current.filter((id) => id !== register.id)
+                      );
+                    }}
+                  />
+                  <span className="text-sm font-medium">{register.name}</span>
+                  {register.code && <span className="text-xs text-muted-foreground">({register.code})</span>}
+                </label>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssigningUser(null)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveCashRegisters} disabled={saving || cashRegisters.length === 0}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Guardar asignación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open: boolean) => !open && setUserToDelete(null)}>
