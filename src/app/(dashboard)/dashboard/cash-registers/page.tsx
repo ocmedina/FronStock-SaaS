@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Pencil, Plus, WalletCards } from "lucide-react";
+import { Loader2, Pencil, Plus, Users, WalletCards } from "lucide-react";
 import { toast } from "sonner";
 
 interface CashRegister {
@@ -19,6 +20,16 @@ interface CashRegister {
   name: string;
   code: string | null;
   is_active: boolean;
+}
+
+interface Employee {
+  id: string;
+  full_name: string | null;
+}
+
+interface RegisterAssignment {
+  user_id: string;
+  register_id: string;
 }
 
 export default function CashRegistersPage() {
@@ -32,6 +43,10 @@ export default function CashRegistersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [assignedEmployeeIds, setAssignedEmployeeIds] = useState<string[]>([]);
+  const [assigningRegister, setAssigningRegister] = useState<CashRegister | null>(null);
+  const [assignments, setAssignments] = useState<RegisterAssignment[]>([]);
 
   const canManage = ["owner", "admin", "manager"].includes(profile?.role || "");
 
@@ -46,6 +61,21 @@ export default function CashRegistersPage() {
 
     if (error) toast.error(`No se pudieron cargar las cajas: ${error.message}`);
     else setRegisters(data || []);
+
+    const [{ data: employeesData }, { data: assignmentsData }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("organization_id", organizationId)
+        .eq("role", "employee")
+        .order("full_name"),
+      supabase
+        .from("cash_register_users")
+        .select("user_id, register_id")
+        .eq("organization_id", organizationId)
+    ]);
+    setEmployees(employeesData || []);
+    setAssignments(assignmentsData || []);
     setLoading(false);
   }, [organizationId, supabase]);
 
@@ -67,6 +97,34 @@ export default function CashRegistersPage() {
     setName(register.name);
     setCode(register.code || "");
     setDialogOpen(true);
+  };
+
+  const openAssignments = (register: CashRegister) => {
+    setAssigningRegister(register);
+    setAssignedEmployeeIds(
+      assignments
+        .filter((assignment) => assignment.register_id === register.id)
+        .map((assignment) => assignment.user_id)
+    );
+  };
+
+  const saveAssignments = async () => {
+    if (!organizationId || !assigningRegister) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("replace_cash_register_assignments", {
+      p_org_id: organizationId,
+      p_register_id: assigningRegister.id,
+      p_user_ids: assignedEmployeeIds,
+    });
+
+    if (error) {
+      toast.error(`No se pudieron guardar los vendedores: ${error.message}`);
+    } else {
+      toast.success("Vendedores asignados correctamente");
+      setAssigningRegister(null);
+      await fetchRegisters();
+    }
+    setSaving(false);
   };
 
   const saveRegister = async (event: React.FormEvent) => {
@@ -154,6 +212,9 @@ export default function CashRegistersPage() {
                     </Badge>
                     {canEdit("settings") && (
                       <>
+                        <Button variant="outline" size="sm" onClick={() => openAssignments(register)}>
+                          <Users className="mr-2 h-4 w-4" />Vendedores
+                        </Button>
                         <Switch checked={register.is_active} onCheckedChange={(active) => void toggleRegister(register, active)} />
                         <Button variant="outline" size="sm" onClick={() => openEdit(register)}>
                           <Pencil className="mr-2 h-4 w-4" />Editar
@@ -190,6 +251,46 @@ export default function CashRegistersPage() {
               <Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Guardar</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!assigningRegister} onOpenChange={(open) => !open && setAssigningRegister(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar vendedores</DialogTitle>
+            <DialogDescription>
+              Seleccioná los vendedores que podrán utilizar {assigningRegister?.name}.
+              Si no seleccionás ninguno, la caja queda disponible para los usuarios de la organización.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 space-y-2 overflow-y-auto py-2">
+            {employees.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay usuarios con rol vendedor.</p>
+            ) : (
+              employees.map((employee) => (
+                <label key={employee.id} className="flex cursor-pointer items-center gap-3 rounded-md border p-3">
+                  <Checkbox
+                    checked={assignedEmployeeIds.includes(employee.id)}
+                    onCheckedChange={(checked) => {
+                      setAssignedEmployeeIds((current) =>
+                        checked
+                          ? [...current, employee.id]
+                          : current.filter((id) => id !== employee.id)
+                      );
+                    }}
+                  />
+                  <span className="text-sm font-medium">{employee.full_name || "Sin nombre"}</span>
+                </label>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssigningRegister(null)} disabled={saving}>Cancelar</Button>
+            <Button onClick={() => void saveAssignments()} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Guardar asignación
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, UserCog, Trash2, WalletCards } from "lucide-react";
+import { Loader2, Eye, UserCog, Trash2 } from "lucide-react";
 import { roleLabels, roleDescriptions, Role, canAssignRole } from "@/lib/permissions";
 import { User, ROLE_COLORS, ROLE_ICONS } from "./types";
 
@@ -13,7 +13,6 @@ interface UserGridProps {
     canEdit: boolean;
     canDelete: boolean;
     onEditRole: (user: User) => void;
-    onAssignCashRegisters: (user: User) => void;
     onRemoveUser: (userId: string, userName: string) => void;
 }
 
@@ -25,7 +24,6 @@ export function UserGrid({
     canEdit,
     canDelete,
     onEditRole,
-    onAssignCashRegisters,
     onRemoveUser,
 }: UserGridProps) {
     // Función para obtener iniciales
@@ -103,17 +101,6 @@ export function UserGrid({
                                         >
                                             <UserCog className="h-4 w-4" />
                                             Cambiar Rol
-                                        </Button>
-                                    )}
-                                    {canEdit && user.role === "employee" && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onAssignCashRegisters(user)}
-                                            title="Asignar cajas"
-                                        >
-                                            <WalletCards className="h-4 w-4" />
-                                            Cajas
                                         </Button>
                                     )}
                                     {canDelete && (
