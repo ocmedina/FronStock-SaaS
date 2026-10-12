@@ -16,6 +16,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
+Para habilitar el panel global del desarrollador, agregá también en el entorno del servidor:
+
+```env
+DEVELOPER_USER_ID=uuid-de-tu-usuario-en-supabase
+```
+
+El UUID debe corresponder a tu usuario de `auth.users`. Esta variable no debe comenzar con
+`NEXT_PUBLIC_`, porque el panel y sus operaciones administrativas se validan exclusivamente
+en el servidor.
+
 ## Desarrollo
 
 ```bash

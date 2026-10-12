@@ -233,6 +233,18 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     }, [router, supabase]);
 
     useEffect(() => {
+        const handleDeveloperPermissionUpdate = (event: Event) => {
+            const organizationId = (event as CustomEvent<{ organizationId?: string }>).detail?.organizationId;
+            if (organizationId && organizationId === profileRef.current?.organization_id) {
+                void fetchOrganizationData();
+            }
+        };
+
+        window.addEventListener('developer-permissions-updated', handleDeveloperPermissionUpdate);
+        return () => window.removeEventListener('developer-permissions-updated', handleDeveloperPermissionUpdate);
+    }, [fetchOrganizationData]);
+
+    useEffect(() => {
         fetchOrganizationData();
 
         // Escuchar cambios de autenticación

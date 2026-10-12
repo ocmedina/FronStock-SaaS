@@ -40,11 +40,11 @@ function MobileHeader() {
     );
 }
 
-function SidebarLayoutContent({ children }: { children: React.ReactNode }) {
+function SidebarLayoutContent({ children, isDeveloper }: { children: React.ReactNode; isDeveloper: boolean }) {
     return (
         <SidebarProvider>
             <div className="min-h-screen flex flex-col md:flex-row pb-16 md:pb-0" style={{ background: 'var(--background)' }}>
-                <Sidebar />
+                <Sidebar isDeveloper={isDeveloper} />
                 <div className="flex-1 flex flex-col min-w-0">
                     <MobileHeader />
                     {children}
@@ -55,7 +55,7 @@ function SidebarLayoutContent({ children }: { children: React.ReactNode }) {
     );
 }
 
-function DashboardContent({ children }: { children: React.ReactNode }) {
+function DashboardContent({ children, isDeveloper }: { children: React.ReactNode; isDeveloper: boolean }) {
     const { layoutMode } = useLayout();
     const pathname = usePathname();
     const { canView } = usePermissions();
@@ -97,13 +97,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     // Default: sidebar layout
-    return <SidebarLayoutContent>{children}</SidebarLayoutContent>;
+    return <SidebarLayoutContent isDeveloper={isDeveloper}>{children}</SidebarLayoutContent>;
 }
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({ children, isDeveloper = false }: { children: React.ReactNode; isDeveloper?: boolean }) {
     return (
         <LayoutProvider>
-            <DashboardContent>{children}</DashboardContent>
+            <DashboardContent isDeveloper={isDeveloper}>{children}</DashboardContent>
         </LayoutProvider>
     );
 }

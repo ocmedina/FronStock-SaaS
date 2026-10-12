@@ -37,6 +37,7 @@ import {
     CreditCard,
     Truck,
     MapPin,
+    ShieldCheck,
     WalletCards,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -120,6 +121,7 @@ const menuSections: MenuSection[] = [
             { href: '/dashboard/cash-registers', label: 'Cajas', icon: WalletCards },
             { href: '/dashboard/permissions', label: 'Permisos', icon: Shield },
             { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
+            { href: '/dashboard/developer-console', label: 'Panel desarrollador', icon: ShieldCheck },
         ],
     },
 ];
@@ -171,7 +173,7 @@ export function MobileMenuButton() {
     );
 }
 
-export function Sidebar() {
+export function Sidebar({ isDeveloper = false }: { isDeveloper?: boolean }) {
     const pathname = usePathname();
     const { organization } = useOrganization();
     const { canView } = usePermissions();
@@ -266,6 +268,9 @@ export function Sidebar() {
                 <div className="space-y-5">
                     {menuSections.map((section) => {
                         const visibleItems = section.items.filter((item) => {
+                            if (item.href === '/dashboard/developer-console' && !isDeveloper) {
+                                return false;
+                            }
                             const requiredModule = resolveDashboardModuleFromPath(item.href);
                             return !requiredModule || canView(requiredModule);
                         });

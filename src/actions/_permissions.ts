@@ -49,11 +49,6 @@ export async function requireOrganizationPermission(
     userId: user.id,
   };
 
-  // Owner siempre tiene todos los permisos
-  if (role === 'owner') {
-    return { allowed: true, ...base };
-  }
-
   const actionFieldMap: Record<PermissionAction, 'can_view' | 'can_create' | 'can_edit' | 'can_delete'> = {
     view: 'can_view',
     create: 'can_create',

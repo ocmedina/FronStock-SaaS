@@ -1,9 +1,23 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, UserCog, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Eye, MoreHorizontal, Trash2, UserCog } from "lucide-react";
 import { roleLabels, roleDescriptions, Role, canAssignRole } from "@/lib/permissions";
 import { User, ROLE_COLORS, ROLE_ICONS } from "./types";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 interface UserGridProps {
     users: User[];
@@ -39,88 +53,92 @@ export function UserGrid({
 
     if (loading) {
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="col-span-full flex items-center justify-center h-32">
+            <div className="flex items-center justify-center rounded-xl border h-32">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
             </div>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="overflow-hidden rounded-xl border bg-card">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Usuario</TableHead>
+                        <TableHead>Rol</TableHead>
+                        <TableHead className="hidden md:table-cell">Última actualización</TableHead>
+                        <TableHead className="w-16 text-right">Acciones</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
             {users.map((user) => {
                 const RoleIcon = ROLE_ICONS[user.role] || Eye;
                 const isCurrentUser = user.id === currentUserId;
                 return (
-                    <Card
+                    <TableRow
                         key={user.id}
-                        className={`hover:shadow-lg transition-shadow ${isCurrentUser ? "ring-2 ring-primary/20" : ""
-                            }`}
+                        className={isCurrentUser ? "bg-primary/5" : ""}
                     >
-                        <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-12 h-12 rounded-full ${ROLE_COLORS[user.role] || ROLE_COLORS.viewer
-                                            } flex items-center justify-center text-white font-bold text-lg shadow-lg`}
-                                    >
-                                        {getInitials(user.full_name)}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold flex items-center gap-2">
-                                            {user.full_name || "Sin nombre"}
-                                            {isCurrentUser && (
-                                                <Badge variant="outline" className="text-xs">
-                                                    Tú
-                                                </Badge>
-                                            )}
-                                        </p>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                            <RoleIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="text-sm text-muted-foreground">
-                                                {roleLabels[user.role as Role] || user.role}
-                                            </span>
-                                        </div>
-                                    </div>
+                        <TableCell>
+                            <div className="flex items-center gap-3">
+                                <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${ROLE_COLORS[user.role] || ROLE_COLORS.viewer}`}>
+                                    {getInitials(user.full_name)}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium">{user.full_name || "Sin nombre"}</p>
+                                    {isCurrentUser && <Badge variant="outline" className="mt-1 text-xs">Tu usuario</Badge>}
                                 </div>
                             </div>
-
-                            <p className="text-xs text-muted-foreground mb-4">
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant="secondary" className="gap-1">
+                                <RoleIcon className="h-3.5 w-3.5" />
+                                {roleLabels[user.role as Role] || user.role}
+                            </Badge>
+                            <p className="mt-1 hidden text-xs text-muted-foreground lg:block">
                                 {roleDescriptions[user.role as Role]}
                             </p>
-
+                        </TableCell>
+                        <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
+                            {new Date(user.updated_at).toLocaleDateString("es-AR")}
+                        </TableCell>
+                        <TableCell className="text-right">
                             {!isCurrentUser && user.role !== "owner" && (
-                                <div className="flex gap-2">
-                                    {canEdit && canAssignRole(currentRole, user.role as Role) && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => onEditRole(user)}
-                                            className="flex-1"
-                                        >
-                                            <UserCog className="h-4 w-4" />
-                                            Cambiar Rol
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" aria-label={`Acciones para ${user.full_name || "usuario"}`}>
+                                            <MoreHorizontal className="h-4 w-4" />
                                         </Button>
-                                    )}
-                                    {canDelete && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                onRemoveUser(user.id, user.full_name || "usuario")
-                                            }
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {canEdit && canAssignRole(currentRole, user.role as Role) && (
+                                            <DropdownMenuItem onClick={() => onEditRole(user)}>
+                                                <UserCog className="mr-2 h-4 w-4" />Cambiar rol
+                                            </DropdownMenuItem>
+                                        )}
+                                        {canDelete && (
+                                            <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    className="text-destructive focus:text-destructive"
+                                                    onClick={() => onRemoveUser(user.id, user.full_name || "usuario")}
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />Eliminar usuario
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             )}
-                        </CardContent>
-                    </Card>
+                        </TableCell>
+                    </TableRow>
                 );
             })}
+                </TableBody>
+            </Table>
+            {users.length === 0 && (
+                <p className="p-8 text-center text-sm text-muted-foreground">No hay usuarios que coincidan con los filtros.</p>
+            )}
         </div>
     );
 }

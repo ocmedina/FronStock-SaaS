@@ -5,6 +5,7 @@ import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { DashboardShell } from '@/components/DashboardShell';
 import { OfflineStatusBanner } from '@/components/OfflineStatusBanner';
 import { CashSessionStartupPrompt } from '@/components/cash/CashSessionStartupPrompt';
+import { requireDeveloperAccess } from '@/lib/developer-access';
 
 export default async function DashboardLayout({
     children,
@@ -19,11 +20,12 @@ export default async function DashboardLayout({
     if (!user) {
         redirect('/login');
     }
+    const developerAccess = await requireDeveloperAccess();
 
     return (
         <OrganizationProvider>
             <NotificationsProvider>
-                <DashboardShell>
+                <DashboardShell isDeveloper={developerAccess.allowed}>
                     <CashSessionStartupPrompt />
 
                     {/* Offline/Sync Status Banner */}
@@ -38,4 +40,3 @@ export default async function DashboardLayout({
         </OrganizationProvider>
     );
 }
-

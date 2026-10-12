@@ -31,8 +31,6 @@ export function usePermissions(): UsePermissionsReturn {
             return action === 'view';
         }
 
-        // Owner siempre tiene todos los permisos
-        if (role === 'owner') return true;
         if (!role) return false;
 
         const actionFieldMap: Record<string, 'can_view' | 'can_create' | 'can_edit' | 'can_delete'> = {

@@ -5,12 +5,22 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { AccessDenied } from "@/components/Protected";
-import { canAssignRole, type Role } from "@/lib/permissions";
+import { canAssignRole, roleLabels, type Role } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Loader2,
-  UserPlus
+  Search,
+  UserPlus,
+  UsersRound,
 } from "lucide-react";
 import {
   User,
@@ -58,6 +68,8 @@ export default function UsersPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [inviteData, setInviteData] = useState({ email: "", role: "employee" });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   const supabase = createClient();
   const currentRole = profile?.role as Role;
@@ -184,6 +196,11 @@ export default function UsersPage() {
   const availableRoles = ASSIGNABLE_ROLES.filter((r) =>
     canAssignRole(currentRole, r),
   );
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = (user.full_name || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   if (orgLoading) {
     return (
@@ -242,9 +259,43 @@ export default function UsersPage() {
         onCancel={handleCancelInvitation}
       />
 
-      {/* Users Grid */}
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2">
+            <UsersRound className="h-5 w-5 text-primary" />
+            <div>
+              <h2 className="font-semibold">Directorio de usuarios</h2>
+              <p className="text-sm text-muted-foreground">{filteredUsers.length} de {users.length} usuarios</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar usuario..."
+                className="w-full pl-9 sm:w-64"
+              />
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Filtrar por rol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los roles</SelectItem>
+                {["owner", ...ASSIGNABLE_ROLES].map((role) => (
+                  <SelectItem key={role} value={role}>{roleLabels[role as Role] || role}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Users table */}
       <UserGrid
-        users={users}
+        users={filteredUsers}
         currentUserId={profile?.id}
         currentRole={currentRole}
         loading={isLoading}
