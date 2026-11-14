@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
     Table,
     TableBody,
@@ -21,6 +22,17 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -33,6 +45,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Eye,
+    Ban,
     Receipt,
     FileText,
     CreditCard,
@@ -49,6 +62,7 @@ import { TicketPDF } from "@/components/sales/TicketPDF";
 import { InvoicePDF } from "@/components/invoices/InvoicePDF";
 import { fetchLogoBase64 } from "@/hooks/useImageToBase64";
 import { getPlanDetails } from "@/config/plans";
+import { toast } from "sonner";
 
 interface Sale {
     id: string;
@@ -56,7 +70,11 @@ interface Sale {
     total: number;
     payment_method: string;
     status: string;
+    payment_status?: string | null;
     channel?: string | null;
+    delivery_status?: string | null;
+    cancelled_at?: string | null;
+    cancellation_reason?: string | null;
     created_at: string;
     customer?: { name: string; cuit?: string } | null;
     invoices?: { id: string; invoice_number: string; type: string }[];
@@ -72,8 +90,12 @@ interface SaleItem {
 
 export default function SalesHistoryPage() {
     const { organizationId, isLoading: orgLoading, organization } = useOrganization();
+    const { canDelete } = usePermissions();
     const [sales, setSales] = useState<Sale[]>([]);
     const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+    const [saleToVoid, setSaleToVoid] = useState<Sale | null>(null);
+    const [voidReason, setVoidReason] = useState("");
+    const [isVoiding, setIsVoiding] = useState(false);
     const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [pdfLoading, setPdfLoading] = useState<string | null>(null);
@@ -170,6 +192,67 @@ export default function SalesHistoryPage() {
         if (data) setSaleItems(data);
     };
 
+    const handleVoidSale = async () => {
+        if (!saleToVoid) return;
+
+        const reason = voidReason.trim();
+        if (reason.length < 3) {
+            toast.error("Ingresá un motivo de al menos 3 caracteres");
+            return;
+        }
+
+        setIsVoiding(true);
+        try {
+            const { voidSaleFromHistory } = await import("@/actions/sales");
+            const result = await voidSaleFromHistory(saleToVoid.id, reason);
+
+            if (result.error) {
+                toast.error(result.error);
+                return;
+            }
+
+            if (result.alreadyCancelled) {
+                await fetchSales();
+                setSaleToVoid(null);
+                setVoidReason("");
+                toast.success("La venta ya estaba anulada");
+                return;
+            }
+
+            setSales((current) => current.map((sale) =>
+                sale.id === saleToVoid.id
+                    ? {
+                        ...sale,
+                        status: "cancelled",
+                        payment_status: "cancelled",
+                        delivery_status: sale.channel === "delivery" ? "cancelled" : sale.delivery_status,
+                        cancelled_at: new Date().toISOString(),
+                        cancellation_reason: reason,
+                    }
+                    : sale
+            ));
+            setSelectedSale((current) =>
+                current?.id === saleToVoid.id
+                    ? {
+                        ...current,
+                        status: "cancelled",
+                        payment_status: "cancelled",
+                        delivery_status: current.channel === "delivery" ? "cancelled" : current.delivery_status,
+                        cancelled_at: new Date().toISOString(),
+                        cancellation_reason: reason,
+                    }
+                    : current
+            );
+            setSaleToVoid(null);
+            setVoidReason("");
+            toast.success("Venta anulada correctamente");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "No se pudo anular la venta");
+        } finally {
+            setIsVoiding(false);
+        }
+    };
+
     // Filter Logic (Client Side for Search)
     const filteredSales = sales.filter(sale => {
         const matchesSearch =
@@ -186,10 +269,11 @@ export default function SalesHistoryPage() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedSales = filteredSales.slice(startIndex, startIndex + itemsPerPage);
 
-    // KPIs Calculation based on FILTERED sales
-    const totalRevenue = filteredSales.reduce((sum, s) => sum + Number(s.total), 0);
-    const averageTicket = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
-    const totalTransactions = filteredSales.length;
+    // Las anulaciones permanecen visibles en el historial, pero no suman a ventas ni caja.
+    const completedSales = filteredSales.filter((sale) => sale.status === "completed");
+    const totalRevenue = completedSales.reduce((sum, sale) => sum + Number(sale.total), 0);
+    const averageTicket = completedSales.length > 0 ? totalRevenue / completedSales.length : 0;
+    const totalTransactions = completedSales.length;
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleString("es-AR", {
@@ -400,17 +484,37 @@ export default function SalesHistoryPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={sale.status === 'completed' ? 'default' : 'secondary'} className={sale.status === 'completed' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
-                                                {sale.status === 'completed' ? 'Completado' : sale.status}
+                                            <Badge
+                                                variant={sale.status === 'completed' ? 'default' : 'secondary'}
+                                                className={sale.status === 'completed' ? 'bg-emerald-500 hover:bg-emerald-600' : sale.status === 'cancelled' ? 'border border-destructive/30 text-destructive' : ''}
+                                            >
+                                                {sale.status === 'completed' ? 'Completada' : sale.status === 'cancelled' ? 'Anulada' : sale.status}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-base">
                                             ${sale.total.toLocaleString()}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => viewSaleDetails(sale)}>
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="icon" onClick={() => viewSaleDetails(sale)} aria-label="Ver detalle" title="Ver detalle">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                {canDelete("sales") && sale.status === "completed" && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => {
+                                                            setSaleToVoid(sale);
+                                                            setVoidReason("");
+                                                        }}
+                                                        aria-label="Anular venta"
+                                                        title="Anular venta"
+                                                    >
+                                                        <Ban className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -481,6 +585,17 @@ export default function SalesHistoryPage() {
                                 </div>
                             </div>
 
+                            {selectedSale.status === "cancelled" && (
+                                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                                    <p className="font-semibold text-destructive">Venta anulada</p>
+                                    {selectedSale.cancelled_at && (
+                                        <p className="mt-1 text-muted-foreground">{formatDate(selectedSale.cancelled_at)}</p>
+                                    )}
+                                    <p className="mt-2"><span className="font-medium">Motivo:</span> {selectedSale.cancellation_reason || "No informado"}</p>
+                                    <p className="mt-2 text-muted-foreground">El reintegro de efectivo, tarjeta o transferencia se gestiona por fuera de FrontStock.</p>
+                                </div>
+                            )}
+
                             <div className="space-y-3">
                                 <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Productos</h4>
                                 <div className="divide-y border rounded-md max-h-[200px] overflow-y-auto">
@@ -497,7 +612,7 @@ export default function SalesHistoryPage() {
                             </div>
 
                             <div className="flex justify-between items-center pt-4 border-t">
-                                <span className="text-lg font-bold">Total Pagado</span>
+                                <span className="text-lg font-bold">{selectedSale.status === "cancelled" ? "Total de la venta" : "Total Pagado"}</span>
                                 <span className="text-2xl font-bold text-primary">${selectedSale.total.toLocaleString()}</span>
                             </div>
 
@@ -618,6 +733,52 @@ export default function SalesHistoryPage() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog
+                open={Boolean(saleToVoid)}
+                onOpenChange={(open) => {
+                    if (!open && !isVoiding) {
+                        setSaleToVoid(null);
+                        setVoidReason("");
+                    }
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Anular venta</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            La venta quedará anulada, el stock se restituirá y se revertirá el saldo de cuenta corriente. El reintegro de efectivo, tarjeta o transferencia debe gestionarse por fuera de FrontStock. Las ventas con factura o vinculadas a una ruta requieren su flujo correspondiente.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-2">
+                        <label htmlFor="void-sale-reason" className="text-sm font-medium">Motivo de anulación</label>
+                        <Textarea
+                            id="void-sale-reason"
+                            value={voidReason}
+                            onChange={(event) => setVoidReason(event.target.value)}
+                            placeholder="Ej.: carga duplicada, devolución de mercadería…"
+                            maxLength={300}
+                            rows={3}
+                            disabled={isVoiding}
+                            aria-required="true"
+                        />
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isVoiding}>Volver</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isVoiding || voidReason.trim().length < 3}
+                            onClick={(event) => {
+                                event.preventDefault();
+                                void handleVoidSale();
+                            }}
+                        >
+                            {isVoiding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {isVoiding ? "Anulando…" : "Anular venta"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

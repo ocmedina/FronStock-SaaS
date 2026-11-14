@@ -2,6 +2,8 @@
 
 import { requireOrganizationPermission, requireGranularPermission } from '@/actions/_permissions';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { revalidatePath } from 'next/cache';
 
 type SaleItem = {
   product_id: string;
@@ -123,4 +125,46 @@ export async function processSaleAction(input: ProcessSaleInput): Promise<Proces
     saleNumber: result.sale_number!,
     total: result.total || 0,
   };
+}
+
+type VoidSaleResult = { success?: true; error?: string; alreadyCancelled?: boolean };
+
+export async function voidSaleFromHistory(saleId: string, reason: string): Promise<VoidSaleResult> {
+  const guard = await requireOrganizationPermission('sales', 'delete');
+  if (!guard.allowed || !guard.organizationId || !guard.userId) {
+    return { error: guard.error || 'No tienes permiso para anular ventas' };
+  }
+
+  const normalizedSaleId = String(saleId || '').trim();
+  const normalizedReason = String(reason || '').trim();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalizedSaleId)) {
+    return { error: 'La venta seleccionada no es válida' };
+  }
+  if (normalizedReason.length < 3 || normalizedReason.length > 300) {
+    return { error: 'Ingresá un motivo de entre 3 y 300 caracteres' };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.rpc('void_sale_from_history', {
+      p_sale_id: normalizedSaleId,
+      p_org_id: guard.organizationId,
+      p_actor_user_id: guard.userId,
+      p_reason: normalizedReason,
+    });
+
+    if (error) {
+      return { error: error.message || 'No se pudo anular la venta' };
+    }
+
+    const result = data as { success?: boolean; error?: string; already_cancelled?: boolean } | null;
+    if (!result?.success) {
+      return { error: result?.error || 'No se pudo anular la venta' };
+    }
+
+    revalidatePath('/dashboard/sales/history');
+    return { success: true, alreadyCancelled: Boolean(result.already_cancelled) };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'No se pudo anular la venta' };
+  }
 }
