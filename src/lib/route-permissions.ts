@@ -3,6 +3,7 @@ export function resolveDashboardModuleFromPath(pathname: string): string | null 
 
   if (!path.startsWith("/dashboard")) return null;
   if (path === "/dashboard") return "dashboard";
+  if (path.startsWith("/dashboard/developer-console")) return null;
 
   if (path.startsWith("/dashboard/users")) return "users";
   if (path.startsWith("/dashboard/cash-registers")) return "settings";
