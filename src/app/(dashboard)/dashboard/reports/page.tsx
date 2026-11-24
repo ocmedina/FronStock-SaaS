@@ -504,7 +504,7 @@ export default function ReportsPage() {
     cash: "Efectivo",
     card: "Tarjeta",
     transfer: "Transferencia",
-    credit: "Fiado",
+    credit: "Cuenta Corriente",
     mixed: "Pago Mixto",
     unknown: "Sin definir",
   };
@@ -538,7 +538,7 @@ export default function ReportsPage() {
   const exportCSV = () => {
     const paymentLabelsLocal: Record<string, string> = {
       cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia',
-      credit: 'Fiado', mixed: 'Pago Mixto', unknown: 'Sin definir',
+      credit: 'Cuenta Corriente', mixed: 'Pago Mixto', unknown: 'Sin definir',
     };
 
     const rows: string[][] = [];

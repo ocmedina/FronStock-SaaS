@@ -53,5 +53,5 @@ export const paymentMethods = [
     { value: "cash" as const, label: "Efectivo", iconName: "Banknote" },
     { value: "card" as const, label: "Tarjeta", iconName: "CreditCard" },
     { value: "transfer" as const, label: "Transferencia", iconName: "Building" },
-    { value: "credit" as const, label: "Fiado", iconName: "User" },
+    { value: "credit" as const, label: "Cuenta Corriente", iconName: "User" },
 ];

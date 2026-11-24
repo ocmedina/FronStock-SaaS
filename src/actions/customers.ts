@@ -134,38 +134,26 @@ export async function registerCustomerPayment(input: {
   }
 
   const amount = Number(input.amount || 0);
-  if (amount <= 0) return { error: 'El monto debe ser mayor a 0' };
+  if (!Number.isFinite(amount) || amount <= 0) return { error: 'El monto debe ser mayor a 0' };
 
   const supabase = await createClient();
+  const { data, error } = await supabase.rpc('register_customer_payment', {
+    p_org_id: guard.organizationId,
+    p_customer_id: input.customerId,
+    p_amount: amount,
+    p_description: input.description || 'Pago a cuenta',
+  });
 
-  // Leer balance actual
-  const { data: customer } = await supabase
-    .from('customers')
-    .select('name, balance')
-    .eq('id', input.customerId)
-    .eq('organization_id', guard.organizationId)
-    .single();
+  if (error) return { error: error.message || 'Error al registrar pago' };
 
-  if (!customer) return { error: 'Cliente no encontrado' };
-
-  const newBalance = (customer.balance || 0) - amount;
-
-  const [{ error: balanceError }, { error: movementError }] = await Promise.all([
-    supabase
-      .from('customers')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', input.customerId)
-      .eq('organization_id', guard.organizationId),
-    supabase.from('customer_account_movements').insert({
-      customer_id: input.customerId,
-      type: 'payment',
-      amount,
-      description: input.description || 'Pago a cuenta',
-    }),
-  ]);
-
-  if (balanceError) return { error: balanceError.message || 'Error al actualizar saldo' };
-  if (movementError) return { error: movementError.message || 'Error al registrar movimiento' };
+  const result = data as {
+    success?: boolean;
+    error?: string;
+    customer_name?: string;
+    previous_balance?: number;
+    new_balance?: number;
+  } | null;
+  if (!result?.success) return { error: result?.error || 'No se pudo registrar el pago' };
 
   await logAuditEvent({
     organizationId: guard.organizationId,
@@ -174,12 +162,12 @@ export async function registerCustomerPayment(input: {
     entityId: input.customerId,
     metadata: {
       event: 'customer_payment',
-      customer_name: customer.name,
+      customer_name: result.customer_name,
       amount,
-      previous_balance: customer.balance,
-      new_balance: newBalance,
+      previous_balance: result.previous_balance,
+      new_balance: result.new_balance,
     },
   });
 
-  return { success: true, newBalance };
+  return { success: true, newBalance: Number(result.new_balance || 0) };
 }

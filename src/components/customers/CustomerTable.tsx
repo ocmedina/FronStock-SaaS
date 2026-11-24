@@ -123,7 +123,11 @@ export function CustomerTable({
                                                         : "text-emerald-600"
                                                     }`}
                                             >
-                                                ${customer.balance.toLocaleString()}
+                                                {customer.balance > 0
+                                                    ? `Debe $${customer.balance.toLocaleString()}`
+                                                    : customer.balance < 0
+                                                        ? `A favor $${Math.abs(customer.balance).toLocaleString()}`
+                                                        : "Al día"}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">

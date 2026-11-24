@@ -38,6 +38,16 @@ export default function DebtorsPage() {
                 { event: '*', schema: 'public', table: 'order_payments', filter: `organization_id=eq.${organizationId}` },
                 () => fetchDebtors()
             )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'sales', filter: `organization_id=eq.${organizationId}` },
+                () => fetchDebtors()
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'sale_payments', filter: `organization_id=eq.${organizationId}` },
+                () => fetchDebtors()
+            )
             .subscribe();
 
         return () => {
@@ -57,15 +67,25 @@ export default function DebtorsPage() {
 
             const { data: pendingOrders, error: ordersError } = await supabase
                 .from('orders')
-                .select('id, customer_id, total, created_at, payment_status, payment_method')
+                .select('id, customer_id, total, payment_amount, created_at, payment_status, payment_method')
                 .eq('organization_id', organizationId)
                 .in('payment_status', ['pending', 'partial']);
 
             if (ordersError) throw ordersError;
 
-            const orderIds = (pendingOrders || []).map((order: any) => order.id);
+            const { data: pendingSales, error: salesError } = await supabase
+                .from('sales')
+                .select('id, customer_id, total, created_at, payment_status, payment_method')
+                .eq('organization_id', organizationId)
+                .in('payment_status', ['pending', 'partial'])
+                .in('payment_method', ['credit', 'fiado', 'current_account', 'cuenta_corriente', 'mixed']);
 
-            let paymentsByOrderId = new Map<string, number>();
+            if (salesError) throw salesError;
+
+            const orderIds = (pendingOrders || []).map((order: any) => order.id);
+            const saleIds = (pendingSales || []).map((sale: any) => sale.id);
+
+            const paymentsByOrderId = new Map<string, number>();
             if (orderIds.length > 0) {
                 const { data: paymentsData, error: paymentsError } = await supabase
                     .from('order_payments')
@@ -75,66 +95,92 @@ export default function DebtorsPage() {
 
                 if (paymentsError) throw paymentsError;
 
-                paymentsByOrderId = (paymentsData || []).reduce((acc: Map<string, number>, payment: any) => {
-                    acc.set(payment.order_id, (acc.get(payment.order_id) || 0) + Number(payment.amount || 0));
-                    return acc;
-                }, new Map<string, number>());
+                (paymentsData || []).forEach((payment: any) => {
+                    paymentsByOrderId.set(
+                        payment.order_id,
+                        (paymentsByOrderId.get(payment.order_id) || 0) + Number(payment.amount || 0)
+                    );
+                });
+            }
+
+            const paidBySaleId = new Map<string, number>();
+            if (saleIds.length > 0) {
+                const { data: salePayments, error: salePaymentsError } = await supabase
+                    .from('sale_payments')
+                    .select('sale_id, amount, payment_method')
+                    .eq('organization_id', organizationId)
+                    .in('sale_id', saleIds);
+
+                if (salePaymentsError) throw salePaymentsError;
+
+                const creditMethods = new Set(['credit', 'fiado', 'current_account', 'cuenta_corriente']);
+                (salePayments || []).forEach((payment: any) => {
+                    const method = String(payment.payment_method || '').toLowerCase();
+                    if (creditMethods.has(method)) return;
+                    paidBySaleId.set(
+                        payment.sale_id,
+                        (paidBySaleId.get(payment.sale_id) || 0) + Number(payment.amount || 0)
+                    );
+                });
             }
 
             const customerById = new Map((customers || []).map((customer: any) => [customer.id, customer]));
             const debtByCustomer = new Map<string, any>();
 
-            for (const order of pendingOrders || []) {
-                if (!order.customer_id) continue;
+            const addPendingItem = (customerId: string, item: any) => {
+                const customer = customerById.get(customerId);
+                if (!customer) return;
 
-                const alreadyPaid = paymentsByOrderId.get(order.id) || 0;
-                const pendingAmount = Math.max(0, Number(order.total || 0) - alreadyPaid);
-                if (pendingAmount <= 0) continue;
-
-                const customer = customerById.get(order.customer_id);
-                if (!customer) continue;
-
-                const debtor = debtByCustomer.get(order.customer_id) || {
+                const debtor = debtByCustomer.get(customerId) || {
                     ...customer,
                     totalDebt: 0,
                     pendingSales: [],
                 };
+                debtor.totalDebt += item.pendingAmount;
+                debtor.pendingSales.push(item);
+                debtByCustomer.set(customerId, debtor);
+            };
 
-                debtor.totalDebt += pendingAmount;
-                debtor.pendingSales.push({
+            for (const order of pendingOrders || []) {
+                if (!order.customer_id) continue;
+
+                const alreadyPaid = Math.max(
+                    paymentsByOrderId.get(order.id) || 0,
+                    Number(order.payment_amount || 0)
+                );
+                const pendingAmount = Math.max(0, Number(order.total || 0) - alreadyPaid);
+                if (pendingAmount <= 0) continue;
+
+                addPendingItem(order.customer_id, {
                     id: order.id,
                     total: Number(order.total || 0),
                     pendingAmount,
                     created_at: order.created_at,
                     source: 'orders',
                 });
-
-                debtByCustomer.set(order.customer_id, debtor);
             }
 
-            let debtorsList = Array.from(debtByCustomer.values())
+            for (const sale of pendingSales || []) {
+                if (!sale.customer_id) continue;
+
+                const pendingAmount = Math.max(
+                    0,
+                    Number(sale.total || 0) - (paidBySaleId.get(sale.id) || 0)
+                );
+                if (pendingAmount <= 0) continue;
+
+                addPendingItem(sale.customer_id, {
+                    id: sale.id,
+                    total: Number(sale.total || 0),
+                    pendingAmount,
+                    created_at: sale.created_at,
+                    source: 'sales',
+                });
+            }
+
+            const debtorsList = Array.from(debtByCustomer.values())
                 .filter((debtor: any) => debtor.totalDebt > 0)
                 .sort((a: any, b: any) => b.totalDebt - a.totalDebt);
-
-            if (debtorsList.length === 0) {
-                const { data: legacyCustomers, error: legacyError } = await supabase
-                    .from('customers')
-                    .select('*, sales(*)')
-                    .eq('organization_id', organizationId)
-                    .eq('sales.payment_status', 'pending');
-
-                if (!legacyError) {
-                    debtorsList = (legacyCustomers || [])
-                        .map((c: any) => {
-                            const pendingSales = c.sales.filter((s: any) => s.payment_status === 'pending');
-                            const totalDebt = pendingSales.reduce((acc: number, s: any) => acc + s.total, 0);
-                            return { ...c, totalDebt, pendingSales };
-                        })
-                        .filter((c: any) => c.totalDebt > 0)
-                        .sort((a: any, b: any) => b.totalDebt - a.totalDebt);
-                }
-            }
-
             setDebtors(debtorsList);
         } catch (e) {
             console.error(e);
@@ -159,19 +205,24 @@ export default function DebtorsPage() {
                 if (error) throw error;
                 if (data?.success === false) throw new Error(data?.error || 'No se pudo registrar pago');
             } else {
-                const { error } = await supabase
-                    .from('sales')
-                    .update({ payment_status: 'paid' })
-                    .eq('id', saleId);
-
+                const { data, error } = await supabase.rpc('register_sale_payment', {
+                    p_org_id: organizationId,
+                    p_sale_id: saleId,
+                    p_method: 'cash',
+                    p_amount: amount,
+                    p_reference: null,
+                    p_notes: 'Pago registrado desde módulo de deudores',
+                });
                 if (error) throw error;
+                if (data?.success === false) throw new Error(data?.error || 'No se pudo registrar pago');
             }
 
-            toast.success(`Pedido saldado ($${amount})`);
+            toast.success(`Pago registrado ($${amount})`);
+            setSelectedDebtor(null);
             await fetchDebtors();
 
         } catch (e: any) {
-            toast.error("Error al actualizar pago");
+            toast.error(e?.message || "Error al actualizar pago");
         }
     };
 
@@ -269,7 +320,7 @@ export default function DebtorsPage() {
                                             ${(debtor.totalDebt || 0).toLocaleString()}
                                         </span>
                                         <span className="text-xs font-medium text-slate-500">
-                                            {debtor.pendingSales?.length || 0} pedidos pendientes
+                                            {debtor.pendingSales?.length || 0} operaciones pendientes
                                         </span>
                                     </div>
                                 </div>
@@ -294,7 +345,7 @@ export default function DebtorsPage() {
                             <span className="text-3xl font-bold text-red-300">${(selectedDebtor?.totalDebt ?? 0).toLocaleString()}</span>
                         </div>
 
-                        <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase">Pedidos Pendientes</h3>
+                        <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase">Deudas Pendientes</h3>
                         <div className="space-y-2 max-h-[300px] overflow-y-auto">
                             {selectedDebtor?.pendingSales.map((sale: any) => (
                                 <div key={sale.id} className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900 p-3">

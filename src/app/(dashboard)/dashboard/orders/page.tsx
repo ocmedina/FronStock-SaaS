@@ -103,6 +103,11 @@ export default function OrdersPage() {
 
     const handleChangeOrderStatus = async (orderId: string, newStatus: string) => {
         if (!organizationId || !orderId || !newStatus) return;
+        if (newStatus === "delivered") {
+            const order = orders.find((item: any) => item.id === orderId);
+            if (order) handleDeliverOrder(order);
+            return;
+        }
 
         try {
             const { data, error } = await supabase.rpc("set_order_status", {
@@ -124,6 +129,10 @@ export default function OrdersPage() {
 
     const handleBulkChangeStatus = async (orderIds: string[], newStatus: string) => {
         if (!organizationId || orderIds.length === 0) return;
+        if (newStatus === "delivered") {
+            toast.error("Confirmá la entrega y el cobro pedido por pedido desde reparto");
+            return;
+        }
         let successCount = 0;
         for (const orderId of orderIds) {
             try {

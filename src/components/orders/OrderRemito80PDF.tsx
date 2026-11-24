@@ -115,9 +115,9 @@ const getPaymentLabel = (method?: string) => {
     cash: "Efectivo",
     card: "Tarjeta",
     transfer: "Transferencia",
-    credit: "Cta. Corriente",
-    current_account: "Cta. Corriente",
-    cuenta_corriente: "Cta. Corriente",
+    credit: "Cuenta Corriente",
+    current_account: "Cuenta Corriente",
+    cuenta_corriente: "Cuenta Corriente",
   };
   if (!method) return "-";
   return methods[method] || method;

@@ -14,6 +14,7 @@ import { CustomerTable } from "./CustomerTable";
 import { CustomerFormModal } from "./CustomerFormModal";
 import { CustomerHistoryModal } from "./CustomerHistoryModal";
 import { CustomerPaymentModal } from "./CustomerPaymentModal";
+import { registerCustomerPayment } from "@/actions/customers";
 
 interface CustomersViewProps {
     initialShowDebtorsOnly?: boolean;
@@ -100,7 +101,7 @@ export function CustomersView({
                     }
                 }
 
-                const creditMethods = new Set(['credit', 'current_account', 'cuenta_corriente', 'fiado']);
+                const creditMethods = new Set(['credit', 'current_account', 'cuenta_corriente', 'fiado', 'mixed']);
                 const excludedDeliveryStatus = new Set(['cancelled', 'not_delivered', 'returned']);
 
                 const getNormalizedOrderStatus = (order: any) => {
@@ -202,7 +203,8 @@ export function CustomersView({
             const pendingOrdersDebt = pendingOrdersDebtByCustomer[customer.id] || 0;
             const pendingSalesDebt = pendingSalesDebtByCustomer[customer.id] || 0;
             const fallbackDebt = pendingOrdersDebt + pendingSalesDebt;
-            const effectiveBalance = customer.balance > 0 ? customer.balance : fallbackDebt;
+            const storedBalance = Number(customer.balance || 0);
+            const effectiveBalance = storedBalance !== 0 ? storedBalance : fallbackDebt;
             return {
                 ...customer,
                 balance: effectiveBalance,
@@ -332,46 +334,49 @@ export function CustomersView({
         if (salesData) setCustomerSales(salesData);
     };
 
-    const handlePayment = async (amountStr: string, description: string) => {
+    const handlePayment = async (amountStr: string, description: string): Promise<boolean> => {
         if (!canEdit("customers")) {
             toast.error("No tienes permisos para registrar pagos");
-            return;
+            return false;
         }
 
-        if (!selectedCustomerForHistory || !amountStr) return;
+        if (!selectedCustomerForHistory || !amountStr) return false;
 
         setSaving(true);
         const amount = parseFloat(amountStr);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            toast.error("Ingresá un monto mayor a cero");
+            setSaving(false);
+            return false;
+        }
 
         try {
-            // 1. Update Balance
-            const newBalance = (selectedCustomerForHistory.balance || 0) - amount;
-
-            await supabase
-                .from("customers")
-                .update({ balance: newBalance })
-                .eq("id", selectedCustomerForHistory.id);
-
-            // 2. Register Movement
-            await supabase.from("customer_account_movements").insert({
-                customer_id: selectedCustomerForHistory.id,
-                type: "payment",
-                amount: amount,
+            const result = await registerCustomerPayment({
+                customerId: selectedCustomerForHistory.id,
+                amount,
                 description: description || "Pago a cuenta",
             });
 
-            // 3. Update local state
-            setShowPaymentModal(false);
-            fetchCustomers(); // Refresh list
+            if ("error" in result) {
+                toast.error(result.error || "No se pudo registrar el pago");
+                return false;
+            }
 
-            // Update the current history modal view
-            handleViewHistory({
+            const newBalance = result.newBalance;
+            setShowPaymentModal(false);
+            await fetchCustomers();
+
+            await handleViewHistory({
                 ...selectedCustomerForHistory,
                 balance: newBalance
             });
+            toast.success("Pago registrado correctamente");
+            return true;
 
         } catch (error) {
             console.error("Payment error:", error);
+            toast.error("No se pudo registrar el pago");
+            return false;
         } finally {
             setSaving(false);
         }

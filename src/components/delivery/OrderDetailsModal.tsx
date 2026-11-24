@@ -86,6 +86,11 @@ export function OrderDetailsModal({ orderId, open, onOpenChange, onSuccess }: Or
 
     const handleStatusChange = async (newStatus: string) => {
         if (!organizationId || !orderId) return;
+        if (newStatus === 'delivered') {
+            onOpenChange(false);
+            router.push(`/delivery/orders?orderId=${orderId}`);
+            return;
+        }
 
         setUpdating(true);
         try {

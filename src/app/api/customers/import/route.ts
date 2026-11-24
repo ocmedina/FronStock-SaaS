@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireOrganizationPermission } from "@/actions/_permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -10,24 +11,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No se proporcionaron datos de clientes." }, { status: 400 });
         }
 
+        const guard = await requireOrganizationPermission("customers", "create");
+        if (!guard.allowed || !guard.organizationId) {
+            return NextResponse.json({ error: guard.error || "No autorizado." }, { status: 403 });
+        }
+
         const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-        }
-
-        const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("organization_id")
-            .eq("id", user.id)
-            .single();
-
-        if (profileError || !profile?.organization_id) {
-            return NextResponse.json({ error: "No se pudo obtener la organización del usuario." }, { status: 403 });
-        }
-
-        const organization_id = profile.organization_id;
+        const organization_id = guard.organizationId;
 
         const results = {
             successCount: 0,
@@ -51,6 +41,15 @@ export async function POST(request: Request) {
                 }
             }
 
+            const importedBalance = customer.balance === undefined || customer.balance === null
+                ? 0
+                : Number(customer.balance);
+            if (!Number.isFinite(importedBalance)) {
+                results.errorCount++;
+                results.errors.push(`Saldo inicial inválido para cliente: ${customer.name}`);
+                continue;
+            }
+
             const cleanCustomer = {
                 organization_id,
                 name: String(customer.name).trim(),
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
                 email: customer.email ? String(customer.email).trim() : null,
                 phone: customer.phone ? String(customer.phone).trim() : null,
                 address: customer.address ? String(customer.address).trim() : null,
-                balance: typeof customer.balance === "number" ? customer.balance : 0,
+                balance: importedBalance,
                 customer_type: parsedCustomerType,
             };
 

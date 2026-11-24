@@ -32,7 +32,7 @@ export const paymentMethodOptions: FilterOption[] = [
     { value: "cash", label: "Efectivo", icon: "Banknote" },
     { value: "card", label: "Tarjeta", icon: "CreditCard" },
     { value: "transfer", label: "Transferencia", icon: "Building" },
-    { value: "credit", label: "Fiado", icon: "User" },
+    { value: "credit", label: "Cuenta Corriente", icon: "User" },
 ];
 
 export const salesChannelOptions: FilterOption[] = [

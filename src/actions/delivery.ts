@@ -271,6 +271,10 @@ export async function updateOrderStatus(input: {
   newStatus: string;
   notes?: string;
 }) {
+  if (input.newStatus === 'delivered') {
+    return { success: false, error: 'Confirmá la entrega y el cobro desde la pantalla de reparto' };
+  }
+
   const guard = await requireOrganizationPermission('delivery', 'edit');
   if (!guard.allowed || !guard.organizationId) {
     return { success: false, error: guard.error || 'No autorizado' };

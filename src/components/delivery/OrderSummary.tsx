@@ -202,7 +202,7 @@ export function OrderSummary({ items, customer, onReset, onClose, onSuccess }: O
                                 onClick={() => setPaymentMethod('credit')}
                                 className={`h-10 text-xs border-slate-700 ${paymentMethod === 'credit' ? 'bg-orange-600 text-white border-transparent' : 'bg-slate-900 text-slate-400'}`}
                             >
-                                Fiado
+                                Cuenta Corriente
                             </Button>
                         </div>
 

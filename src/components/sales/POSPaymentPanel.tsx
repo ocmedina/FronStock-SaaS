@@ -109,7 +109,7 @@ export function POSPaymentPanel({
     // Handle Simple Mode Selection
     const handleSimpleMethodSelect = (method: PaymentMethod) => {
         if (method === "credit" && !activeTab.customerId) {
-            alert("Debe seleccionar un cliente para pagos a crédito (fiado).");
+            alert("Debe seleccionar un cliente para usar cuenta corriente.");
             return;
         }
 
@@ -244,7 +244,7 @@ export function POSPaymentPanel({
         if (isNaN(numAmount) || numAmount <= 0) return;
 
         if (method === "credit" && !activeTab.customerId) {
-            alert("Debe seleccionar un cliente para pagos a crédito (fiado).");
+            alert("Debe seleccionar un cliente para usar cuenta corriente.");
             return;
         }
 

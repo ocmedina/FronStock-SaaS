@@ -76,6 +76,25 @@ export function PaymentPanel({
     const change = cashReceived ? parseFloat(cashReceived) - total : 0;
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
     const remaining = total - totalPaid;
+    const creditPaid = payments
+        .filter((payment) => payment.method === 'credit')
+        .reduce((sum, payment) => sum + payment.amount, 0);
+    const remainingCreditLimit = hasConfiguredLimit
+        ? Math.max(0, availableCredit - creditPaid)
+        : Number.POSITIVE_INFINITY;
+    const mixedCreditValid = creditPaid <= 0 || (
+        Boolean(selectedCustomerId) && creditPaid <= availableCredit
+    );
+    const enteredAmount = Number(newPaymentAmount || 0);
+    const canAddMixedPayment = Number.isFinite(enteredAmount)
+        && enteredAmount > 0
+        && enteredAmount <= remaining
+        && (newPaymentMethod !== 'credit' || (
+            Boolean(selectedCustomerId) && enteredAmount <= remainingCreditLimit
+        ));
+    const completionAmount = newPaymentMethod === 'credit'
+        ? Math.min(remaining, remainingCreditLimit)
+        : remaining;
     const suppliersWithDebt = suppliers.filter((s) => Number(s.current_balance || 0) > 0);
     const selectedSupplier = suppliersWithDebt.find((s) => s.id === supplierToSettleId);
     const selectedSupplierDebt = Number(selectedSupplier?.current_balance || 0);
@@ -115,11 +134,8 @@ export function PaymentPanel({
     const billBreakdown = change > 0 ? calculateBillBreakdown(change) : [];
 
     const addPayment = () => {
-        const amount = parseFloat(newPaymentAmount);
-        if (!amount || amount <= 0) return;
-        if (amount > remaining) {
-            return;
-        }
+        const amount = enteredAmount;
+        if (!canAddMixedPayment) return;
 
         setPayments([...payments, { method: newPaymentMethod, amount }]);
         setNewPaymentAmount('');
@@ -145,8 +161,8 @@ export function PaymentPanel({
         (paymentMode === 'simple'
             ? simpleMethod === 'cash'
                 ? change >= 0
-                : true
-            : remaining <= 0) &&
+                : simpleMethod !== 'credit' || canUseCredit
+            : remaining <= 0 && mixedCreditValid) &&
         (!applySupplierSettlement || hasValidSupplierSettlement);
 
     const getPaymentLabel = (method: PaymentMethod) => {
@@ -154,7 +170,7 @@ export function PaymentPanel({
             cash: 'Efectivo',
             card: 'Tarjeta',
             transfer: 'Transferencia',
-            credit: 'Fiado'
+            credit: 'Cuenta Corriente'
         };
         return labels[method] || method;
     };
@@ -235,7 +251,7 @@ export function PaymentPanel({
                                     title={!selectedCustomerId ? 'Selecciona un cliente' : !canUseCredit ? 'Excede límite de crédito disponible' : ''}
                                 >
                                     <Wallet className="h-4 w-4 mr-2" />
-                                    Fiado
+                                    Cuenta Corriente
                                 </Button>
                             </div>
                         </div>
@@ -291,7 +307,7 @@ export function PaymentPanel({
                                         </>
                                     ) : (
                                         <div className="pt-2 border-t border-blue-500/20 text-xs text-muted-foreground">
-                                            Fiado habilitado sin límite máximo configurado.
+                                            Cuenta corriente habilitada sin límite máximo configurado.
                                         </div>
                                     )}
                                 </div>
@@ -456,6 +472,7 @@ export function PaymentPanel({
                                     <Button
                                         variant={newPaymentMethod === 'credit' ? 'default' : 'outline'}
                                         size="sm"
+                                        disabled={!selectedCustomerId || remainingCreditLimit <= 0}
                                         onClick={() => setNewPaymentMethod('credit')}
                                     >
                                         <Wallet className="h-3 w-3" />
@@ -470,17 +487,24 @@ export function PaymentPanel({
                                         placeholder={`Máx: $${remaining.toLocaleString()}`}
                                         className="h-10"
                                     />
-                                    <Button onClick={addPayment} size="sm" className="shrink-0">
+                                    <Button onClick={addPayment} size="sm" className="shrink-0" disabled={!canAddMixedPayment}>
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
+                                {newPaymentMethod === 'credit' && !selectedCustomerId && (
+                                    <p className="text-xs text-amber-600">Seleccioná un cliente para usar cuenta corriente.</p>
+                                )}
+                                {newPaymentMethod === 'credit' && selectedCustomerId && enteredAmount > remainingCreditLimit && (
+                                    <p className="text-xs text-amber-600">El monto supera el crédito disponible del cliente.</p>
+                                )}
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     className="w-full"
-                                    onClick={() => setNewPaymentAmount(remaining.toString())}
+                                    disabled={completionAmount <= 0}
+                                    onClick={() => setNewPaymentAmount(completionAmount.toString())}
                                 >
-                                    Completar (${remaining.toLocaleString()})
+                                    Completar (${completionAmount.toLocaleString()})
                                 </Button>
                             </div>
                         )}

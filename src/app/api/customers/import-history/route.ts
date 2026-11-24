@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireOrganizationPermission } from "@/actions/_permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -10,24 +11,13 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No se proporcionaron movimientos." }, { status: 400 });
         }
 
+        const guard = await requireOrganizationPermission("customers", "edit");
+        if (!guard.allowed || !guard.organizationId) {
+            return NextResponse.json({ error: guard.error || "No autorizado." }, { status: 403 });
+        }
+
         const supabase = await createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-        }
-
-        const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("organization_id")
-            .eq("id", user.id)
-            .single();
-
-        if (profileError || !profile?.organization_id) {
-            return NextResponse.json({ error: "No se pudo obtener la organización." }, { status: 403 });
-        }
-
-        const orgId = profile.organization_id;
+        const orgId = guard.organizationId;
 
         // Fetch all customers for this org to match identifiers
         const { data: customersList, error: customersError } = await supabase
@@ -82,6 +72,11 @@ export async function POST(request: Request) {
             // Normalizar monto
             let amount = parseFloat(String(mov.amount).replace(/[^0-9.-]+/g, ""));
             if (isNaN(amount)) amount = 0;
+            if (!Number.isFinite(amount) || amount <= 0) {
+                results.errorCount++;
+                results.errors.push(`Monto inválido para cliente: ${mov.customer_identifier}`);
+                continue;
+            }
 
             // Normalizar fecha. Excel puede mandar numeros y Javascript fechas.
             // Tratamos de convertirlo a formato ISO o valid Date
@@ -114,48 +109,22 @@ export async function POST(request: Request) {
             return NextResponse.json(results); // Todos fallaron o ninguno mapeable
         }
 
-        const { error: insertError } = await supabase
-            .from("customer_account_movements")
-            .insert(recordsToInsert);
+        const { data, error: importError } = await supabase.rpc("import_customer_account_movements", {
+            p_org_id: orgId,
+            p_movements: recordsToInsert,
+        });
 
-        if (insertError) {
-            console.error("Bulk insert error for movements:", insertError);
-            return NextResponse.json({ error: `Db Error: ${insertError.message}` }, { status: 500 });
+        if (importError) {
+            console.error("Bulk import failed:", importError);
+            return NextResponse.json({ error: `Db Error: ${importError.message}` }, { status: 500 });
         }
 
-        results.successCount = recordsToInsert.length;
-
-        // Actualizar el "balance" de los clientes afectados. 
-        // Cargo aumenta la deuda (balance), Pago reduce la deuda.
-        // Dado que esto puede ser muy pesado si iteramos, podríamos llamar a una función RPC de la base de datos,
-        // O alternativamente iterar en un hash map los saldos totales a actualizar.
-        
-        // Calcular variaciones
-        const balanceChanges = new Map<string, number>();
-        for (const record of recordsToInsert) {
-            const amountChange = record.type === 'charge' ? record.amount : -record.amount;
-            balanceChanges.set(record.customer_id, (balanceChanges.get(record.customer_id) || 0) + amountChange);
+        const importResult = data as { success?: boolean; inserted_count?: number; error?: string } | null;
+        if (!importResult?.success) {
+            return NextResponse.json({ error: importResult?.error || "No se pudo importar el historial." }, { status: 400 });
         }
 
-        // Actualizar clientes uno a uno (no ideal para miles, pero para decenas/centenas está bien)
-        for (const [custId, change] of Array.from(balanceChanges.entries())) {
-            const customer = customersList?.find(c => c.id === custId);
-            if (!customer) continue;
-            
-            // Re-fetch current balance just to be sure
-            const { data: currentCust } = await supabase
-                .from("customers")
-                .select("balance")
-                .eq("id", custId)
-                .single();
-            
-            if (currentCust) {
-                await supabase
-                    .from("customers")
-                    .update({ balance: currentCust.balance + change })
-                    .eq("id", custId);
-            }
-        }
+        results.successCount = Number(importResult.inserted_count || 0);
 
         return NextResponse.json(results);
 
