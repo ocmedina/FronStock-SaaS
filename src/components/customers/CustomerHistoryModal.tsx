@@ -66,14 +66,16 @@ export function CustomerHistoryModal({
                             <p className="text-muted-foreground">{customer?.name}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-sm text-muted-foreground">Saldo Pendiente</p>
+                            <p className="text-sm text-muted-foreground">
+                                {customer && customer.balance < 0 ? "Saldo a favor" : customer?.balance === 0 ? "Al día" : "Saldo pendiente"}
+                            </p>
                             <p
                                 className={`text-2xl font-bold ${customer && customer.balance > 0
                                     ? "text-rose-500"
                                     : "text-emerald-500"
                                     }`}
                             >
-                                ${customer?.balance.toLocaleString()}
+                                ${Math.abs(customer?.balance || 0).toLocaleString()}
                             </p>
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -38,6 +38,7 @@ import { DeliveryBottomNav } from "@/components/delivery/DeliveryBottomNav";
 
 export default function DeliveryOrdersPage() {
     const { profile, organizationId } = useOrganization();
+    const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
     const [loading, setLoading] = useState(true);
@@ -453,8 +454,15 @@ export default function DeliveryOrdersPage() {
 
     const openDeliverDialog = (order: any) => {
         setDeliveryOrder(order);
-        setPaymentAmount(String(Number(order.total || 0)));
-        setPaymentMethod(order.payment_method || "cash");
+        const paymentRowsTotal = Array.isArray(order.order_payments)
+            ? order.order_payments.reduce((sum: number, payment: any) => sum + Number(payment?.amount || 0), 0)
+            : 0;
+        const paidAmount = Math.max(paymentRowsTotal, Number(order.payment_amount || 0));
+        const pendingBalance = Math.max(0, Number(order.total || 0) - paidAmount);
+        const storedMethod = String(order.payment_method || "cash").toLowerCase();
+        const isCreditMethod = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(storedMethod);
+        setPaymentAmount(isCreditMethod ? "0" : String(Number(pendingBalance.toFixed(2))));
+        setPaymentMethod(isCreditMethod ? "credit" : (["cash", "transfer", "card"].includes(storedMethod) ? storedMethod : "cash"));
         setPaymentMode("single");
         setSplitPayments([{ id: crypto.randomUUID(), amount: "", method: "cash" }]);
         setDeliveryConfirmed(false);
@@ -495,8 +503,10 @@ export default function DeliveryOrdersPage() {
     };
 
     const getOrderPaidAmount = (order: any) => {
-        if (!Array.isArray(order?.order_payments)) return 0;
-        return order.order_payments.reduce((sum: number, payment: any) => sum + Number(payment?.amount || 0), 0);
+        const paymentsTotal = Array.isArray(order?.order_payments)
+            ? order.order_payments.reduce((sum: number, payment: any) => sum + Number(payment?.amount || 0), 0)
+            : 0;
+        return Math.max(paymentsTotal, Number(order?.payment_amount || 0));
     };
 
     const getOrderPendingBalance = (order: any) => {
@@ -504,6 +514,27 @@ export default function DeliveryOrdersPage() {
         const paidAmount = getOrderPaidAmount(order);
         return Math.max(0, total - paidAmount);
     };
+
+    useEffect(() => {
+        if (!targetOrderId || loading || deliveryOrder) return;
+        const order = orders.find((item) => item.id === targetOrderId);
+        if (!order) return;
+
+        const paymentRowsTotal = Array.isArray(order.order_payments)
+            ? order.order_payments.reduce((sum: number, payment: any) => sum + Number(payment?.amount || 0), 0)
+            : 0;
+        const paidAmount = Math.max(paymentRowsTotal, Number(order.payment_amount || 0));
+        const pendingBalance = Math.max(0, Number(order.total || 0) - paidAmount);
+        const storedMethod = String(order.payment_method || "cash").toLowerCase();
+        const isCreditMethod = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(storedMethod);
+        setDeliveryOrder(order);
+        setPaymentAmount(isCreditMethod ? "0" : String(Number(pendingBalance.toFixed(2))));
+        setPaymentMethod(isCreditMethod ? "credit" : (["cash", "transfer", "card"].includes(storedMethod) ? storedMethod : "cash"));
+        setPaymentMode("single");
+        setSplitPayments([{ id: crypto.randomUUID(), amount: "", method: "cash" }]);
+        setDeliveryConfirmed(false);
+        router.replace("/delivery/orders", { scroll: false });
+    }, [targetOrderId, loading, deliveryOrder, orders, router]);
 
     const normalizePhone = (phone?: string | null) => String(phone || "").replace(/\D/g, "");
 
@@ -557,7 +588,7 @@ export default function DeliveryOrdersPage() {
     const handleMarkDelivered = async () => {
         if (!deliveryOrder) return;
 
-        const totalAmount = Number(deliveryOrder.total || 0);
+        const totalAmount = getOrderPendingBalance(deliveryOrder);
         let paymentsToProcess: { amount: number; method: string }[] = [];
         let finalStatusMethod = "mixed";
         let paymentAuditNote = "";
@@ -572,20 +603,36 @@ export default function DeliveryOrdersPage() {
                 return toast.error("Monto inválido");
             }
             if (!allowsPendingBalance && amount < totalAmount) {
-                return toast.error("Para este método debes cobrar el total del pedido");
+                return toast.error("Para este método debes cobrar todo el saldo pendiente");
             }
-            paymentsToProcess = amount > 0 ? [{ amount, method: paymentMethod }] : [];
+            if (normalizedMethod !== "cash" && !allowsPendingBalance && amount > totalAmount) {
+                return toast.error("El monto ingresado supera el saldo pendiente");
+            }
+            if (allowsPendingBalance) {
+                if (amount > 0) return toast.error("Para dejar el saldo en cuenta corriente, usa el botón ‘Dejar saldo’ o el modo de pagos múltiples");
+                paymentsToProcess = totalAmount > 0 ? [{ amount: totalAmount, method: paymentMethod }] : [];
+            } else {
+                const appliedAmount = Math.min(amount, totalAmount);
+                paymentsToProcess = appliedAmount > 0 ? [{ amount: appliedAmount, method: paymentMethod }] : [];
+                paymentAuditNote = `[Unico] Método=${getDeliveryPaymentLabel(paymentMethod)}; Recibido=${amount}; Aplicado=${appliedAmount}; Vuelto=${Math.max(0, amount - appliedAmount)}; Saldo=${totalAmount}`;
+            }
             finalStatusMethod = paymentMethod;
-            paymentAuditNote = `[Unico] Método=${getDeliveryPaymentLabel(paymentMethod)}; Cobrado=${amount}; Total=${totalAmount}; Saldo=${pendingAmount}`;
+            if (allowsPendingBalance) {
+                paymentAuditNote = `[Unico] Método=${getDeliveryPaymentLabel(paymentMethod)}; Cobrado=$0; Saldo en cuenta=${totalAmount}`;
+            }
         } else {
-            // Mixed mode validation
-            const totalSplit = splitPayments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+            // El desglose debe cubrir solo lo que resta cobrar, descontando pagos previos.
+            const parsedSplitPayments = splitPayments.map((payment) => Number(payment.amount || 0));
+            if (parsedSplitPayments.some((amount) => !Number.isFinite(amount) || amount < 0)) {
+                return toast.error("Hay un monto inválido en el desglose");
+            }
+            const totalSplit = parsedSplitPayments.reduce((acc, amount) => acc + amount, 0);
             const totalSplitAmount = Number(totalSplit.toFixed(2));
             const diff = totalAmount - totalSplitAmount;
             
             // Check if sum equals order amount precisely (allow margin 0.01 floating point)
             if (Math.abs(diff) > 0.05) {
-                return toast.error(`El total de los cobros desglosados debe sumar exactamente el total del pedido ($${totalAmount}). Faltan o sobran $${Math.abs(diff).toFixed(2)}`);
+                return toast.error(`El desglose debe sumar exactamente el saldo pendiente ($${totalAmount}). Faltan o sobran $${Math.abs(diff).toFixed(2)}`);
             }
             
             // Collect valid payments
@@ -593,7 +640,7 @@ export default function DeliveryOrdersPage() {
                 .filter(p => Number(p.amount) > 0)
                 .map(p => ({ amount: Number(p.amount), method: p.method }));
 
-            paymentAuditNote = `[Mixto] Desglose: ${paymentsToProcess.map(p => `${getDeliveryPaymentLabel(p.method)}: $${p.amount}`).join(" | ")}. Total=${totalAmount}`;
+            paymentAuditNote = `[Mixto] Desglose: ${paymentsToProcess.map(p => `${getDeliveryPaymentLabel(p.method)}: $${p.amount}`).join(" | ")}. Saldo=${totalAmount}`;
         }
 
         if (!deliveryConfirmed) {
@@ -603,35 +650,11 @@ export default function DeliveryOrdersPage() {
 
         setSubmittingDelivery(true);
         try {
-            const { error: methodError } = await supabase
-                .from("orders")
-                .update({ payment_method: finalStatusMethod })
-                .eq("id", deliveryOrder.id)
-                .eq("organization_id", organizationId);
-
-            if (methodError) throw methodError;
-
-            // Procesar pagos Múltiples de forma paralela via rpc
-            if (paymentsToProcess.length > 0) {
-                await Promise.all(paymentsToProcess.map(async (payment) => {
-                    const { data: payData, error: payError } = await supabase.rpc("register_order_payment", {
-                        p_org_id: organizationId,
-                        p_order_id: deliveryOrder.id,
-                        p_method: payment.method,
-                        p_amount: payment.amount,
-                        p_reference: null,
-                        p_notes: `Cobro registrado al entregar. ${paymentAuditNote}`,
-                    });
-
-                    if (payError) throw payError;
-                    if (payData?.success === false) throw new Error(payData?.error || "Error al registrar un cobro del desglose");
-                }));
-            }
-
-            const { data, error } = await supabase.rpc("set_order_status", {
+            const { data, error } = await supabase.rpc("register_order_settlement", {
                 p_org_id: organizationId,
                 p_order_id: deliveryOrder.id,
-                p_new_status: "delivered",
+                p_payments: paymentsToProcess,
+                p_final_payment_method: finalStatusMethod,
                 p_notes: `Entregado por repartidor. ${paymentAuditNote}`,
             });
 
@@ -767,7 +790,7 @@ export default function DeliveryOrdersPage() {
         return true;
     });
 
-    const deliveryTotalAmount = Number(deliveryOrder?.total || 0);
+    const deliveryTotalAmount = deliveryOrder ? getOrderPendingBalance(deliveryOrder) : 0;
     
     // Calcular resúmenes dinámicos según modo
     let currentPaymentAmount = 0;
@@ -1136,6 +1159,7 @@ export default function DeliveryOrdersPage() {
                         <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
                             <p className="text-sm text-slate-300 font-medium">{deliveryOrder?.customer?.name || "Cliente"}</p>
                             <p className="text-xs text-slate-500">Total pedido: ${Number(deliveryOrder?.total || 0).toLocaleString()}</p>
+                            <p className="text-xs text-amber-300">Saldo pendiente: ${deliveryTotalAmount.toLocaleString()}</p>
                         </div>
 
                         {/* Mode Selector */}
@@ -1157,7 +1181,7 @@ export default function DeliveryOrdersPage() {
                         {paymentMode === "single" ? (
                             <>
                                 <div className="space-y-2">
-                                    <Label htmlFor="payment-amount" className="text-slate-300">Monto cobrado</Label>
+                                    <Label htmlFor="payment-amount" className="text-slate-300">Monto ingresado</Label>
                                     <Input
                                         id="payment-amount"
                                         type="number"
@@ -1165,6 +1189,7 @@ export default function DeliveryOrdersPage() {
                                         step="0.01"
                                         value={paymentAmount}
                                         onChange={(e) => setPaymentAmount(e.target.value)}
+                                        disabled={["fiado", "credit", "current_account", "cuenta_corriente"].includes(paymentMethod.toLowerCase())}
                                         className="bg-slate-950 border-slate-700"
                                     />
 
@@ -1176,7 +1201,7 @@ export default function DeliveryOrdersPage() {
                                             className="h-8 border-slate-700 bg-slate-900 text-xs text-slate-200"
                                             onClick={() => {
                                                 setPaymentAmount(String(Number(deliveryTotalAmount.toFixed(2))));
-                                                if (paymentMethod === "credit") setPaymentMethod("cash");
+                                                if (["fiado", "credit", "current_account", "cuenta_corriente"].includes(paymentMethod.toLowerCase())) setPaymentMethod("cash");
                                             }}
                                         >
                                             Exacto
@@ -1188,7 +1213,7 @@ export default function DeliveryOrdersPage() {
                                             className="h-8 border-slate-700 bg-slate-900 text-xs text-slate-200"
                                             onClick={() => {
                                                 setPaymentAmount(String(Number((deliveryTotalAmount * 0.5).toFixed(2))));
-                                                if (paymentMethod === "credit") setPaymentMethod("cash");
+                                                if (["fiado", "credit", "current_account", "cuenta_corriente"].includes(paymentMethod.toLowerCase())) setPaymentMethod("cash");
                                             }}
                                         >
                                             Parcial 50%
@@ -1210,7 +1235,14 @@ export default function DeliveryOrdersPage() {
         
                                 <div className="space-y-2">
                                     <Label className="text-slate-300">Método elegido por cliente</Label>
-                                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                    <Select value={paymentMethod} onValueChange={(value) => {
+                                        setPaymentMethod(value);
+                                        const isCredit = ["fiado", "credit", "current_account", "cuenta_corriente"].includes(value.toLowerCase());
+                                        if (isCredit) setPaymentAmount("0");
+                                        else if (["fiado", "credit", "current_account", "cuenta_corriente"].includes(paymentMethod.toLowerCase())) {
+                                            setPaymentAmount(String(Number(deliveryTotalAmount.toFixed(2))));
+                                        }
+                                    }}>
                                         <SelectTrigger className="bg-slate-950 border-slate-700">
                                             <SelectValue placeholder="Seleccionar método" />
                                         </SelectTrigger>
@@ -1218,8 +1250,7 @@ export default function DeliveryOrdersPage() {
                                             <SelectItem value="cash">Efectivo</SelectItem>
                                             <SelectItem value="transfer">Transferencia</SelectItem>
                                             <SelectItem value="card">Tarjeta</SelectItem>
-                                            <SelectItem value="mixed">Mixto</SelectItem>
-                                            <SelectItem value="fiado">Fiado</SelectItem>
+                                            <SelectItem value="fiado">Cuenta Corriente</SelectItem>
                                             <SelectItem value="credit">Cuenta Corriente</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -1239,7 +1270,7 @@ export default function DeliveryOrdersPage() {
                                                     <SelectItem value="cash">Efectivo</SelectItem>
                                                     <SelectItem value="transfer">Transf.</SelectItem>
                                                     <SelectItem value="card">Tarjeta</SelectItem>
-                                                    <SelectItem value="fiado">📝 Cta Cte</SelectItem>
+                                                    <SelectItem value="fiado">📝 Cuenta Corriente</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -1296,11 +1327,17 @@ export default function DeliveryOrdersPage() {
                             </div>
                         </div>
 
+                        {paymentMode === "single" && paymentMethod.toLowerCase() === "cash" && currentPaymentAmount > deliveryTotalAmount && (
+                            <p className="text-right text-sm font-medium text-emerald-300">
+                                Vuelto: ${(currentPaymentAmount - deliveryTotalAmount).toLocaleString()}
+                            </p>
+                        )}
+
                         {fullPaymentRequiredAndMissing && (
                             <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
                                 {paymentMode === "single" 
-                                    ? `Para confirmar entrega debes cobrar el total ($${deliveryTotalAmount.toLocaleString()}).`
-                                    : `El desglose múltiple debe sumar exactamente $${deliveryTotalAmount.toLocaleString()}.`}
+                                    ? `Para confirmar entrega debes cobrar el saldo pendiente ($${deliveryTotalAmount.toLocaleString()}).`
+                                    : `El desglose debe sumar exactamente el saldo pendiente ($${deliveryTotalAmount.toLocaleString()}).`}
                             </div>
                         )}
 

@@ -9,7 +9,7 @@ export const DELIVERY_PAYMENT_LABELS: Record<string, string> = {
   transfer: 'Transferencia',
   card: 'Tarjeta',
   mixed: 'Mixto',
-  fiado: 'Fiado',
+  fiado: 'Cuenta Corriente',
   credit: 'Cuenta Corriente',
   current_account: 'Cuenta Corriente',
   cuenta_corriente: 'Cuenta Corriente',

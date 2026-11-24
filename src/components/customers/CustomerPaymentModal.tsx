@@ -13,7 +13,7 @@ import { useState } from "react";
 interface CustomerPaymentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (amount: string, description: string) => Promise<void>;
+    onSubmit: (amount: string, description: string) => Promise<boolean | void>;
     saving: boolean;
 }
 
@@ -26,8 +26,10 @@ export function CustomerPaymentModal({
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
 
-    const handleSubmit = () => {
-        onSubmit(amount, description);
+    const handleSubmit = async () => {
+        const succeeded = await onSubmit(amount, description);
+        if (succeeded === false) return;
+
         setAmount("");
         setDescription("");
     };

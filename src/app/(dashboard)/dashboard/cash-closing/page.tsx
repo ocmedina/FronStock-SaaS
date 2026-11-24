@@ -140,7 +140,7 @@ const methodLabel: Record<PaymentKey, string> = {
   cash: "Efectivo",
   transfer: "Transferencia",
   card: "Tarjeta",
-  credit: "Fiado",
+  credit: "Cuenta Corriente",
   other: "Otros",
 };
 
@@ -834,7 +834,7 @@ export default function CashClosingPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Fiado generado</CardDescription>
+                <CardDescription>Cuenta Corriente generada</CardDescription>
                 <CardTitle className="text-xl">{formatMoney(data.fiadoTotal)}</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">Ventas y pedidos con pago pendiente/parcial.</CardContent>
@@ -941,7 +941,7 @@ export default function CashClosingPage() {
                         <TableHead className="text-right">Vendido</TableHead>
                         <TableHead className="text-right">Cobrado</TableHead>
                         <TableHead className="text-right">Gastos</TableHead>
-                        <TableHead className="text-right">Fiado</TableHead>
+                        <TableHead className="text-right">Cuenta Corriente</TableHead>
                         <TableHead className="text-right">Caja esperada</TableHead>
                         <TableHead className="text-right">Transfer. esperada</TableHead>
                         <TableHead className="text-right">Detalle</TableHead>
@@ -1123,7 +1123,7 @@ export default function CashClosingPage() {
                         <CardTitle className="text-2xl tabular-nums whitespace-nowrap">{formatMoney(selectedClosing.expenses_total)}</CardTitle>
                       </CardHeader>
                       <CardContent className="text-sm text-muted-foreground space-y-1">
-                        <p className="leading-none">Fiado: <span className="tabular-nums whitespace-nowrap">{formatMoney(selectedClosing.fiado_total)}</span></p>
+                        <p className="leading-none">Cuenta Corriente: <span className="tabular-nums whitespace-nowrap">{formatMoney(selectedClosing.fiado_total)}</span></p>
                       </CardContent>
                     </Card>
                     <Card>

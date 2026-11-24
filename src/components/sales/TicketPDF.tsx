@@ -128,7 +128,10 @@ export const TicketPDF = ({ sale, items, organization, logoBase64 }: TicketPDFPr
             'cash': 'Efectivo',
             'card': 'Tarjeta',
             'transfer': 'Transferencia',
-            'credit': 'Cta. Corriente'
+            'credit': 'Cuenta Corriente',
+            'current_account': 'Cuenta Corriente',
+            'cuenta_corriente': 'Cuenta Corriente',
+            'fiado': 'Cuenta Corriente'
         };
         return methods[method] || method;
     };

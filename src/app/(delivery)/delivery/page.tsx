@@ -74,7 +74,7 @@ const PAYMENT_LABELS: Record<string, string> = {
     transfer: "Transferencia",
     card: "Tarjeta",
     mixed: "Mixto",
-    fiado: "Fiado",
+    fiado: "Cuenta Corriente",
     credit: "Cta. Cte.",
     current_account: "Cta. Cte.",
     cuenta_corriente: "Cta. Cte.",
@@ -195,40 +195,8 @@ export default function DeliveryHomePage() {
         }
     };
 
-    const handleQuickDeliverWithUndo = async (order: DeliveryOrder) => {
-        setUpdatingId(order.id);
-        try {
-            const result = await updateOrderStatus({ orderId: order.id, newStatus: "delivered" });
-            if (!result.success) throw new Error(result.error);
-
-            await fetchOrders(true);
-
-            toast.success(`Pedido de ${order.customer?.name || "cliente"} marcado como entregado`, {
-                duration: 7000,
-                action: {
-                    label: "Deshacer",
-                    onClick: async () => {
-                        setUpdatingId(order.id);
-                        try {
-                            const undoResult = await updateOrderStatus({ orderId: order.id, newStatus: "in_delivery" });
-                            if (!undoResult.success) throw new Error(undoResult.error);
-
-                            setActiveTab("in_delivery");
-                            await fetchOrders(true);
-                            toast.success("Entrega revertida");
-                        } catch (undoError: any) {
-                            toast.error("No se pudo deshacer: " + undoError.message);
-                        } finally {
-                            setUpdatingId(null);
-                        }
-                    },
-                },
-            });
-        } catch (e: any) {
-            toast.error("Error: " + e.message);
-        } finally {
-            setUpdatingId(null);
-        }
+    const handleOpenDeliveryCollection = (order: DeliveryOrder) => {
+        window.location.href = `/delivery/orders?orderId=${order.id}`;
     };
 
     const handleLogout = async () => {
@@ -524,7 +492,7 @@ export default function DeliveryHomePage() {
                                             <button
                                                 type="button"
                                                 className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 transition-colors text-[11px] font-semibold"
-                                                onClick={() => handleQuickDeliverWithUndo(order)}
+                                                onClick={() => handleOpenDeliveryCollection(order)}
                                                 disabled={isUpdating}
                                             >
                                                 {isUpdating ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}

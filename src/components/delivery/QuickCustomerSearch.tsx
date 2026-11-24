@@ -40,19 +40,39 @@ export function QuickCustomerSearch({ onSelect }: QuickCustomerSearchProps) {
             setLoading(true);
             const { data } = await supabase
                 .from('customers')
-                .select('*, sales(total, payment_status)')
+                .select('*, sales(total, payment_status, payment_method, sale_payments(amount, payment_method)), orders(total, payment_status, payment_method, payment_amount, lifecycle_status, delivery_status, order_payments(amount))')
                 .eq('organization_id', organizationId)
                 .in('service_type', ['delivery', 'both']) // Filter service types
                 .or(`name.ilike.%${query}%,phone.ilike.%${query}%,address.ilike.%${query}%`)
                 .limit(5);
 
-            // Calculate Balance locally (sum of pending sales)
-            // Note: In a real app, use a View or RPC for performance.
             const resultsWithBalance = (data || []).map((c: any) => {
-                const debt = c.sales
-                    ?.filter((s: any) => s.payment_status === 'pending')
-                    .reduce((sum: number, s: any) => sum + s.total, 0) || 0;
-                return { ...c, balance: debt };
+                const creditMethods = new Set(['credit', 'fiado', 'current_account', 'cuenta_corriente', 'mixed']);
+                const salesDebt = (c.sales || [])
+                    .filter((sale: any) => ['pending', 'partial'].includes(String(sale.payment_status || '').toLowerCase())
+                        && creditMethods.has(String(sale.payment_method || '').toLowerCase()))
+                    .reduce((sum: number, sale: any) => {
+                        const paid = Array.isArray(sale.sale_payments)
+                            ? sale.sale_payments
+                                .filter((payment: any) => !creditMethods.has(String(payment.payment_method || '').toLowerCase()))
+                                .reduce((paymentSum: number, payment: any) => paymentSum + Number(payment.amount || 0), 0)
+                            : 0;
+                        return sum + Math.max(0, Number(sale.total || 0) - paid);
+                    }, 0);
+                const ordersDebt = (c.orders || [])
+                    .filter((order: any) => ['pending', 'partial'].includes(String(order.payment_status || '').toLowerCase())
+                        && (creditMethods.has(String(order.payment_method || '').toLowerCase())
+                            || String(order.lifecycle_status || order.delivery_status || '').toLowerCase() === 'delivered'))
+                    .reduce((sum: number, order: any) => {
+                        const paidFromRows = Array.isArray(order.order_payments)
+                            ? order.order_payments.reduce((paymentSum: number, payment: any) => paymentSum + Number(payment.amount || 0), 0)
+                            : 0;
+                        const paid = Math.max(paidFromRows, Number(order.payment_amount || 0));
+                        return sum + Math.max(0, Number(order.total || 0) - paid);
+                    }, 0);
+                const debt = salesDebt + ordersDebt;
+                const storedBalance = Number(c.balance || 0);
+                return { ...c, balance: storedBalance !== 0 ? storedBalance : debt };
             });
 
             setResults(resultsWithBalance);
@@ -125,9 +145,11 @@ export function QuickCustomerSearch({ onSelect }: QuickCustomerSearchProps) {
                             </div>
 
                             <div className="flex flex-col items-end gap-1">
-                                {customer.balance > 0 && (
-                                    <span className="text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">
-                                        Deuda: ${customer.balance.toLocaleString()}
+                                {customer.balance !== 0 && (
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${customer.balance > 0 ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"}`}>
+                                        {customer.balance > 0
+                                            ? `Deuda: $${customer.balance.toLocaleString()}`
+                                            : `A favor: $${Math.abs(customer.balance).toLocaleString()}`}
                                     </span>
                                 )}
                                 {customer.address && (

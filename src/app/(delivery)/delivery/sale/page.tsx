@@ -522,7 +522,7 @@ function RouteSaleContent() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="paid">Pagado (Contado)</SelectItem>
-                                        <SelectItem value="pending">Fiado (Cuenta Corriente)</SelectItem>
+                                        <SelectItem value="pending">Cuenta Corriente</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {paymentStatus === "pending" && (

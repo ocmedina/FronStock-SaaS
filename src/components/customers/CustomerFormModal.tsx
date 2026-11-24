@@ -269,7 +269,7 @@ export function CustomerFormModal({
                     <div className="rounded-lg border p-4 space-y-4 bg-muted/20">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium">Habilitar crédito (fiado)</p>
+                                <p className="text-sm font-medium">Habilitar cuenta corriente</p>
                                 <p className="text-xs text-muted-foreground">
                                     Activa cuenta corriente para este cliente.
                                 </p>

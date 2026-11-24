@@ -52,6 +52,10 @@ export const useOrderDragDrop = (
 
         const order = orders.find((o) => o.id === orderId);
         if (!order || getOrderStatus(order) === newStatus) return;
+        if (newStatus === "delivered") {
+            window.location.href = `/delivery/orders?orderId=${orderId}`;
+            return;
+        }
 
         // Actualización optimista
         setOrders((prev) =>
